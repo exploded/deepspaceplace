@@ -23,7 +23,7 @@
 <script>
 // Celestial data URLs
 const celestialDataUrls = {
-    stars: '/data/stars.6.geojson',
+    stars: '/data/stars.5.geojson',
     constellationLines: '/data/constellations.lines.geojson',
     constellationBounds: '/data/constellations.bounds.geojson',
     dsos: '/data/dsos.bright.geojson',
@@ -133,6 +133,19 @@ const projection = createAzimuthalProjection();
 // Group for transformable content
 const g = svg.append('g').attr('class', 'map-content');
 
+// Pre-create layer groups in correct z-order (back to front)
+const layers = {
+    milkyWay: g.append('g').attr('class', 'layer-milkyway'),
+    grid: g.append('g').attr('class', 'layer-grid'),
+    constLines: g.append('g').attr('class', 'layer-const-lines'),
+    constBounds: g.append('g').attr('class', 'layer-const-bounds'),
+    ecliptic: g.append('g').attr('class', 'layer-ecliptic'),
+    horizon: g.append('g').attr('class', 'layer-horizon'),
+    fov: g.append('g').attr('class', 'layer-fov'),
+    dsos: g.append('g').attr('class', 'layer-dsos'),
+    stars: g.append('g').attr('class', 'layer-stars')
+};
+
 // Helper: convert GeoJSON coordinates (lon, lat) to RA, Dec
 // GeoJSON uses -180..180 longitude; 0-180 = 0-12h RA, -180-0 = 12-24h RA
 function geojsonToRaDec(lon, lat) {
@@ -140,13 +153,19 @@ function geojsonToRaDec(lon, lat) {
     return { ra, dec: lat };
 }
 
-// Constellation data
+// Observations data inlined from server
+{{if .ObservationsJSON}}
+const observations = {{.ObservationsJSON}};
+{{else}}
+const observations = [];
+{{end}}
+
+// Celestial data (loaded async)
 let celestialStars = [];
 let celestialConstellationLines = [];
 let celestialConstellationBounds = [];
 let celestialDSOs = [];
 let celestialMilkyWay = [];
-let observations = [];
 
 // Draw constellation lines
 function drawConstellationLines() {
@@ -165,7 +184,7 @@ function drawConstellationLines() {
     celestialConstellationLines.forEach(feature => {
         const lines = feature.geometry.coordinates;
         lines.forEach(line => {
-            g.append('path')
+            layers.constLines.append('path')
                 .attr('class', 'constellation-connection')
                 .attr('d', lineGenerator(line))
                 .style('fill', 'none');
@@ -191,7 +210,7 @@ function drawConstellationBounds() {
         const bounds = feature.geometry.coordinates;
         bounds.forEach(boundary => {
             boundary.forEach(ring => {
-                g.append('path')
+                layers.constBounds.append('path')
                     .attr('class', 'constellation-border')
                     .attr('d', lineGenerator(ring))
                     .style('fill', 'none');
@@ -205,10 +224,6 @@ function drawStarsFromData() {
     if (celestialStars.length === 0) return;
 
     const starData = celestialStars
-        .filter(feature => {
-            const mag = feature.properties.mag || 6;
-            return mag < 5.0;
-        })
         .map(feature => {
             const [lon, lat] = feature.geometry.coordinates;
             const c = geojsonToRaDec(lon, lat);
@@ -232,7 +247,7 @@ function drawStarsFromData() {
             };
         });
 
-    const starGroups = g.selectAll('.star-group')
+    const starGroups = layers.stars.selectAll('.star-group')
         .data(starData)
         .enter()
         .append('g')
@@ -289,7 +304,7 @@ function drawDSOs() {
         };
     });
 
-    const dsoGroups = g.selectAll('.dso-point')
+    const dsoGroups = layers.dsos.selectAll('.dso-point')
         .data(dsoData)
         .enter()
         .append('g')
@@ -344,7 +359,7 @@ function drawMilkyWayFromData() {
                         .y(d => d.y)
                         .curve(d3.curveLinear);
 
-                    g.append('path')
+                    layers.milkyWay.append('path')
                         .attr('class', 'milky-way')
                         .attr('d', lineGenerator(path))
                         .style('fill', 'none')
@@ -366,7 +381,7 @@ function drawGrid() {
             const { x, y } = altAz2XY(alt, az, projection.centerX, projection.centerY, projection.maxRadius);
             circle.push([x, y]);
         }
-        g.append('path')
+        layers.grid.append('path')
             .attr('class', 'grid-line')
             .attr('d', d3.line()(circle))
             .style('fill', 'none');
@@ -374,7 +389,7 @@ function drawGrid() {
 
     for (let az = 0; az < 360; az += 30) {
         const { x: x1, y: y1 } = altAz2XY(-5, az, projection.centerX, projection.centerY, projection.maxRadius);
-        g.append('line')
+        layers.grid.append('line')
             .attr('class', 'grid-line')
             .attr('x1', projection.centerX)
             .attr('y1', projection.centerY)
@@ -384,7 +399,7 @@ function drawGrid() {
 
     for (let alt = 30; alt <= 90; alt += 30) {
         const { x, y } = altAz2XY(alt, 180, projection.centerX, projection.centerY, projection.maxRadius);
-        g.append('text')
+        layers.grid.append('text')
             .attr('class', 'grid-label')
             .attr('x', x + 5)
             .attr('y', y - 5)
@@ -399,7 +414,7 @@ function drawGrid() {
     ];
     directions.forEach(({ az, label }) => {
         const { x, y } = altAz2XY(85, az, projection.centerX, projection.centerY, projection.maxRadius);
-        g.append('text')
+        layers.grid.append('text')
             .attr('class', 'grid-label')
             .attr('x', x)
             .attr('y', y)
@@ -417,7 +432,7 @@ function drawEcliptic() {
         const { x, y } = projection.project(ra, dec);
         eclipticData.push([x, y]);
     }
-    g.append('path')
+    layers.ecliptic.append('path')
         .attr('class', 'ecliptic-line')
         .attr('d', d3.line()(eclipticData));
 }
@@ -429,7 +444,7 @@ function drawHorizon() {
         const { x, y } = altAz2XY(0, az, projection.centerX, projection.centerY, projection.maxRadius);
         horizonData.push([x, y]);
     }
-    g.append('path')
+    layers.horizon.append('path')
         .attr('class', 'horizon-line')
         .attr('id', 'horizon')
         .attr('d', d3.line()(horizonData));
@@ -439,7 +454,7 @@ function drawHorizon() {
 function drawFOV() {
     if (!observations || observations.length === 0) return;
 
-    const fovGroup = g.selectAll('.fov-group')
+    const fovGroup = layers.fov.selectAll('.fov-group')
         .data(observations)
         .enter()
         .append('g')
@@ -529,49 +544,58 @@ const zoom = d3.zoom()
 
 svg.call(zoom);
 
-// Main initialization function
-function initializeMap() {
-    g.selectAll('*').remove();
+// Track loading progress
+let loadedCount = 0;
+const totalFetches = 5;
 
-    // Draw in order from back to front
-    drawMilkyWayFromData();
+function onLayerLoaded() {
+    loadedCount++;
+    if (loadedCount >= totalFetches) {
+        document.getElementById('info-text').textContent = 'Left-click + drag to pan. Scroll to zoom. Sky Map Ready.';
+    } else {
+        document.getElementById('info-text').textContent = `Loading celestial data... (${loadedCount}/${totalFetches})`;
+    }
+}
+
+// Draw immediate layers (no fetch needed) and kick off async fetches
+function initializeMap() {
+    // These draw instantly — no external data required
     drawGrid();
-    drawConstellationLines();
-    drawConstellationBounds();
     drawEcliptic();
     drawHorizon();
     drawFOV();
-    drawDSOs();
-    drawStarsFromData();
+    document.getElementById('info-text').textContent = 'Loading celestial data... (0/5)';
 
-    document.getElementById('info-text').textContent = 'Left-click + drag to pan. Scroll to zoom. Sky Map Ready.';
-}
+    // Fetch and render each celestial layer independently
+    fetch(celestialDataUrls.milkyWay).then(r => r.json()).then(data => {
+        celestialMilkyWay = data.features;
+        drawMilkyWayFromData();
+        onLayerLoaded();
+    }).catch(err => { console.error('Milky Way load failed:', err); onLayerLoaded(); });
 
-// Load all celestial data + observations in parallel
-async function loadAllData() {
-    try {
-        const [starsData, consLinesData, consBoundsData, dsosData, mwData, obsData] = await Promise.all([
-            fetch(celestialDataUrls.stars).then(r => r.json()),
-            fetch(celestialDataUrls.constellationLines).then(r => r.json()),
-            fetch(celestialDataUrls.constellationBounds).then(r => r.json()),
-            fetch(celestialDataUrls.dsos).then(r => r.json()),
-            fetch(celestialDataUrls.milkyWay).then(r => r.json()),
-            fetch('/api/observations').then(r => r.json())
-        ]);
+    fetch(celestialDataUrls.constellationLines).then(r => r.json()).then(data => {
+        celestialConstellationLines = data.features;
+        drawConstellationLines();
+        onLayerLoaded();
+    }).catch(err => { console.error('Constellation lines load failed:', err); onLayerLoaded(); });
 
-        celestialStars = starsData.features;
-        celestialConstellationLines = consLinesData.features;
-        celestialConstellationBounds = consBoundsData.features;
-        celestialDSOs = dsosData.features;
-        celestialMilkyWay = mwData.features;
-        observations = obsData || [];
+    fetch(celestialDataUrls.constellationBounds).then(r => r.json()).then(data => {
+        celestialConstellationBounds = data.features;
+        drawConstellationBounds();
+        onLayerLoaded();
+    }).catch(err => { console.error('Constellation bounds load failed:', err); onLayerLoaded(); });
 
-        document.getElementById('info-text').textContent = 'Rendering sky map...';
-        initializeMap();
-    } catch (error) {
-        console.error('Error loading celestial data:', error);
-        document.getElementById('info-text').textContent = 'Error loading celestial data: ' + error.message;
-    }
+    fetch(celestialDataUrls.dsos).then(r => r.json()).then(data => {
+        celestialDSOs = data.features;
+        drawDSOs();
+        onLayerLoaded();
+    }).catch(err => { console.error('DSOs load failed:', err); onLayerLoaded(); });
+
+    fetch(celestialDataUrls.stars).then(r => r.json()).then(data => {
+        celestialStars = data.features;
+        drawStarsFromData();
+        onLayerLoaded();
+    }).catch(err => { console.error('Stars load failed:', err); onLayerLoaded(); });
 }
 
 // Button handlers
@@ -606,7 +630,7 @@ document.getElementById('btn-toggle-ecliptic').addEventListener('click', (e) => 
     }
 });
 
-// Start loading data
-loadAllData();
+// Start rendering
+initializeMap();
 </script>
 {{end}}

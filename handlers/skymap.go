@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 )
@@ -18,7 +19,39 @@ type Observation struct {
 }
 
 func HandleSkymap(w http.ResponseWriter, r *http.Request) {
-	Render(w, "skymap.html", nil)
+	ctx := r.Context()
+	rows, err := DB.ListObservations(ctx)
+	if err != nil {
+		log.Printf("Error listing observations for skymap: %v", err)
+		Render(w, "skymap.html", nil)
+		return
+	}
+
+	var observations []Observation
+	for _, row := range rows {
+		observations = append(observations, Observation{
+			ID:          row.ID,
+			Name:        row.Name,
+			Thumbnail:   row.Thumbnail,
+			RA:          row.Ra.Float64,
+			Dec:         row.Dec.Float64,
+			FieldW:      row.Fieldw.Float64,
+			FieldH:      row.Fieldh.Float64,
+			Orientation: row.Orientation.Float64,
+		})
+	}
+
+	obsJSON, err := json.Marshal(observations)
+	if err != nil {
+		log.Printf("Error marshaling observations: %v", err)
+		Render(w, "skymap.html", nil)
+		return
+	}
+
+	data := map[string]interface{}{
+		"ObservationsJSON": template.JS(string(obsJSON)),
+	}
+	Render(w, "skymap.html", data)
 }
 
 func HandleObservationsJSON(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +78,7 @@ func HandleObservationsJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
 	if err := json.NewEncoder(w).Encode(observations); err != nil {
 		log.Printf("Error encoding observations JSON: %v", err)
 	}
