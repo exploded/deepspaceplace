@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+var (
+	reHMSSymbols = regexp.MustCompile(`[hms°'"]+`)
+	reDMSSymbols = regexp.MustCompile(`[°'"hms+\-]+`)
+	reWhitespace = regexp.MustCompile(`\s+`)
+)
+
 type ConverterData struct {
 	RADecimal  string
 	DecDecimal string
@@ -37,26 +43,14 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 			if data.RADecimal != "" {
 				ra, err := strconv.ParseFloat(data.RADecimal, 64)
 				if err == nil {
-					raHours := ra / 15.0
-					h := int(raHours)
-					minDec := (raHours - float64(h)) * 60
-					m := int(minDec)
-					s := (minDec - float64(m)) * 60
+					h, m, s := splitHMS(ra)
 					data.ResultHMS = fmt.Sprintf("RA: %02dh %02dm %06.3fs", h, m, s)
 				}
 			}
 			if data.DecDecimal != "" {
 				dec, err := strconv.ParseFloat(data.DecDecimal, 64)
 				if err == nil {
-					sign := "+"
-					if dec < 0 {
-						sign = "-"
-						dec = math.Abs(dec)
-					}
-					d := int(dec)
-					minDec := (dec - float64(d)) * 60
-					m := int(minDec)
-					s := (minDec - float64(m)) * 60
+					sign, d, m, s := splitDMS(dec)
 					data.ResultDMS = fmt.Sprintf("DEC: %s%02d° %02d' %06.3f\"", sign, d, m, s)
 				}
 			}
@@ -100,9 +94,8 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseHMS(input string) float64 {
-	re := regexp.MustCompile(`[hms°'"]+`)
-	clean := re.ReplaceAllString(input, " ")
-	clean = strings.TrimSpace(regexp.MustCompile(`\s+`).ReplaceAllString(clean, " "))
+	clean := reHMSSymbols.ReplaceAllString(input, " ")
+	clean = strings.TrimSpace(reWhitespace.ReplaceAllString(clean, " "))
 	parts := strings.Split(clean, " ")
 
 	if len(parts) < 1 {
@@ -127,9 +120,8 @@ func parseHMS(input string) float64 {
 func parseDMS(input string) (float64, bool) {
 	negative := strings.Contains(input, "-")
 
-	re := regexp.MustCompile(`[°'"hms+\-]+`)
-	clean := re.ReplaceAllString(input, " ")
-	clean = strings.TrimSpace(regexp.MustCompile(`\s+`).ReplaceAllString(clean, " "))
+	clean := reDMSSymbols.ReplaceAllString(input, " ")
+	clean = strings.TrimSpace(reWhitespace.ReplaceAllString(clean, " "))
 	parts := strings.Split(clean, " ")
 
 	if len(parts) < 1 {

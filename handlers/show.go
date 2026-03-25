@@ -23,7 +23,7 @@ type ShowData struct {
 }
 
 func HandleShow(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	id := r.URL.Query().Get("id")
 	sort := r.URL.Query().Get("sort")
 	filter := r.URL.Query().Get("filter")
@@ -103,28 +103,37 @@ func getNext(ctx context.Context, id, sort string) string {
 	return nextID
 }
 
-func decimalToHMS(decimal float64) string {
+// splitHMS splits a decimal RA (degrees) into hours, minutes, and seconds.
+func splitHMS(decimal float64) (h, m int, s float64) {
 	decimal = decimal / 15.0
-	hours := int(decimal)
-	minutesDecimal := (decimal - float64(hours)) * 60
-	minutes := int(minutesDecimal)
-	seconds := (minutesDecimal - float64(minutes)) * 60
-
-	return fmt.Sprintf("%02dh %02dm %02.0fs", hours, minutes, seconds)
+	h = int(decimal)
+	minDec := (decimal - float64(h)) * 60
+	m = int(minDec)
+	s = (minDec - float64(m)) * 60
+	return
 }
 
-func decimalToDMS(decimal float64) string {
-	sign := "+"
+// splitDMS splits a decimal angle into sign, degrees, minutes, and seconds.
+func splitDMS(decimal float64) (sign string, d, m int, s float64) {
+	sign = "+"
 	if decimal < 0 {
 		sign = "-"
 		decimal = -decimal
 	}
+	d = int(decimal)
+	minDec := (decimal - float64(d)) * 60
+	m = int(minDec)
+	s = (minDec - float64(m)) * 60
+	return
+}
 
-	degrees := int(decimal)
-	minutesDecimal := (decimal - float64(degrees)) * 60
-	minutes := int(minutesDecimal)
-	seconds := (minutesDecimal - float64(minutes)) * 60
+func decimalToHMS(decimal float64) string {
+	h, m, s := splitHMS(decimal)
+	return fmt.Sprintf("%02dh %02dm %02.0fs", h, m, s)
+}
 
-	return fmt.Sprintf("%s%02d° %02d' %02.0f\"", sign, degrees, minutes, seconds)
+func decimalToDMS(decimal float64) string {
+	sign, d, m, s := splitDMS(decimal)
+	return fmt.Sprintf("%s%02d° %02d' %02.0f\"", sign, d, m, s)
 }
 

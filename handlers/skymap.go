@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -23,7 +22,7 @@ func HandleSkymap(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleObservationsJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	rows, err := DB.ListObservations(ctx)
 	if err != nil {
 		log.Printf("Error listing observations: %v", err)
@@ -46,5 +45,7 @@ func HandleObservationsJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(observations)
+	if err := json.NewEncoder(w).Encode(observations); err != nil {
+		log.Printf("Error encoding observations JSON: %v", err)
+	}
 }

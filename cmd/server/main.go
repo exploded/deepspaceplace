@@ -118,7 +118,10 @@ func main() {
 	mux.HandleFunc("/robots.txt", handlers.HandleRobotsTxt)
 
 	// Static file servers - serve from original paths to preserve URLs
-	path, _ := os.Getwd()
+	path, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get working directory: %v", err)
+	}
 	mux.Handle("/static/", http.StripPrefix("/static/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static"))))))
 	mux.Handle("/images/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 	mux.Handle("/files/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
@@ -174,12 +177,6 @@ func loadEnvFile(path string) {
 }
 
 func parseTemplates() (map[string]*template.Template, error) {
-	funcMap := template.FuncMap{
-		"safeHTML": func(s string) template.HTML {
-			return template.HTML(s)
-		},
-	}
-
 	templates := make(map[string]*template.Template)
 
 	// Collect all page template files
@@ -202,7 +199,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 
 			// Each page gets its own template set: base + page
 			name := filepath.Base(match)
-			t, err := template.New("").Funcs(funcMap).ParseFiles("templates/base.html", match)
+			t, err := template.New("").ParseFiles("templates/base.html", match)
 			if err != nil {
 				return nil, fmt.Errorf("parsing %s: %w", match, err)
 			}

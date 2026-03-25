@@ -32,7 +32,7 @@ func HandleGalleryPartial(w http.ResponseWriter, r *http.Request) {
 }
 
 func buildGalleryData(r *http.Request) GalleryData {
-	ctx := context.Background()
+	ctx := r.Context()
 	sort := r.URL.Query().Get("sort")
 	filter := r.URL.Query().Get("filter")
 	page, _ := strconv.Atoi(r.URL.Query().Get("pageNum_rsImages"))

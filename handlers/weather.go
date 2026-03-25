@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+var bomClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
+
 func HandleWeather(w http.ResponseWriter, r *http.Request) {
 	Render(w, "weather.html", nil)
 }
@@ -30,15 +37,6 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 		imageCode = imageCodes["national"]
 	}
 
-	// Match the PHP proxy: browser User-Agent, follow redirects, skip SSL verify
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: transport,
-	}
-
 	now := time.Now().UTC()
 
 	for i := 0; i < 6; i++ {
@@ -54,7 +52,7 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 		}
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
 
-		resp, err := client.Do(req)
+		resp, err := bomClient.Do(req)
 		if err != nil {
 			log.Printf("BOM fetch error for %s: %v", url, err)
 			continue
@@ -63,7 +61,9 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 		if resp.StatusCode == 200 {
 			w.Header().Set("Content-Type", "image/jpeg")
 			w.Header().Set("Cache-Control", "max-age=1800")
-			io.Copy(w, resp.Body)
+			if _, err := io.Copy(w, resp.Body); err != nil {
+				log.Printf("BOM proxy write error: %v", err)
+			}
 			resp.Body.Close()
 			return
 		}

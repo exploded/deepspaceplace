@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/hex"
 	"log"
@@ -10,13 +10,15 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	"deepspaceplace/internal/database"
 )
 
 var (
-	adminSessionToken string
-	adminSessionMu    sync.Mutex
+	adminSessionToken   string
+	adminSessionExpiry  time.Time
+	adminSessionMu      sync.Mutex
 )
 
 func adminAuth(next http.HandlerFunc) http.HandlerFunc {
@@ -24,7 +26,9 @@ func adminAuth(next http.HandlerFunc) http.HandlerFunc {
 		cookie, err := r.Cookie("admin_session")
 		if err == nil && cookie.Value != "" {
 			adminSessionMu.Lock()
-			valid := cookie.Value == adminSessionToken && adminSessionToken != ""
+			valid := adminSessionToken != "" &&
+				subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(adminSessionToken)) == 1 &&
+				time.Now().Before(adminSessionExpiry)
 			adminSessionMu.Unlock()
 			if valid {
 				next(w, r)
@@ -42,13 +46,16 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 
 		adminPass := os.Getenv("ADMIN_PASSWORD")
 		if adminPass == "" {
-			adminPass = "admin" // dev default
+			log.Println("WARNING: ADMIN_PASSWORD not set, admin login disabled")
+			Render(w, "login.html", "Admin login disabled (no password configured)")
+			return
 		}
 
-		if password == adminPass {
+		if subtle.ConstantTimeCompare([]byte(password), []byte(adminPass)) == 1 {
 			token := generateToken()
 			adminSessionMu.Lock()
 			adminSessionToken = token
+			adminSessionExpiry = time.Now().Add(24 * time.Hour)
 			adminSessionMu.Unlock()
 
 			http.SetCookie(w, &http.Cookie{
@@ -56,6 +63,8 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 				Value:    token,
 				Path:     "/admin",
 				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteStrictMode,
 			})
 			http.Redirect(w, r, "/admin", http.StatusSeeOther)
 			return
@@ -76,7 +85,7 @@ func generateToken() string {
 
 func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 	adminAuth(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+		ctx := r.Context()
 		images, err := DB.ListAllImages(ctx)
 		if err != nil {
 			log.Printf("Error listing images: %v", err)
@@ -90,47 +99,24 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 
 func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 	adminAuth(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+		ctx := r.Context()
 
 		if r.Method == http.MethodPost {
 			r.ParseForm()
+			f := parseImageForm(r)
 			params := database.UpdateImageParams{
-				Archive:    r.FormValue("archive"),
-				Messier:    r.FormValue("messier"),
-				Ngc:        r.FormValue("ngc"),
-				Ic:         r.FormValue("ic"),
-				Rcw:        r.FormValue("rcw"),
-				Sh2:        r.FormValue("sh2"),
-				Henize:     r.FormValue("henize"),
-				Gum:        r.FormValue("gum"),
-				Lbn:        r.FormValue("lbn"),
-				CommonName: r.FormValue("common_name"),
-				Name:       r.FormValue("name"),
-				Filename:   r.FormValue("filename"),
-				Thumbnail:  r.FormValue("thumbnail"),
-				Type:       r.FormValue("type"),
-				Camera:     r.FormValue("camera"),
-				Scope:      r.FormValue("scope"),
-				Mount:      r.FormValue("mount"),
-				Guiding:    r.FormValue("guiding"),
-				Exposure:   r.FormValue("exposure"),
-				Location:   r.FormValue("location"),
-				Date:       r.FormValue("date"),
-				Notes:      r.FormValue("notes"),
-				Blink:      r.FormValue("blink"),
-				Corrector:  r.FormValue("corrector"),
-				Solved:     r.FormValue("solved"),
-				ID:         r.FormValue("id"),
+				Archive: f.Archive, Messier: f.Messier, Ngc: f.Ngc, Ic: f.Ic,
+				Rcw: f.Rcw, Sh2: f.Sh2, Henize: f.Henize, Gum: f.Gum, Lbn: f.Lbn,
+				CommonName: f.CommonName, Name: f.Name, Filename: f.Filename,
+				Thumbnail: f.Thumbnail, Type: f.Type, Camera: f.Camera,
+				Scope: f.Scope, Mount: f.Mount, Guiding: f.Guiding,
+				Exposure: f.Exposure, Location: f.Location, Date: f.Date,
+				Notes: f.Notes, Blink: f.Blink, Corrector: f.Corrector,
+				Solved: f.Solved, ID: r.FormValue("id"),
+				Ra: f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
+				WidthArcsec: f.WidthArcsec, HeightArcsec: f.HeightArcsec,
+				Fieldw: f.Fieldw, Fieldh: f.Fieldh, Orientation: f.Orientation,
 			}
-			params.Ra = parseOptionalFloat(r.FormValue("ra"))
-			params.Dec = parseOptionalFloat(r.FormValue("dec"))
-			params.Pixscale = parseOptionalFloat(r.FormValue("pixscale"))
-			params.Radius = parseOptionalFloat(r.FormValue("radius"))
-			params.WidthArcsec = parseOptionalFloat(r.FormValue("width_arcsec"))
-			params.HeightArcsec = parseOptionalFloat(r.FormValue("height_arcsec"))
-			params.Fieldw = parseOptionalFloat(r.FormValue("fieldw"))
-			params.Fieldh = parseOptionalFloat(r.FormValue("fieldh"))
-			params.Orientation = parseOptionalFloat(r.FormValue("orientation"))
 
 			if err := DB.UpdateImage(ctx, params); err != nil {
 				log.Printf("Error updating image: %v", err)
@@ -159,47 +145,25 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 
 func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 	adminAuth(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+		ctx := r.Context()
 
 		if r.Method == http.MethodPost {
 			r.ParseForm()
+			f := parseImageForm(r)
 			params := database.CreateImageParams{
-				ID:         r.FormValue("id"),
-				Archive:    r.FormValue("archive"),
-				Messier:    r.FormValue("messier"),
-				Ngc:        r.FormValue("ngc"),
-				Ic:         r.FormValue("ic"),
-				Rcw:        r.FormValue("rcw"),
-				Sh2:        r.FormValue("sh2"),
-				Henize:     r.FormValue("henize"),
-				Gum:        r.FormValue("gum"),
-				Lbn:        r.FormValue("lbn"),
-				CommonName: r.FormValue("common_name"),
-				Name:       r.FormValue("name"),
-				Filename:   r.FormValue("filename"),
-				Thumbnail:  r.FormValue("thumbnail"),
-				Type:       r.FormValue("type"),
-				Camera:     r.FormValue("camera"),
-				Scope:      r.FormValue("scope"),
-				Mount:      r.FormValue("mount"),
-				Guiding:    r.FormValue("guiding"),
-				Exposure:   r.FormValue("exposure"),
-				Location:   r.FormValue("location"),
-				Date:       r.FormValue("date"),
-				Notes:      r.FormValue("notes"),
-				Blink:      r.FormValue("blink"),
-				Corrector:  r.FormValue("corrector"),
-				Solved:     r.FormValue("solved"),
+				ID: r.FormValue("id"),
+				Archive: f.Archive, Messier: f.Messier, Ngc: f.Ngc, Ic: f.Ic,
+				Rcw: f.Rcw, Sh2: f.Sh2, Henize: f.Henize, Gum: f.Gum, Lbn: f.Lbn,
+				CommonName: f.CommonName, Name: f.Name, Filename: f.Filename,
+				Thumbnail: f.Thumbnail, Type: f.Type, Camera: f.Camera,
+				Scope: f.Scope, Mount: f.Mount, Guiding: f.Guiding,
+				Exposure: f.Exposure, Location: f.Location, Date: f.Date,
+				Notes: f.Notes, Blink: f.Blink, Corrector: f.Corrector,
+				Solved: f.Solved,
+				Ra: f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
+				WidthArcsec: f.WidthArcsec, HeightArcsec: f.HeightArcsec,
+				Fieldw: f.Fieldw, Fieldh: f.Fieldh, Orientation: f.Orientation,
 			}
-			params.Ra = parseOptionalFloat(r.FormValue("ra"))
-			params.Dec = parseOptionalFloat(r.FormValue("dec"))
-			params.Pixscale = parseOptionalFloat(r.FormValue("pixscale"))
-			params.Radius = parseOptionalFloat(r.FormValue("radius"))
-			params.WidthArcsec = parseOptionalFloat(r.FormValue("width_arcsec"))
-			params.HeightArcsec = parseOptionalFloat(r.FormValue("height_arcsec"))
-			params.Fieldw = parseOptionalFloat(r.FormValue("fieldw"))
-			params.Fieldh = parseOptionalFloat(r.FormValue("fieldh"))
-			params.Orientation = parseOptionalFloat(r.FormValue("orientation"))
 
 			if err := DB.CreateImage(ctx, params); err != nil {
 				log.Printf("Error creating image: %v", err)
@@ -226,7 +190,7 @@ func HandleAdminDelete(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ctx := context.Background()
+		ctx := r.Context()
 		r.ParseForm()
 		id := r.FormValue("id")
 
@@ -242,6 +206,56 @@ func HandleAdminDelete(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	})(w, r)
+}
+
+type imageFormFields struct {
+	Archive, Messier, Ngc, Ic, Rcw, Sh2, Henize, Gum, Lbn string
+	CommonName, Name, Filename, Thumbnail                  string
+	Type, Camera, Scope, Mount, Guiding                    string
+	Exposure, Location, Date, Notes                        string
+	Blink, Corrector, Solved                               string
+	Ra, Dec, Pixscale, Radius                              sql.NullFloat64
+	WidthArcsec, HeightArcsec                              sql.NullFloat64
+	Fieldw, Fieldh, Orientation                            sql.NullFloat64
+}
+
+func parseImageForm(r *http.Request) imageFormFields {
+	return imageFormFields{
+		Archive:     r.FormValue("archive"),
+		Messier:     r.FormValue("messier"),
+		Ngc:         r.FormValue("ngc"),
+		Ic:          r.FormValue("ic"),
+		Rcw:         r.FormValue("rcw"),
+		Sh2:         r.FormValue("sh2"),
+		Henize:      r.FormValue("henize"),
+		Gum:         r.FormValue("gum"),
+		Lbn:         r.FormValue("lbn"),
+		CommonName:  r.FormValue("common_name"),
+		Name:        r.FormValue("name"),
+		Filename:    r.FormValue("filename"),
+		Thumbnail:   r.FormValue("thumbnail"),
+		Type:        r.FormValue("type"),
+		Camera:      r.FormValue("camera"),
+		Scope:       r.FormValue("scope"),
+		Mount:       r.FormValue("mount"),
+		Guiding:     r.FormValue("guiding"),
+		Exposure:    r.FormValue("exposure"),
+		Location:    r.FormValue("location"),
+		Date:        r.FormValue("date"),
+		Notes:       r.FormValue("notes"),
+		Blink:       r.FormValue("blink"),
+		Corrector:   r.FormValue("corrector"),
+		Solved:      r.FormValue("solved"),
+		Ra:          parseOptionalFloat(r.FormValue("ra")),
+		Dec:         parseOptionalFloat(r.FormValue("dec")),
+		Pixscale:    parseOptionalFloat(r.FormValue("pixscale")),
+		Radius:      parseOptionalFloat(r.FormValue("radius")),
+		WidthArcsec: parseOptionalFloat(r.FormValue("width_arcsec")),
+		HeightArcsec: parseOptionalFloat(r.FormValue("height_arcsec")),
+		Fieldw:      parseOptionalFloat(r.FormValue("fieldw")),
+		Fieldh:      parseOptionalFloat(r.FormValue("fieldh")),
+		Orientation: parseOptionalFloat(r.FormValue("orientation")),
+	}
 }
 
 func parseOptionalFloat(s string) sql.NullFloat64 {
