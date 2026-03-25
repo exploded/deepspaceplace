@@ -1336,3 +1336,43 @@ func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) error 
 	)
 	return err
 }
+
+const updateImagePlateSolve = `-- name: UpdateImagePlateSolve :exec
+UPDATE images SET
+    ra = ?, dec = ?, pixscale = ?, radius = ?,
+    width_arcsec = ?, height_arcsec = ?,
+    fieldw = ?, fieldh = ?, orientation = ?, solved = ?
+WHERE id = ?
+`
+
+type UpdateImagePlateSolveParams struct {
+	Ra           sql.NullFloat64 `json:"ra"`
+	Dec          sql.NullFloat64 `json:"dec"`
+	Pixscale     sql.NullFloat64 `json:"pixscale"`
+	Radius       sql.NullFloat64 `json:"radius"`
+	WidthArcsec  sql.NullFloat64 `json:"width_arcsec"`
+	HeightArcsec sql.NullFloat64 `json:"height_arcsec"`
+	Fieldw       sql.NullFloat64 `json:"fieldw"`
+	Fieldh       sql.NullFloat64 `json:"fieldh"`
+	Orientation  sql.NullFloat64 `json:"orientation"`
+	Solved       string          `json:"solved"`
+	ID           string          `json:"id"`
+}
+
+// Admin: update plate-solve results
+func (q *Queries) UpdateImagePlateSolve(ctx context.Context, arg UpdateImagePlateSolveParams) error {
+	_, err := q.db.ExecContext(ctx, updateImagePlateSolve,
+		arg.Ra,
+		arg.Dec,
+		arg.Pixscale,
+		arg.Radius,
+		arg.WidthArcsec,
+		arg.HeightArcsec,
+		arg.Fieldw,
+		arg.Fieldh,
+		arg.Orientation,
+		arg.Solved,
+		arg.ID,
+	)
+	return err
+}

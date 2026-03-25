@@ -1,20 +1,21 @@
 {{template "base" .}}
 {{define "content"}}
-<h2>Sky Map</h2>
-<p>Interactive sky map showing observation field of view rectangles overlaid on star chart.</p>
-<p>Click on a rectangle to view the image.</p>
+<h4>Sky Map</h4>
+<p class="text-muted">Real-time azimuthal projection showing the sky above Melbourne and the location of all the images I have taken so far.</p>
 
 <div class="controls">
-    <button class="btn btn-outline-primary btn-sm active" id="btn-toggle-fov">Show FOV</button>
-    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-constLines">Constellation Lines</button>
-    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-constBounds">Constellation Bounds</button>
-    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-dsos">DSOs</button>
-    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-mw">Milky Way</button>
-    <span class="ms-3 text-muted" id="info-panel">Drag to pan, scroll to zoom</span>
+    <button id="btn-reset" class="btn btn-outline-primary btn-sm" title="Reset map to initial view">Reset View</button>
+    <button id="btn-toggle-horizon" class="btn btn-outline-secondary btn-sm active" title="Toggle horizon visibility">Show Horizon</button>
+    <button id="btn-toggle-grid" class="btn btn-outline-secondary btn-sm active" title="Toggle coordinate grid">Show Grid</button>
+    <button id="btn-toggle-ecliptic" class="btn btn-outline-secondary btn-sm active" title="Toggle ecliptic line">Show Ecliptic</button>
 </div>
 
-<div class="skymap-container" id="skymap">
-    <svg id="skymap-svg"></svg>
+<div class="info-panel">
+    <small id="info-text">Left-click + drag to pan. Scroll to zoom. Loading celestial data...</small>
+</div>
+
+<div class="skymap-container">
+    <svg id="skymap"></svg>
 </div>
 
 <style>
@@ -33,17 +34,35 @@
         background: #0a0e27;
         border-radius: 0.375rem;
     }
+    .controls {
+        padding: 10px 0;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .controls .btn { font-size: 0.875rem; }
+    .info-panel {
+        padding: 0.5rem 0;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
     .skymap-container .star { fill: white; }
     .fov-rect {
         fill: rgba(74, 144, 226, 0.05);
         stroke: #4a90e2;
         stroke-width: 1.5;
         opacity: 0.7;
+        transition: opacity 0.2s;
+        pointer-events: auto;
         cursor: pointer;
     }
     .fov-rect:hover {
         opacity: 1;
         stroke: #7ab8ff;
+        cursor: pointer;
         filter: drop-shadow(0 0 3px rgba(122, 184, 255, 0.6));
     }
     .fov-label {
@@ -51,215 +70,668 @@
         fill: #a0d0e8;
         opacity: 0;
         pointer-events: none;
+        transition: opacity 0.2s;
     }
-    .fov-rect:hover + .fov-label { opacity: 1; }
-    .constellation-line { stroke: #334; stroke-width: 0.5; fill: none; }
-    .constellation-bound { stroke: #222; stroke-width: 0.3; fill: none; stroke-dasharray: 3,3; }
-    .dso-marker { fill: none; stroke: #666; stroke-width: 0.5; }
-    .mw-path { fill: rgba(200,200,255,0.03); stroke: none; }
+    .fov-rect:hover ~ .fov-label { opacity: 1; }
+    .fov-thumbnail {
+        opacity: 0.85;
+        transition: opacity 0.2s;
+        image-rendering: crisp-edges;
+        pointer-events: none;
+    }
+    .fov-rotated:hover .fov-thumbnail { opacity: 1; }
+    .grid-line {
+        stroke: #4a90e2;
+        stroke-width: 1;
+        opacity: 0.65;
+    }
+    .grid-label {
+        font-size: 10px;
+        fill: #5a6a9a;
+        pointer-events: none;
+    }
+    .ecliptic-line {
+        stroke: #ffaa00;
+        stroke-width: 1;
+        fill: none;
+        opacity: 0.6;
+        stroke-dasharray: 4,4;
+    }
+    .horizon-line {
+        stroke: #ff6666;
+        stroke-width: 2.5;
+        fill: none;
+        opacity: 0.8;
+        stroke-dasharray: 5,3;
+    }
+    .milky-way {
+        fill: url(#milkyWayGradient);
+        opacity: 0.15;
+    }
+    .star-halo {
+        fill: none;
+        stroke: white;
+        opacity: 0.2;
+    }
+    .dso-point {
+        fill: none;
+        stroke: #ff9999;
+        opacity: 0.6;
+    }
+    .dso-label {
+        font-size: 9px;
+        fill: #ff9999;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .dso-point:hover .dso-label { opacity: 0.8; }
+    .constellation-connection {
+        stroke: #aaaaff;
+        stroke-width: 0.8;
+        opacity: 0.4;
+    }
+    .constellation-border {
+        stroke: #333366;
+        stroke-width: 0.5;
+        opacity: 0.2;
+    }
+    .constellation-name {
+        font-size: 10px;
+        fill: #aaaaff;
+        opacity: 0.4;
+        pointer-events: none;
+    }
 </style>
 
-<script>
-// Skymap - loads observation data from API and renders on SVG
-(function() {
-    const svg = document.getElementById('skymap-svg');
-    const container = document.getElementById('skymap');
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+<script src="/static/js/d3.v7.min.js"></script>
 
-    // Aitoff projection
-    function aitoff(ra, dec) {
-        const lambda = (ra - 180) * Math.PI / 180;
-        const phi = dec * Math.PI / 180;
-        const alpha = Math.acos(Math.cos(phi) * Math.cos(lambda / 2));
-        let x, y;
-        if (alpha === 0) {
-            x = 0; y = 0;
-        } else {
-            const sincAlpha = Math.sin(alpha) / alpha;
-            x = 2 * Math.cos(phi) * Math.sin(lambda / 2) / sincAlpha;
-            y = Math.sin(phi) / sincAlpha;
+<script>
+// Celestial data URLs
+const celestialDataUrls = {
+    stars: '/data/stars.6.geojson',
+    constellationLines: '/data/constellations.lines.geojson',
+    constellationBounds: '/data/constellations.bounds.geojson',
+    dsos: '/data/dsos.bright.geojson',
+    milkyWay: '/data/mw.geojson'
+};
+
+const svg = d3.select('#skymap');
+const container = document.querySelector('.skymap-container');
+
+// Get initial dimensions
+function getMargins() {
+    return {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        margin: { top: 10, right: 10, bottom: 10, left: 10 }
+    };
+}
+
+let dims = getMargins();
+
+// Observatory location (Melbourne, Australia)
+const observatoryLat = -37.79 * Math.PI / 180;
+const observatoryLon = 145.19 * Math.PI / 180;
+
+// Calculate Local Sidereal Time (in radians)
+function calculateLST() {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth() + 1;
+    const day = now.getUTCDate();
+    const hours = now.getUTCHours();
+    const minutes = now.getUTCMinutes();
+    const seconds = now.getUTCSeconds();
+
+    let a = Math.floor((14 - month) / 12);
+    let y = year + 4800 - a;
+    let m = month + 12 * a - 3;
+
+    const JDN = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    const JD = JDN + (hours - 12) / 24 + minutes / 1440 + seconds / 86400;
+
+    const T = (JD - 2451545.0) / 36525;
+    let GMST = 280.46061837 + 360.98564736629 * (JD - 2451545.0) + 0.000387933 * T * T - T * T * T / 38710000;
+
+    GMST = GMST % 360;
+    if (GMST < 0) GMST += 360;
+
+    let LST = GMST + observatoryLon * 180 / Math.PI;
+    LST = LST % 360;
+    if (LST < 0) LST += 360;
+
+    return LST * Math.PI / 180;
+}
+
+// Convert RA (degrees), Dec (degrees) to Alt (degrees), Az (degrees)
+function raDec2AltAz(raDegs, decDegs) {
+    const ra = raDegs * Math.PI / 180;
+    const dec = decDegs * Math.PI / 180;
+    const lst = calculateLST();
+
+    const ha = lst - ra;
+
+    const sinAlt = Math.sin(observatoryLat) * Math.sin(dec) +
+                   Math.cos(observatoryLat) * Math.cos(dec) * Math.cos(ha);
+    const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt)));
+
+    const y = -Math.cos(dec) * Math.sin(ha);
+    const x = Math.sin(dec) * Math.cos(observatoryLat) - Math.cos(dec) * Math.sin(observatoryLat) * Math.cos(ha);
+    let az = Math.atan2(y, x);
+
+    return {
+        alt: alt * 180 / Math.PI,
+        az: az * 180 / Math.PI + 180
+    };
+}
+
+// Convert Alt/Az to x,y for display (azimuthal projection)
+function altAz2XY(alt, az, centerX, centerY, radius) {
+    const r = radius * (90 - alt) / 90;
+    const theta = az * Math.PI / 180;
+
+    const x = centerX + r * Math.sin(theta);
+    const y = centerY - r * Math.cos(theta);
+
+    return { x, y };
+}
+
+// Create azimuthal projection
+function createAzimuthalProjection() {
+    const centerX = dims.width / 2;
+    const centerY = dims.height / 2;
+    const maxRadius = Math.min(dims.width, dims.height) / 2 * 0.9;
+
+    return {
+        centerX,
+        centerY,
+        maxRadius,
+        project: (raDegs, decDegs) => {
+            const { alt, az } = raDec2AltAz(raDegs, decDegs);
+            return altAz2XY(alt, az, centerX, centerY, maxRadius);
         }
-        const px = width / 2 + x * width / (2 * Math.PI) * 0.9;
-        const py = height / 2 - y * height / Math.PI * 0.9;
-        return [px, py];
+    };
+}
+
+const projection = createAzimuthalProjection();
+
+// Group for transformable content
+const g = svg.append('g').attr('class', 'map-content');
+
+// Helper: convert GeoJSON coordinates (lon, lat) to RA, Dec
+// GeoJSON uses -180..180 longitude; 0-180 = 0-12h RA, -180-0 = 12-24h RA
+function geojsonToRaDec(lon, lat) {
+    let ra = lon < 0 ? 360 + lon : lon;
+    return { ra, dec: lat };
+}
+
+// Constellation data
+let celestialStars = [];
+let celestialConstellationLines = [];
+let celestialConstellationBounds = [];
+let celestialDSOs = [];
+let celestialMilkyWay = [];
+let observations = [];
+
+// Draw constellation lines
+function drawConstellationLines() {
+    if (celestialConstellationLines.length === 0) return;
+
+    const lineGenerator = d3.line()
+        .x(d => {
+            const c = geojsonToRaDec(d[0], d[1]);
+            return projection.project(c.ra, c.dec).x;
+        })
+        .y(d => {
+            const c = geojsonToRaDec(d[0], d[1]);
+            return projection.project(c.ra, c.dec).y;
+        });
+
+    celestialConstellationLines.forEach(feature => {
+        const lines = feature.geometry.coordinates;
+        lines.forEach(line => {
+            g.append('path')
+                .attr('class', 'constellation-connection')
+                .attr('d', lineGenerator(line))
+                .style('fill', 'none');
+        });
+    });
+}
+
+// Draw constellation boundaries
+function drawConstellationBounds() {
+    if (celestialConstellationBounds.length === 0) return;
+
+    const lineGenerator = d3.line()
+        .x(d => {
+            const c = geojsonToRaDec(d[0], d[1]);
+            return projection.project(c.ra, c.dec).x;
+        })
+        .y(d => {
+            const c = geojsonToRaDec(d[0], d[1]);
+            return projection.project(c.ra, c.dec).y;
+        });
+
+    celestialConstellationBounds.forEach(feature => {
+        const bounds = feature.geometry.coordinates;
+        bounds.forEach(boundary => {
+            boundary.forEach(ring => {
+                g.append('path')
+                    .attr('class', 'constellation-border')
+                    .attr('d', lineGenerator(ring))
+                    .style('fill', 'none');
+            });
+        });
+    });
+}
+
+// Draw stars from celestial data
+function drawStarsFromData() {
+    if (celestialStars.length === 0) return;
+
+    const starData = celestialStars
+        .filter(feature => {
+            const mag = feature.properties.mag || 6;
+            return mag < 5.0;
+        })
+        .map(feature => {
+            const [lon, lat] = feature.geometry.coordinates;
+            const c = geojsonToRaDec(lon, lat);
+            const mag = feature.properties.mag || 6;
+
+            const bv = feature.properties.bv || 0;
+            let color = '#ffffff';
+            if (bv < -0.3) color = '#5588ff';
+            else if (bv < 0) color = '#aaccff';
+            else if (bv < 0.3) color = '#ffffff';
+            else if (bv < 0.6) color = '#ffeb99';
+            else if (bv < 1.0) color = '#ffcc66';
+            else color = '#ff9944';
+
+            return {
+                ra: c.ra,
+                dec: c.dec,
+                mag,
+                color,
+                name: feature.properties.name
+            };
+        });
+
+    const starGroups = g.selectAll('.star-group')
+        .data(starData)
+        .enter()
+        .append('g')
+        .attr('class', 'star-group')
+        .attr('transform', d => {
+            const { x, y } = projection.project(d.ra, d.dec);
+            return `translate(${x}, ${y})`;
+        });
+
+    starGroups.append('circle')
+        .attr('class', 'star')
+        .attr('r', d => Math.max(0.5, 2 - Math.max(0, d.mag) / 4))
+        .style('fill', d => d.color)
+        .style('opacity', 0.8)
+        .style('cursor', d => d.name ? 'pointer' : 'default')
+        .style('pointer-events', d => d.name ? 'all' : 'none')
+        .on('mouseenter', function(event, d) {
+            if (d.name) {
+                d3.select(this.parentNode).select('.star-tooltip').style('display', 'block');
+            }
+        })
+        .on('mouseleave', function(event, d) {
+            if (d.name) {
+                d3.select(this.parentNode).select('.star-tooltip').style('display', 'none');
+            }
+        });
+
+    starGroups.filter(d => d.name)
+        .append('text')
+        .attr('class', 'star-tooltip')
+        .attr('x', 10)
+        .attr('y', -8)
+        .style('display', 'none')
+        .style('font-size', '11px')
+        .style('fill', '#ffdd99')
+        .text(d => d.name);
+}
+
+// Draw deep space objects
+function drawDSOs() {
+    if (celestialDSOs.length === 0) return;
+
+    const dsoData = celestialDSOs.map(feature => {
+        const [lon, lat] = feature.geometry.coordinates;
+        const c = geojsonToRaDec(lon, lat);
+        const { x, y } = projection.project(c.ra, c.dec);
+
+        return {
+            ra: c.ra,
+            dec: c.dec,
+            x, y,
+            name: feature.properties.name || feature.properties.id,
+            type: feature.properties.type
+        };
+    });
+
+    const dsoGroups = g.selectAll('.dso-point')
+        .data(dsoData)
+        .enter()
+        .append('g')
+        .attr('class', 'dso-group')
+        .attr('transform', d => `translate(${d.x}, ${d.y})`)
+        .style('cursor', 'pointer')
+        .on('mouseenter', function() {
+            d3.select(this).select('.dso-tooltip').style('display', 'block');
+        })
+        .on('mouseleave', function() {
+            d3.select(this).select('.dso-tooltip').style('display', 'none');
+        });
+
+    dsoGroups.append('circle')
+        .attr('class', 'dso-hover')
+        .attr('r', 4)
+        .style('fill', 'none')
+        .style('pointer-events', 'all');
+
+    dsoGroups.append('circle')
+        .attr('class', 'dso-point')
+        .attr('r', 4);
+
+    dsoGroups.append('title')
+        .text(d => `${d.name} (${d.type})`);
+
+    dsoGroups.append('text')
+        .attr('class', 'dso-tooltip')
+        .attr('x', 10)
+        .attr('y', -8)
+        .style('display', 'none')
+        .style('font-size', '11px')
+        .style('fill', '#ffdd99')
+        .text(d => d.name);
+}
+
+// Draw the Milky Way
+function drawMilkyWayFromData() {
+    if (celestialMilkyWay.length === 0) return;
+
+    celestialMilkyWay.forEach(feature => {
+        if (feature.geometry.type === 'MultiLineString') {
+            feature.geometry.coordinates.forEach(lineString => {
+                const path = lineString.map(coord => {
+                    const c = geojsonToRaDec(coord[0], coord[1]);
+                    return projection.project(c.ra, c.dec);
+                }).filter(point => point.x !== null && point.y !== null);
+
+                if (path.length > 0) {
+                    const lineGenerator = d3.line()
+                        .x(d => d.x)
+                        .y(d => d.y)
+                        .curve(d3.curveLinear);
+
+                    g.append('path')
+                        .attr('class', 'milky-way')
+                        .attr('d', lineGenerator(path))
+                        .style('fill', 'none')
+                        .style('stroke', 'rgba(220, 220, 255, 0.7)')
+                        .style('stroke-width', 16)
+                        .style('stroke-linecap', 'round')
+                        .style('filter', 'drop-shadow(0 0 12px #b0b8ff)');
+                }
+            });
+        }
+    });
+}
+
+// Draw coordinate grid
+function drawGrid() {
+    for (let alt = 30; alt <= 90; alt += 30) {
+        const circle = [];
+        for (let az = 0; az <= 360; az += 2) {
+            const { x, y } = altAz2XY(alt, az, projection.centerX, projection.centerY, projection.maxRadius);
+            circle.push([x, y]);
+        }
+        g.append('path')
+            .attr('class', 'grid-line')
+            .attr('d', d3.line()(circle))
+            .style('fill', 'none');
     }
 
-    // Layer visibility toggles
-    const layers = { fov: true, constLines: false, constBounds: false, dsos: false, mw: false };
-    document.querySelectorAll('[id^="btn-toggle-"]').forEach(btn => {
-        const layer = btn.id.replace('btn-toggle-', '');
-        btn.addEventListener('click', () => {
-            layers[layer] = !layers[layer];
-            btn.classList.toggle('active', layers[layer]);
-            const el = document.getElementById('layer-' + layer);
-            if (el) el.style.display = layers[layer] ? '' : 'none';
+    for (let az = 0; az < 360; az += 30) {
+        const { x: x1, y: y1 } = altAz2XY(-5, az, projection.centerX, projection.centerY, projection.maxRadius);
+        g.append('line')
+            .attr('class', 'grid-line')
+            .attr('x1', projection.centerX)
+            .attr('y1', projection.centerY)
+            .attr('x2', x1)
+            .attr('y2', y1);
+    }
+
+    for (let alt = 30; alt <= 90; alt += 30) {
+        const { x, y } = altAz2XY(alt, 180, projection.centerX, projection.centerY, projection.maxRadius);
+        g.append('text')
+            .attr('class', 'grid-label')
+            .attr('x', x + 5)
+            .attr('y', y - 5)
+            .text(alt + '°');
+    }
+
+    const directions = [
+        { az: 180, label: 'N' },
+        { az: 90, label: 'W' },
+        { az: 0, label: 'S' },
+        { az: 270, label: 'E' }
+    ];
+    directions.forEach(({ az, label }) => {
+        const { x, y } = altAz2XY(85, az, projection.centerX, projection.centerY, projection.maxRadius);
+        g.append('text')
+            .attr('class', 'grid-label')
+            .attr('x', x)
+            .attr('y', y)
+            .attr('text-anchor', 'middle')
+            .attr('font-weight', 'bold')
+            .text(label);
+    });
+}
+
+// Draw ecliptic
+function drawEcliptic() {
+    const eclipticData = [];
+    for (let ra = 0; ra <= 360; ra += 2) {
+        const dec = 23.5 * Math.sin((ra * Math.PI) / 180);
+        const { x, y } = projection.project(ra, dec);
+        eclipticData.push([x, y]);
+    }
+    g.append('path')
+        .attr('class', 'ecliptic-line')
+        .attr('d', d3.line()(eclipticData));
+}
+
+// Draw horizon circle
+function drawHorizon() {
+    const horizonData = [];
+    for (let az = 0; az <= 360; az += 2) {
+        const { x, y } = altAz2XY(0, az, projection.centerX, projection.centerY, projection.maxRadius);
+        horizonData.push([x, y]);
+    }
+    g.append('path')
+        .attr('class', 'horizon-line')
+        .attr('id', 'horizon')
+        .attr('d', d3.line()(horizonData));
+}
+
+// Draw field of view rectangles
+function drawFOV() {
+    if (!observations || observations.length === 0) return;
+
+    const fovGroup = g.selectAll('.fov-group')
+        .data(observations)
+        .enter()
+        .append('g')
+        .attr('class', 'fov-group');
+
+    fovGroup.append('rect')
+        .attr('class', 'fov-rect')
+        .attr('id', d => 'fov-' + d.id)
+        .attr('x', d => {
+            const { x } = projection.project(d.ra, d.dec);
+            const fieldwDeg = d.fieldw / 60;
+            const pixelWidth = (fieldwDeg / 180) * projection.maxRadius;
+            return x - pixelWidth / 2;
+        })
+        .attr('y', d => {
+            const { y } = projection.project(d.ra, d.dec);
+            const fieldhDeg = d.fieldh / 60;
+            const pixelHeight = (fieldhDeg / 180) * projection.maxRadius;
+            return y - pixelHeight / 2;
+        })
+        .attr('width', d => {
+            const fieldwDeg = d.fieldw / 60;
+            return (fieldwDeg / 180) * projection.maxRadius;
+        })
+        .attr('height', d => {
+            const fieldhDeg = d.fieldh / 60;
+            return (fieldhDeg / 180) * projection.maxRadius;
+        })
+        .attr('transform', d => {
+            const { x, y } = projection.project(d.ra, d.dec);
+            return `rotate(${d.orientation} ${x} ${y})`;
+        })
+        .on('click', (event, d) => {
+            window.location.href = '/show?id=' + d.id;
+        })
+        .append('title')
+        .text(d => (d.name || d.id) + '\nRA: ' + d.ra.toFixed(2) + '°, Dec: ' + d.dec.toFixed(2) + '°\nFOV: ' + d.fieldw.toFixed(1) + '\' × ' + d.fieldh.toFixed(1) + '\'\nRotation: ' + d.orientation.toFixed(1) + '°');
+
+    // Add thumbnail images
+    fovGroup.append('image')
+        .attr('class', 'fov-thumbnail')
+        .attr('href', d => d.thumbnail ? `/images/${d.thumbnail}` : `/images/${d.id}_thumb.jpg`)
+        .attr('x', d => {
+            const { x } = projection.project(d.ra, d.dec);
+            const fieldwDeg = d.fieldw / 60;
+            const pixelWidth = (fieldwDeg / 180) * projection.maxRadius;
+            return x - pixelWidth / 2;
+        })
+        .attr('y', d => {
+            const { y } = projection.project(d.ra, d.dec);
+            const fieldhDeg = d.fieldh / 60;
+            const pixelHeight = (fieldhDeg / 180) * projection.maxRadius;
+            return y - pixelHeight / 2;
+        })
+        .attr('width', d => {
+            const fieldwDeg = d.fieldw / 60;
+            return (fieldwDeg / 180) * projection.maxRadius;
+        })
+        .attr('height', d => {
+            const fieldhDeg = d.fieldh / 60;
+            return (fieldhDeg / 180) * projection.maxRadius;
+        })
+        .attr('preserveAspectRatio', 'xMidYMid slice')
+        .attr('transform', d => {
+            const { x, y } = projection.project(d.ra, d.dec);
+            return `rotate(${d.orientation} ${x} ${y})`;
+        })
+        .on('error', function() {
+            d3.select(this).style('display', 'none');
         });
+
+    // Add labels
+    fovGroup.append('text')
+        .attr('class', 'fov-label')
+        .attr('x', d => projection.project(d.ra, d.dec).x)
+        .attr('y', d => projection.project(d.ra, d.dec).y + 12)
+        .attr('text-anchor', 'middle')
+        .text(d => d.name || d.id);
+}
+
+// Setup zoom and pan
+const zoom = d3.zoom()
+    .scaleExtent([0.5, 64])
+    .on('zoom', (event) => {
+        g.attr('transform', event.transform);
     });
 
-    // Create SVG namespace helper
-    function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+svg.call(zoom);
 
-    // Create layer groups
-    const layerNames = ['mw', 'constBounds', 'constLines', 'dsos', 'stars', 'fov'];
-    const groups = {};
-    layerNames.forEach(name => {
-        const g = svgEl('g');
-        g.id = 'layer-' + name;
-        if (!layers[name] && name !== 'stars') g.style.display = 'none';
-        svg.appendChild(g);
-        groups[name] = g;
-    });
+// Main initialization function
+function initializeMap() {
+    g.selectAll('*').remove();
 
-    // Load stars
-    fetch('/data/stars.6.geojson')
-        .then(r => r.json())
-        .then(data => {
-            data.features.forEach(f => {
-                const [ra, dec] = f.geometry.coordinates;
-                const mag = f.properties.mag || 6;
-                const [x, y] = aitoff(ra, dec);
-                const r = Math.max(0.3, 2.5 - mag * 0.35);
-                const circle = svgEl('circle');
-                circle.setAttribute('cx', x);
-                circle.setAttribute('cy', y);
-                circle.setAttribute('r', r);
-                circle.setAttribute('class', 'star');
-                circle.setAttribute('opacity', Math.max(0.2, 1 - mag / 7));
-                groups.stars.appendChild(circle);
-            });
-        });
+    // Draw in order from back to front
+    drawMilkyWayFromData();
+    drawGrid();
+    drawConstellationLines();
+    drawConstellationBounds();
+    drawEcliptic();
+    drawHorizon();
+    drawFOV();
+    drawDSOs();
+    drawStarsFromData();
 
-    // Load constellation lines
-    fetch('/data/constellations.lines.geojson')
-        .then(r => r.json())
-        .then(data => {
-            data.features.forEach(f => {
-                if (f.geometry.type === 'MultiLineString') {
-                    f.geometry.coordinates.forEach(line => {
-                        const path = svgEl('path');
-                        let d = '';
-                        line.forEach((coord, i) => {
-                            const [x, y] = aitoff(coord[0], coord[1]);
-                            d += (i === 0 ? 'M' : 'L') + x + ',' + y;
-                        });
-                        path.setAttribute('d', d);
-                        path.setAttribute('class', 'constellation-line');
-                        groups.constLines.appendChild(path);
-                    });
-                }
-            });
-        });
+    document.getElementById('info-text').textContent = 'Left-click + drag to pan. Scroll to zoom. Sky Map Ready.';
+}
 
-    // Load constellation boundaries
-    fetch('/data/constellations.bounds.geojson')
-        .then(r => r.json())
-        .then(data => {
-            data.features.forEach(f => {
-                if (f.geometry.type === 'Polygon') {
-                    f.geometry.coordinates.forEach(ring => {
-                        const path = svgEl('path');
-                        let d = '';
-                        ring.forEach((coord, i) => {
-                            const [x, y] = aitoff(coord[0], coord[1]);
-                            d += (i === 0 ? 'M' : 'L') + x + ',' + y;
-                        });
-                        d += 'Z';
-                        path.setAttribute('d', d);
-                        path.setAttribute('class', 'constellation-bound');
-                        groups.constBounds.appendChild(path);
-                    });
-                }
-            });
-        });
+// Load all celestial data + observations in parallel
+async function loadAllData() {
+    try {
+        const [starsData, consLinesData, consBoundsData, dsosData, mwData, obsData] = await Promise.all([
+            fetch(celestialDataUrls.stars).then(r => r.json()),
+            fetch(celestialDataUrls.constellationLines).then(r => r.json()),
+            fetch(celestialDataUrls.constellationBounds).then(r => r.json()),
+            fetch(celestialDataUrls.dsos).then(r => r.json()),
+            fetch(celestialDataUrls.milkyWay).then(r => r.json()),
+            fetch('/api/observations').then(r => r.json())
+        ]);
 
-    // Load DSOs
-    fetch('/data/dsos.bright.geojson')
-        .then(r => r.json())
-        .then(data => {
-            data.features.forEach(f => {
-                const [ra, dec] = f.geometry.coordinates;
-                const [x, y] = aitoff(ra, dec);
-                const circle = svgEl('circle');
-                circle.setAttribute('cx', x);
-                circle.setAttribute('cy', y);
-                circle.setAttribute('r', 3);
-                circle.setAttribute('class', 'dso-marker');
-                groups.dsos.appendChild(circle);
-            });
-        });
+        celestialStars = starsData.features;
+        celestialConstellationLines = consLinesData.features;
+        celestialConstellationBounds = consBoundsData.features;
+        celestialDSOs = dsosData.features;
+        celestialMilkyWay = mwData.features;
+        observations = obsData || [];
 
-    // Load Milky Way
-    fetch('/data/mw.geojson')
-        .then(r => r.json())
-        .then(data => {
-            data.features.forEach(f => {
-                if (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') {
-                    const coords = f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
-                    coords.forEach(poly => {
-                        poly.forEach(ring => {
-                            const path = svgEl('path');
-                            let d = '';
-                            ring.forEach((coord, i) => {
-                                const [x, y] = aitoff(coord[0], coord[1]);
-                                d += (i === 0 ? 'M' : 'L') + x + ',' + y;
-                            });
-                            d += 'Z';
-                            path.setAttribute('d', d);
-                            path.setAttribute('class', 'mw-path');
-                            groups.mw.appendChild(path);
-                        });
-                    });
-                }
-            });
-        });
+        document.getElementById('info-text').textContent = 'Rendering sky map...';
+        initializeMap();
+    } catch (error) {
+        console.error('Error loading celestial data:', error);
+        document.getElementById('info-text').textContent = 'Error loading celestial data: ' + error.message;
+    }
+}
 
-    // Load observations (FOV rectangles)
-    fetch('/api/observations')
-        .then(r => r.json())
-        .then(observations => {
-            if (!observations) return;
-            observations.forEach(obs => {
-                const [cx, cy] = aitoff(obs.ra, obs.dec);
-                // Approximate FOV rectangle
-                const hw = obs.fieldw / 2 / 60; // half-width in degrees
-                const hh = obs.fieldh / 2 / 60; // half-height in degrees
-                const corners = [
-                    [obs.ra - hw, obs.dec - hh],
-                    [obs.ra + hw, obs.dec - hh],
-                    [obs.ra + hw, obs.dec + hh],
-                    [obs.ra - hw, obs.dec + hh]
-                ];
-                let d = '';
-                corners.forEach((c, i) => {
-                    const [x, y] = aitoff(c[0], c[1]);
-                    d += (i === 0 ? 'M' : 'L') + x + ',' + y;
-                });
-                d += 'Z';
-                const rect = svgEl('path');
-                rect.setAttribute('d', d);
-                rect.setAttribute('class', 'fov-rect');
-                rect.addEventListener('click', () => {
-                    window.location.href = '/show?id=' + obs.id;
-                });
-                rect.addEventListener('mouseenter', () => {
-                    label.style.opacity = 1;
-                });
-                rect.addEventListener('mouseleave', () => {
-                    label.style.opacity = 0;
-                });
-                groups.fov.appendChild(rect);
+// Button handlers
+document.getElementById('btn-reset').addEventListener('click', () => {
+    svg.transition().duration(750).call(
+        zoom.transform,
+        d3.zoomIdentity.translate(0, 0).scale(1)
+    );
+});
 
-                const label = svgEl('text');
-                label.setAttribute('x', cx);
-                label.setAttribute('y', cy - 10);
-                label.setAttribute('text-anchor', 'middle');
-                label.setAttribute('class', 'fov-label');
-                label.textContent = obs.name;
-                groups.fov.appendChild(label);
-            });
-        });
-})();
+document.getElementById('btn-toggle-horizon').addEventListener('click', (e) => {
+    const horizon = d3.select('#horizon');
+    const currentVisibility = horizon.style('visibility');
+    const isVisible = currentVisibility === '' || currentVisibility === 'visible';
+    horizon.style('visibility', isVisible ? 'hidden' : 'visible');
+    e.target.classList.toggle('active', !isVisible);
+});
+
+document.getElementById('btn-toggle-grid').addEventListener('click', (e) => {
+    const gridElements = d3.selectAll('.grid-line, .grid-label');
+    const isVisible = gridElements.style('visibility') !== 'hidden';
+    gridElements.style('visibility', isVisible ? 'hidden' : 'visible');
+    e.target.classList.toggle('active', !isVisible);
+});
+
+document.getElementById('btn-toggle-ecliptic').addEventListener('click', (e) => {
+    const ecliptic = document.querySelector('.ecliptic-line');
+    const isVisible = ecliptic && ecliptic.style.display !== 'none';
+    if (ecliptic) {
+        ecliptic.style.display = isVisible ? 'none' : 'block';
+        e.target.classList.toggle('active', !isVisible);
+    }
+});
+
+// Start loading data
+loadAllData();
 </script>
 {{end}}

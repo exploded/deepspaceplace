@@ -4,6 +4,7 @@
 {{define "content"}}
 <h1>Admin - Image Management</h1>
 <a href="/admin/new" class="btn btn-success mb-3">Add New Image</a>
+<a href="/admin/resize" class="btn btn-warning mb-3 ms-2">Resize Images</a>
 <table class="table table-striped table-hover">
     <thead>
         <tr>
@@ -13,6 +14,7 @@
             <th>Camera</th>
             <th>Scope</th>
             <th>Date</th>
+            <th>Solved</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -25,6 +27,26 @@
             <td>{{.Camera}}</td>
             <td>{{.Scope}}</td>
             <td>{{.Date}}</td>
+            <td id="solve-{{.ID}}">
+                {{if eq .Solved "y"}}
+                <span class="badge bg-success">Solved</span>
+                {{else if eq .Solved "f"}}
+                <span class="badge bg-danger">Failed</span>
+                <button class="btn btn-sm btn-outline-info"
+                    hx-post="/admin/platesolve"
+                    hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
+                    hx-target="#solve-{{.ID}}"
+                    hx-swap="innerHTML"
+                    hx-disabled-elt="this">Retry</button>
+                {{else}}
+                <button class="btn btn-sm btn-info"
+                    hx-post="/admin/platesolve"
+                    hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
+                    hx-target="#solve-{{.ID}}"
+                    hx-swap="innerHTML"
+                    hx-disabled-elt="this">Solve</button>
+                {{end}}
+            </td>
             <td>
                 <a href="/admin/edit?id={{.ID}}" class="btn btn-sm btn-primary">Edit</a>
                 <button class="btn btn-sm btn-danger"

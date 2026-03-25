@@ -1,0 +1,63 @@
+{{define "admin_resize.html"}}
+{{template "base" .}}
+{{end}}
+{{define "content"}}
+<h1>Admin - Resize Images</h1>
+
+{{if not .Done}}
+<div class="card mb-4">
+    <div class="card-body">
+        <p>Resize all images in <code>/images/</code> so the longest side does not exceed the specified maximum. Thumbnails (<code>_thumb</code> files) are skipped.</p>
+        <p>Images are saved as JPEG quality 90. <strong>This overwrites the original files.</strong></p>
+        <form method="POST" action="/admin/resize">
+            <div class="mb-3">
+                <label for="max_dimension" class="form-label">Max dimension (px)</label>
+                <input type="number" class="form-control" id="max_dimension" name="max_dimension"
+                       value="{{.MaxDim}}" min="800" max="7680" style="max-width: 200px">
+                <div class="form-text">3840 = 4K, 2560 = QHD, 1920 = Full HD</div>
+            </div>
+            <button type="submit" class="btn btn-warning"
+                    onclick="this.disabled=true; this.innerHTML='Processing — this may take a few minutes...'; this.form.submit();">
+                Resize All Images
+            </button>
+        </form>
+    </div>
+</div>
+{{else}}
+<div class="alert alert-info">
+    <strong>Done:</strong> {{.Total}} images scanned —
+    {{.Resized}} resized, {{.Skipped}} already OK, {{.Errors}} errors.
+    Max dimension: {{.MaxDim}}px.
+</div>
+
+{{if gt .Resized 0}}
+<h3>Resized ({{.Resized}})</h3>
+<table class="table table-sm table-striped">
+    <thead><tr><th>File</th><th>Original</th><th>New Size</th></tr></thead>
+    <tbody>
+    {{range .Results}}{{if eq .Status "resized"}}
+    <tr>
+        <td>{{.Filename}}</td>
+        <td>{{.OldW}} x {{.OldH}}</td>
+        <td>{{.NewW}} x {{.NewH}}</td>
+    </tr>
+    {{end}}{{end}}
+    </tbody>
+</table>
+{{end}}
+
+{{if gt .Errors 0}}
+<h3>Errors ({{.Errors}})</h3>
+<table class="table table-sm table-striped">
+    <thead><tr><th>File</th><th>Error</th></tr></thead>
+    <tbody>
+    {{range .Results}}{{if eq .Status "error"}}
+    <tr><td>{{.Filename}}</td><td>{{.Error}}</td></tr>
+    {{end}}{{end}}
+    </tbody>
+</table>
+{{end}}
+
+<a href="/admin" class="btn btn-primary mt-3">Back to Admin</a>
+{{end}}
+{{end}}

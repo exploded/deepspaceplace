@@ -174,6 +174,14 @@ UPDATE images SET
     fieldw = ?, fieldh = ?, orientation = ?, solved = ?
 WHERE id = ?;
 
+-- Admin: update plate-solve results
+-- name: UpdateImagePlateSolve :exec
+UPDATE images SET
+    ra = ?, dec = ?, pixscale = ?, radius = ?,
+    width_arcsec = ?, height_arcsec = ?,
+    fieldw = ?, fieldh = ?, orientation = ?, solved = ?
+WHERE id = ?;
+
 -- Admin: delete image
 -- name: DeleteImage :exec
 DELETE FROM images WHERE id = ?;
