@@ -1,0 +1,23 @@
+@charset "utf-8";
+/* CSS Document */
+
+/* prevent jumping */
+html {
+	overflow-y: scroll; 
+}
+
+.img-container {
+	float: left;
+	position: relative;
+	/* width: 940px; */
+} 
+.prev {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+} 
+.next {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+} 

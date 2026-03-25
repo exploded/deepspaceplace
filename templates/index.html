@@ -1,0 +1,50 @@
+{{template "base" .}}
+{{define "content"}}
+<br>
+<br>
+<h4>astrophotography by james mchugh</h4>
+<p class="fw-light">I have been interested in Astrophotography since I purchased by first telescope in 2009.
+    I have created this website to showcase my journey through the years.<br>
+Be sure to check out my deep space images <a href="/images">here.</a></p>
+<br>
+<div id="myCarousel" class="carousel slide">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="/static/images/ngc3576bCAR.jpg" alt="" class="d-block w-100">
+            <div class="carousel-caption d-none d-md-block">
+                <h4>Statue of Liberty Nebula</h4>
+                <p>7 hour exposure taken Feb 2025. NGC 3576 is an emission nebula about 9,000 light-years away in the constellation of Carina.</p>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="/static/images/ngc3372bCAR.jpg" alt="" class="d-block w-100">
+            <div class="carousel-caption d-none d-md-block">
+                <h4>Eta Carinae Nebula NGC 3372</h4>
+                <p>12 hour exposure taken Mar 2025. The Eta Carinae Nebula is an emission nebula in the constellation Carina. It is located about about 7500 ly from Earth.</p>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="/static/images/ngc2070bCAR.jpg" alt="" class="d-block w-100">
+            <div class="carousel-caption d-none d-md-block">
+                <h4>Tarantula Nebula NGC 2070</h4>
+                <p>5 hour exposure taken October 2010. The Tarantula Nebula (also known as NGC 2070) is an H II star forming region in nearby galaxy The Large Magellanic Cloud. Taken with Ha filter.</p>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="/static/images/ngc253CAR.jpg" alt="" class="d-block w-100">
+            <div class="carousel-caption d-none d-md-block">
+                <h4>Sculptor Galaxy NGC 253</h4>
+                <p>A 16 hour exposure taken October 2011. The Sculptor Galaxy (NGC 253) is an intermediate spiral galaxy in the constellation Sculptor. It is located about 11.4 million light years from Earth.</p>
+            </div>
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+{{end}}

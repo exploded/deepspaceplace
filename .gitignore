@@ -1,0 +1,12 @@
+.env
+*.exe
+*.db
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.backup
+*.bak
+/images/

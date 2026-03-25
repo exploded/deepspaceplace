@@ -1,0 +1,266 @@
+{{template "base" .}}
+{{define "head"}}<link href="/static/css/dsp.css" rel="stylesheet" media="screen" />{{end}}
+{{define "content"}}
+<h2>Sky Map</h2>
+<p>Interactive sky map showing observation field of view rectangles overlaid on star chart.</p>
+<p>Click on a rectangle to view the image.</p>
+
+<div class="controls">
+    <button class="btn btn-outline-primary btn-sm active" id="btn-toggle-fov">Show FOV</button>
+    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-constLines">Constellation Lines</button>
+    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-constBounds">Constellation Bounds</button>
+    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-dsos">DSOs</button>
+    <button class="btn btn-outline-primary btn-sm" id="btn-toggle-mw">Milky Way</button>
+    <span class="ms-3 text-muted" id="info-panel">Drag to pan, scroll to zoom</span>
+</div>
+
+<div class="skymap-container" id="skymap">
+    <svg id="skymap-svg"></svg>
+</div>
+
+<style>
+    .skymap-container {
+        width: 100%;
+        height: 800px;
+        background: radial-gradient(ellipse at 50% 50%, #1a1f3a 0%, #0a0e27 100%);
+        position: relative;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+    }
+    .skymap-container svg {
+        width: 100%;
+        height: 100%;
+        background: #0a0e27;
+        border-radius: 0.375rem;
+    }
+    .skymap-container .star { fill: white; }
+    .fov-rect {
+        fill: rgba(74, 144, 226, 0.05);
+        stroke: #4a90e2;
+        stroke-width: 1.5;
+        opacity: 0.7;
+        cursor: pointer;
+    }
+    .fov-rect:hover {
+        opacity: 1;
+        stroke: #7ab8ff;
+        filter: drop-shadow(0 0 3px rgba(122, 184, 255, 0.6));
+    }
+    .fov-label {
+        font-size: 10px;
+        fill: #a0d0e8;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .fov-rect:hover + .fov-label { opacity: 1; }
+    .constellation-line { stroke: #334; stroke-width: 0.5; fill: none; }
+    .constellation-bound { stroke: #222; stroke-width: 0.3; fill: none; stroke-dasharray: 3,3; }
+    .dso-marker { fill: none; stroke: #666; stroke-width: 0.5; }
+    .mw-path { fill: rgba(200,200,255,0.03); stroke: none; }
+</style>
+
+<script>
+// Skymap - loads observation data from API and renders on SVG
+(function() {
+    const svg = document.getElementById('skymap-svg');
+    const container = document.getElementById('skymap');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    // Aitoff projection
+    function aitoff(ra, dec) {
+        const lambda = (ra - 180) * Math.PI / 180;
+        const phi = dec * Math.PI / 180;
+        const alpha = Math.acos(Math.cos(phi) * Math.cos(lambda / 2));
+        let x, y;
+        if (alpha === 0) {
+            x = 0; y = 0;
+        } else {
+            const sincAlpha = Math.sin(alpha) / alpha;
+            x = 2 * Math.cos(phi) * Math.sin(lambda / 2) / sincAlpha;
+            y = Math.sin(phi) / sincAlpha;
+        }
+        const px = width / 2 + x * width / (2 * Math.PI) * 0.9;
+        const py = height / 2 - y * height / Math.PI * 0.9;
+        return [px, py];
+    }
+
+    // Layer visibility toggles
+    const layers = { fov: true, constLines: false, constBounds: false, dsos: false, mw: false };
+    document.querySelectorAll('[id^="btn-toggle-"]').forEach(btn => {
+        const layer = btn.id.replace('btn-toggle-', '');
+        btn.addEventListener('click', () => {
+            layers[layer] = !layers[layer];
+            btn.classList.toggle('active', layers[layer]);
+            const el = document.getElementById('layer-' + layer);
+            if (el) el.style.display = layers[layer] ? '' : 'none';
+        });
+    });
+
+    // Create SVG namespace helper
+    function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+    // Create layer groups
+    const layerNames = ['mw', 'constBounds', 'constLines', 'dsos', 'stars', 'fov'];
+    const groups = {};
+    layerNames.forEach(name => {
+        const g = svgEl('g');
+        g.id = 'layer-' + name;
+        if (!layers[name] && name !== 'stars') g.style.display = 'none';
+        svg.appendChild(g);
+        groups[name] = g;
+    });
+
+    // Load stars
+    fetch('/data/stars.6.geojson')
+        .then(r => r.json())
+        .then(data => {
+            data.features.forEach(f => {
+                const [ra, dec] = f.geometry.coordinates;
+                const mag = f.properties.mag || 6;
+                const [x, y] = aitoff(ra, dec);
+                const r = Math.max(0.3, 2.5 - mag * 0.35);
+                const circle = svgEl('circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', r);
+                circle.setAttribute('class', 'star');
+                circle.setAttribute('opacity', Math.max(0.2, 1 - mag / 7));
+                groups.stars.appendChild(circle);
+            });
+        });
+
+    // Load constellation lines
+    fetch('/data/constellations.lines.geojson')
+        .then(r => r.json())
+        .then(data => {
+            data.features.forEach(f => {
+                if (f.geometry.type === 'MultiLineString') {
+                    f.geometry.coordinates.forEach(line => {
+                        const path = svgEl('path');
+                        let d = '';
+                        line.forEach((coord, i) => {
+                            const [x, y] = aitoff(coord[0], coord[1]);
+                            d += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                        });
+                        path.setAttribute('d', d);
+                        path.setAttribute('class', 'constellation-line');
+                        groups.constLines.appendChild(path);
+                    });
+                }
+            });
+        });
+
+    // Load constellation boundaries
+    fetch('/data/constellations.bounds.geojson')
+        .then(r => r.json())
+        .then(data => {
+            data.features.forEach(f => {
+                if (f.geometry.type === 'Polygon') {
+                    f.geometry.coordinates.forEach(ring => {
+                        const path = svgEl('path');
+                        let d = '';
+                        ring.forEach((coord, i) => {
+                            const [x, y] = aitoff(coord[0], coord[1]);
+                            d += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                        });
+                        d += 'Z';
+                        path.setAttribute('d', d);
+                        path.setAttribute('class', 'constellation-bound');
+                        groups.constBounds.appendChild(path);
+                    });
+                }
+            });
+        });
+
+    // Load DSOs
+    fetch('/data/dsos.bright.geojson')
+        .then(r => r.json())
+        .then(data => {
+            data.features.forEach(f => {
+                const [ra, dec] = f.geometry.coordinates;
+                const [x, y] = aitoff(ra, dec);
+                const circle = svgEl('circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', 3);
+                circle.setAttribute('class', 'dso-marker');
+                groups.dsos.appendChild(circle);
+            });
+        });
+
+    // Load Milky Way
+    fetch('/data/mw.geojson')
+        .then(r => r.json())
+        .then(data => {
+            data.features.forEach(f => {
+                if (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon') {
+                    const coords = f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
+                    coords.forEach(poly => {
+                        poly.forEach(ring => {
+                            const path = svgEl('path');
+                            let d = '';
+                            ring.forEach((coord, i) => {
+                                const [x, y] = aitoff(coord[0], coord[1]);
+                                d += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                            });
+                            d += 'Z';
+                            path.setAttribute('d', d);
+                            path.setAttribute('class', 'mw-path');
+                            groups.mw.appendChild(path);
+                        });
+                    });
+                }
+            });
+        });
+
+    // Load observations (FOV rectangles)
+    fetch('/api/observations')
+        .then(r => r.json())
+        .then(observations => {
+            if (!observations) return;
+            observations.forEach(obs => {
+                const [cx, cy] = aitoff(obs.ra, obs.dec);
+                // Approximate FOV rectangle
+                const hw = obs.fieldw / 2 / 60; // half-width in degrees
+                const hh = obs.fieldh / 2 / 60; // half-height in degrees
+                const corners = [
+                    [obs.ra - hw, obs.dec - hh],
+                    [obs.ra + hw, obs.dec - hh],
+                    [obs.ra + hw, obs.dec + hh],
+                    [obs.ra - hw, obs.dec + hh]
+                ];
+                let d = '';
+                corners.forEach((c, i) => {
+                    const [x, y] = aitoff(c[0], c[1]);
+                    d += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                });
+                d += 'Z';
+                const rect = svgEl('path');
+                rect.setAttribute('d', d);
+                rect.setAttribute('class', 'fov-rect');
+                rect.addEventListener('click', () => {
+                    window.location.href = '/show?id=' + obs.id;
+                });
+                rect.addEventListener('mouseenter', () => {
+                    label.style.opacity = 1;
+                });
+                rect.addEventListener('mouseleave', () => {
+                    label.style.opacity = 0;
+                });
+                groups.fov.appendChild(rect);
+
+                const label = svgEl('text');
+                label.setAttribute('x', cx);
+                label.setAttribute('y', cy - 10);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('class', 'fov-label');
+                label.textContent = obs.name;
+                groups.fov.appendChild(label);
+            });
+        });
+})();
+</script>
+{{end}}

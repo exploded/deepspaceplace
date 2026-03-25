@@ -1,0 +1,99 @@
+{{define "base"}}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <script src="/static/js/htmx.min.js"></script>
+    <title>Deep Space Place{{block "title" .}}{{end}}</title>
+    {{block "head" .}}{{end}}
+</head>
+
+<body>
+    <script src="/static/js/bootstrap.bundle.js"></script>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid">
+                <a href="/" class="navbar-brand">deepspaceplace.com</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/images">Deep Space</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/timelapse">Timelapse</a>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Equipment
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/equipment">Summary</a></li>
+                                <li><a class="dropdown-item" href="/observatory">Observatory</a></li>
+                                <li><a class="dropdown-item" href="/gso8rc">GSO 8" RC</a></li>
+                                <li><a class="dropdown-item" href="/8se">Celestron NexStar 8 SE</a></li>
+                                <li><a class="dropdown-item" href="/mn152">Maxvision MN152</a></li>
+                                <li><a class="dropdown-item" href="/ed127">ED127 APO</a></li>
+                                <li><a class="dropdown-item" href="/at8in">AT 8IN</a></li>
+                                <li><a class="dropdown-item" href="/at12in">AT 12IN</a></li>
+                                <li><a class="dropdown-item" href="/meteor">Meteor Camera</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/links">Links</a>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Weather
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/weather">Summary</a></li>
+                                <li><a class="dropdown-item" href="/moon">Moon rise/set</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Info &amp; Tools
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/converter">Coordinate Converter</a></li>
+                                <li><a class="dropdown-item" href="/moon">Moon Rise Set</a></li>
+                                <li><a class="dropdown-item" href="/lightpollution">Light Pollution</a></li>
+                                <li><a class="dropdown-item" href="/gso8rcpointing">GSO 8" RC Pointing Accuracy</a></li>
+                                <li><a class="dropdown-item" href="/gso8rccollimate">GSO 8" Collimation</a></li>
+                                <li><a class="dropdown-item" href="/abbreviations">AP Terminology</a></li>
+                                <li><a class="dropdown-item" href="/eq6">EQ6 Tuneup</a></li>
+                                <li><a class="dropdown-item" href="/bahtinovmask">Bahtinov Mask</a></li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        {{block "content" .}}{{end}}
+
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid">
+                <a class="icon-link" href="mailto:james@deepspaceplace.com">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
+                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z" />
+                    </svg>Contact me</a>
+            </div>
+        </nav>
+    </div>
+</body>
+</html>
+{{end}}

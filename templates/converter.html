@@ -1,0 +1,69 @@
+{{template "base" .}}
+{{define "head"}}<link href="/static/css/dsp.css" rel="stylesheet" media="screen" />{{end}}
+{{define "content"}}
+<h2>Astronomical Coordinate Converter</h2>
+
+<div class="converter-section" style="margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+    <h3>Decimal Degrees to HMS/DMS</h3>
+    <form method="post" action="/converter" hx-post="/converter" hx-target="#result-hms">
+        <input type="hidden" name="convert_to_hms" value="1">
+        <div style="margin: 10px 0;">
+            <label for="ra_decimal" style="display: inline-block; width: 150px; font-weight: bold;">RA (Decimal Degrees):</label>
+            <input type="text" id="ra_decimal" name="ra_decimal" placeholder="115.624" value="{{.RADecimal}}" style="width: 300px; padding: 5px;">
+        </div>
+        <div style="margin: 10px 0;">
+            <label for="dec_decimal" style="display: inline-block; width: 150px; font-weight: bold;">DEC (Decimal Degrees):</label>
+            <input type="text" id="dec_decimal" name="dec_decimal" placeholder="-14.819" value="{{.DecDecimal}}" style="width: 300px; padding: 5px;">
+        </div>
+        <button type="submit" class="btn btn-primary">Convert to HMS/DMS</button>
+    </form>
+    <div id="result-hms">
+    {{if .ShowHMS}}
+        <div style="margin-top: 15px; padding: 15px; background-color: #e9ecef; border-radius: 3px; font-weight: bold;">
+            <strong>Result:</strong><br>
+            {{.ResultHMS}}<br>
+            {{.ResultDMS}}
+        </div>
+    {{end}}
+    </div>
+</div>
+
+<div class="converter-section" style="margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+    <h3>HMS/DMS to Decimal Degrees</h3>
+    <form method="post" action="/converter" hx-post="/converter" hx-target="#result-dec">
+        <input type="hidden" name="convert_to_decimal" value="1">
+        <div style="margin: 10px 0;">
+            <label for="ra_hms" style="display: inline-block; width: 150px; font-weight: bold;">RA (HMS format):</label>
+            <input type="text" id="ra_hms" name="ra_hms" placeholder="07h 41m 46.0s or 07 41 46.0" value="{{.RAHMS}}" style="width: 300px; padding: 5px;">
+        </div>
+        <div style="margin: 10px 0;">
+            <label for="dec_dms" style="display: inline-block; width: 150px; font-weight: bold;">DEC (DMS format):</label>
+            <input type="text" id="dec_dms" name="dec_dms" placeholder="-14° 30' 00 or -14 30 00" value="{{.DecDMS}}" style="width: 300px; padding: 5px;">
+        </div>
+        <button type="submit" class="btn btn-primary">Convert to Decimal</button>
+    </form>
+    <div id="result-dec">
+    {{if .ShowDec}}
+        <div style="margin-top: 15px; padding: 15px; background-color: #e9ecef; border-radius: 3px; font-weight: bold;">
+            <strong>Result:</strong><br>
+            {{.ResultRA}}<br>
+            {{.ResultDec}}
+        </div>
+    {{end}}
+    </div>
+</div>
+
+<div style="margin-top: 30px; padding: 15px; background-color: #fff3cd; border-radius: 5px;">
+    <h4>Format Examples:</h4>
+    <p><strong>Decimal to HMS/DMS:</strong></p>
+    <ul>
+        <li>RA: 115.624 (decimal degrees) &rarr; 07h 41m 29.760s</li>
+        <li>DEC: -14.819 (decimal degrees) &rarr; -14&deg; 49' 08.400"</li>
+    </ul>
+    <p><strong>HMS/DMS to Decimal:</strong></p>
+    <ul>
+        <li>RA accepts: 07h 41m 46.0s, 07 41 46.0, 7h 41m 46s, etc.</li>
+        <li>DEC accepts: -14&deg; 30' 00, -14 30 00, +26&deg; 25' 14.161, etc.</li>
+    </ul>
+</div>
+{{end}}

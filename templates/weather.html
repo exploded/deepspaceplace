@@ -1,0 +1,122 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="weather-page">
+    <header class="mb-4">
+        <h1 class="display-4">Weather Forecasts for Astronomy</h1>
+        <p class="lead text-muted">Multiple weather sources for Melbourne, Australia to plan your observing sessions</p>
+    </header>
+
+    <section class="mb-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h4 mb-0">Clear Outside - Cloud Forecast</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Detailed cloud cover and astronomy-specific weather forecast</p>
+                <a href="https://clearoutside.com/forecast/-37.79/145.19" target="_blank" rel="noopener noreferrer" class="d-block mb-2">
+                    <img src="https://clearoutside.com/forecast_image_large/-37.79/145.19/forecast.png" alt="Clear Outside cloud forecast for Melbourne" class="img-fluid rounded" loading="lazy">
+                </a>
+                <a href="https://clearoutside.com/forecast/-37.79/145.19" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">View on Clear Outside</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h2 class="h4 mb-0">Skippy Sky</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Total cloud coverage forecast for Melbourne region</p>
+                <img src="http://www.skippysky.com.au/Melbourne/cloud_total/melb_006_cct.png" alt="Skippy Sky total cloud coverage forecast" class="img-fluid rounded" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h2 class="h4 mb-0">yr.no - Norwegian Meteorological Institute</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Detailed meteorological forecast with temperature, precipitation, and wind data</p>
+                <img src="https://www.yr.no/en/content/2-2158177/meteogram.svg" alt="yr.no meteogram for Melbourne" class="img-fluid rounded mb-3" loading="lazy">
+                <a href="https://www.yr.no/en/forecast/daily-table/2-2158177/Australia/Victoria/Melbourne/Melbourne" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm">View Daily Forecast on yr.no</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h2 class="h4 mb-0">Weather Underground</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Interactive weather maps including wind patterns and jet stream</p>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="http://maps.wunderground.com/" target="_blank" rel="noopener noreferrer" class="btn btn-warning btn-sm">Weather Maps</a>
+                    <a href="https://www.wunderground.com/wundermap/" target="_blank" rel="noopener noreferrer" class="btn btn-warning btn-sm">Wind &amp; Jet Stream Map</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h2 class="h4 mb-0">Bureau of Meteorology (BOM)</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Official Australian weather bureau satellite imagery and forecasts</p>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h3 class="h6">Latest Infrared Satellite - National</h3>
+                        <a href="http://www.bom.gov.au/australia/satellite/" target="_blank" rel="noopener noreferrer">
+                            <img src="/api/bom-satellite?type=national" alt="BOM National infrared satellite showing cloud cover" class="img-fluid rounded" loading="lazy">
+                        </a>
+                        <p class="small text-muted mt-2">Shows cloud patterns across Australia (updates every 30 minutes)</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h3 class="h6">Cloud/surface composite</h3>
+                        <a href="http://www.bom.gov.au/australia/satellite/" target="_blank" rel="noopener noreferrer">
+                            <img src="/api/bom-satellite?type=composite" alt="BOM cloud and surface composite satellite image" class="img-fluid rounded" loading="lazy">
+                        </a>
+                        <p class="small text-muted mt-2">Combined cloud and surface imagery</p>
+                    </div>
+                </div>
+                <a href="http://www.bom.gov.au/australia/satellite/" target="_blank" rel="noopener noreferrer" class="btn btn-danger btn-sm">View Interactive Satellite Map</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="card border-secondary">
+            <div class="card-header bg-secondary text-white">
+                <h2 class="h5 mb-0">Quick Tips for Astronomy Weather Planning</h2>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Check Clear Outside for astronomy-specific conditions (cloud cover, seeing, transparency)</li>
+                    <li>Monitor wind speeds - high winds can affect telescope stability</li>
+                    <li>Watch for jet stream patterns that can impact seeing conditions</li>
+                    <li>Compare multiple sources for the most reliable forecast</li>
+                    <li>Satellite imagery helps identify actual cloud movements</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+.weather-page .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.weather-page .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.weather-page img { max-width: 100%; height: auto; }
+.weather-page .card-header h2 { font-weight: 500; }
+</style>
+{{end}}

@@ -1,0 +1,13 @@
+{{define "converter_result.html"}}
+<div style="margin-top: 15px; padding: 15px; background-color: #e9ecef; border-radius: 3px; font-weight: bold;">
+    <strong>Result:</strong><br>
+    {{if .ShowHMS}}
+        {{.ResultHMS}}<br>
+        {{.ResultDMS}}
+    {{end}}
+    {{if .ShowDec}}
+        {{.ResultRA}}<br>
+        {{.ResultDec}}
+    {{end}}
+</div>
+{{end}}

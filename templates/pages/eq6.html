@@ -1,0 +1,24 @@
+{{template "base" .}}
+{{define "content"}}
+<h1>EQ6 Tuneup</h1>
+<p>Ever since I bought a Sky-watcher EQ-6 mount back in September 2008, I was disappointed with the rattling noise when starting and stopping slews on speed 6 and above.
+  This occurred on both the RA and DEC axis, and it seemed to be a common problem for new EQ-6 and Orion Atlas owners. Although the mount performed well, the noise was very annoying.</p>
+<p>Here is a video of the noise on the DEC axis.</p>
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/QE5S-tnW0KY?si=TdRTrrSVBXevmLBN" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<p>The RA noise was very similar, but perhaps not quite as bad. Fortunately it can be fixed quite easily. </p>
+<p>Note - the procedure described below only applies to older EQ6 models. Newer models have a different design and the adjustment is not as easy to make. </p>
+<p>When you have the stepper motor out, check the play of the transfer gear.
+  If it's too loose, then this is most likely the cause of the rattling noise - it will cause the motor to resonate at certain points during the ramp up and ramp down.
+  The following video shows how loose the tranfer gears were in my mount.</p>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ChJoxketPWw?si=ZcK6GZMdG2keC3f9" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<p>Before tightening the transfer gear, loosen the retaining grub screw with a hex key.
+  This is important - if you don't loosen the grub screw first you will strip the thread of the hex nut.</p>
+<p><img src="/static/images/Step1.jpg" alt="Screw" class="img-fluid"></p>
+<p>Next, tighten the hexagonal nut a little with a socket wrench just enough to remove the excessive play. Don't over do it - you don't want to bind the stepper motor.</p>
+<p><img src="/static/images/Step2.jpg" alt="Nut" class="img-fluid"></p>
+<p>&nbsp;</p>
+<p>There are web sites around to help with the reassembly - the most important point is to get the worm adjustment just right - you should still be able to move the gear with your finger,
+  but with little or no play in the axis. It's worth taking your time to get it spot on. </p>
+<p>Here is the end result - no more annoying rattle noise!</p>
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/-fSw8drVYw4?si=JWhnvav9huAlkc5U" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+{{end}}

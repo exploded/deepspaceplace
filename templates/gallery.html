@@ -1,0 +1,7 @@
+{{template "base" .}}
+{{define "head"}}<link href="/static/css/dsp.css" rel="stylesheet" media="screen" />{{end}}
+{{define "content"}}
+<div id="gallery-container">
+{{template "gallery_grid.html" .}}
+</div>
+{{end}}

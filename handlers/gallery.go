@@ -1,0 +1,191 @@
+package handlers
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
+
+	"deepspaceplace/internal/database"
+)
+
+const maxPerPage = 120
+
+type GalleryData struct {
+	Images     []database.Image
+	Sort       string
+	Filter     string
+	Page       int
+	TotalPages int
+	TotalRows  int
+}
+
+func HandleGallery(w http.ResponseWriter, r *http.Request) {
+	data := buildGalleryData(r)
+	Render(w, "gallery.html", data)
+}
+
+func HandleGalleryPartial(w http.ResponseWriter, r *http.Request) {
+	data := buildGalleryData(r)
+	RenderPartial(w, "gallery.html", "gallery_grid.html", data)
+}
+
+func buildGalleryData(r *http.Request) GalleryData {
+	ctx := context.Background()
+	sort := r.URL.Query().Get("sort")
+	filter := r.URL.Query().Get("filter")
+	page, _ := strconv.Atoi(r.URL.Query().Get("pageNum_rsImages"))
+	if page < 0 {
+		page = 0
+	}
+
+	offset := int64(page * maxPerPage)
+	limit := int64(maxPerPage)
+
+	var images []database.Image
+	var totalRows int64
+	var err error
+
+	// Get filter values
+	filterScope, filterCamera, filterType := resolveFilter(filter)
+
+	// Count total
+	totalRows, err = countFiltered(ctx, filter, filterType, filterCamera, filterScope)
+	if err != nil {
+		log.Printf("Error counting images: %v", err)
+	}
+
+	// Fetch images
+	images, err = listFiltered(ctx, sort, filter, filterType, filterCamera, filterScope, limit, offset)
+	if err != nil {
+		log.Printf("Error listing images: %v", err)
+	}
+
+	totalPages := 0
+	if totalRows > 0 {
+		totalPages = int((totalRows - 1) / maxPerPage)
+	}
+
+	return GalleryData{
+		Images:     images,
+		Sort:       sort,
+		Filter:     filter,
+		Page:       page,
+		TotalPages: totalPages,
+		TotalRows:  int(totalRows),
+	}
+}
+
+func resolveFilter(filter string) (scope, camera, objType string) {
+	switch filter {
+	case "TOA130NS":
+		return "TOA130NS", "", ""
+	case "ED127":
+		return "ED127", "", ""
+	case "GSO8RC":
+		return "GSO 8 RC", "", ""
+	case "AT8IN":
+		return "AT8 IN", "", ""
+	case "AT12IN":
+		return "AT12 IN", "", ""
+	case "MN152":
+		return "MN152 F4.8 Mak-Newt", "", ""
+	case "STL":
+		return "", "STL-11000M", ""
+	case "QHY9":
+		return "", "QHY9", ""
+	case "500D":
+		return "", "Canon 500D", ""
+	case "D50":
+		return "", "Nikon D50", ""
+	case "ASI2600MM":
+		return "", "ASI2600MM DUO", ""
+	case "Galaxy":
+		return "", "", "Galaxy"
+	case "Nebula":
+		return "", "", "Nebula"
+	case "Globular":
+		return "", "", "Globular Cluster"
+	case "Cluster":
+		return "", "", "Cluster"
+	default:
+		return "", "", ""
+	}
+}
+
+func countFiltered(ctx context.Context, filter, objType, camera, scope string) (int64, error) {
+	switch {
+	case filter == "new":
+		cutoff := time.Now().AddDate(-1, 0, 0).Format("2006-01")
+		return DB.CountImagesNew(ctx, cutoff)
+	case objType != "":
+		return DB.CountImagesByType(ctx, objType)
+	case camera != "":
+		return DB.CountImagesByCamera(ctx, camera)
+	case scope != "":
+		return DB.CountImagesByScope(ctx, scope)
+	default:
+		return DB.CountImages(ctx)
+	}
+}
+
+func listFiltered(ctx context.Context, sort, filter, objType, camera, scope string, limit, offset int64) ([]database.Image, error) {
+	switch {
+	case filter == "new":
+		cutoff := time.Now().AddDate(-1, 0, 0).Format("2006-01")
+		return DB.ListImagesByDateFilterNew(ctx, database.ListImagesByDateFilterNewParams{
+			Date:   cutoff,
+			Limit:  limit,
+			Offset: offset,
+		})
+	case objType != "":
+		return listByTypeFilter(ctx, sort, objType, limit, offset)
+	case camera != "":
+		return listByCameraFilter(ctx, sort, camera, limit, offset)
+	case scope != "":
+		return listByScopeFilter(ctx, sort, scope, limit, offset)
+	default:
+		return listUnfiltered(ctx, sort, limit, offset)
+	}
+}
+
+func listUnfiltered(ctx context.Context, sort string, limit, offset int64) ([]database.Image, error) {
+	switch sort {
+	case "Date":
+		return DB.ListImagesByDateDesc(ctx, database.ListImagesByDateDescParams{Limit: limit, Offset: offset})
+	case "Type":
+		return DB.ListImagesByType(ctx, database.ListImagesByTypeParams{Limit: limit, Offset: offset})
+	default:
+		return DB.ListImagesByID(ctx, database.ListImagesByIDParams{Limit: limit, Offset: offset})
+	}
+}
+
+func listByTypeFilter(ctx context.Context, sort, objType string, limit, offset int64) ([]database.Image, error) {
+	switch sort {
+	case "Date":
+		return DB.ListImagesByDateFilterType(ctx, database.ListImagesByDateFilterTypeParams{Type: objType, Limit: limit, Offset: offset})
+	case "Type":
+		return DB.ListImagesByTypeFilterType(ctx, database.ListImagesByTypeFilterTypeParams{Type: objType, Limit: limit, Offset: offset})
+	default:
+		return DB.ListImagesByIDFilterType(ctx, database.ListImagesByIDFilterTypeParams{Type: objType, Limit: limit, Offset: offset})
+	}
+}
+
+func listByCameraFilter(ctx context.Context, sort, camera string, limit, offset int64) ([]database.Image, error) {
+	switch sort {
+	case "Date":
+		return DB.ListImagesByDateFilterCamera(ctx, database.ListImagesByDateFilterCameraParams{Camera: camera, Limit: limit, Offset: offset})
+	default:
+		return DB.ListImagesByIDFilterCamera(ctx, database.ListImagesByIDFilterCameraParams{Camera: camera, Limit: limit, Offset: offset})
+	}
+}
+
+func listByScopeFilter(ctx context.Context, sort, scope string, limit, offset int64) ([]database.Image, error) {
+	switch sort {
+	case "Date":
+		return DB.ListImagesByDateFilterScope(ctx, database.ListImagesByDateFilterScopeParams{Scope: scope, Limit: limit, Offset: offset})
+	default:
+		return DB.ListImagesByIDFilterScope(ctx, database.ListImagesByIDFilterScopeParams{Scope: scope, Limit: limit, Offset: offset})
+	}
+}

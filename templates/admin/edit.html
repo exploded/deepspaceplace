@@ -1,0 +1,132 @@
+{{define "admin_edit.html"}}
+{{template "base" .}}
+{{end}}
+{{define "content"}}
+<h1>{{if .ID}}Edit Image: {{.ID}}{{else}}New Image{{end}}</h1>
+<form method="post" action="{{if .ID}}/admin/edit{{else}}/admin/new{{end}}">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">ID</label>
+            <input type="text" class="form-control" name="id" value="{{.ID}}" {{if .ID}}readonly{{end}} required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name" value="{{.Name}}">
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="3">{{.Notes}}</textarea>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Camera</label>
+            <input type="text" class="form-control" name="camera" value="{{.Camera}}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Scope</label>
+            <input type="text" class="form-control" name="scope" value="{{.Scope}}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Mount</label>
+            <input type="text" class="form-control" name="mount" value="{{.Mount}}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Guiding</label>
+            <input type="text" class="form-control" name="guiding" value="{{.Guiding}}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Exposure</label>
+            <input type="text" class="form-control" name="exposure" value="{{.Exposure}}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-control" name="location" value="{{.Location}}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label class="form-label">Date</label>
+            <input type="text" class="form-control" name="date" value="{{.Date}}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Type</label>
+            <select class="form-select" name="type">
+                <option value="" {{if eq .Type ""}}selected{{end}}>--</option>
+                <option value="Galaxy" {{if eq .Type "Galaxy"}}selected{{end}}>Galaxy</option>
+                <option value="Nebula" {{if eq .Type "Nebula"}}selected{{end}}>Nebula</option>
+                <option value="Globular Cluster" {{if eq .Type "Globular Cluster"}}selected{{end}}>Globular Cluster</option>
+                <option value="Cluster" {{if eq .Type "Cluster"}}selected{{end}}>Cluster</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Archive</label>
+            <select class="form-select" name="archive">
+                <option value="" {{if eq .Archive ""}}selected{{end}}>No</option>
+                <option value="Y" {{if eq .Archive "Y"}}selected{{end}}>Yes</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Blink</label>
+            <input type="text" class="form-control" name="blink" value="{{.Blink}}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Filename</label>
+            <input type="text" class="form-control" name="filename" value="{{.Filename}}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Thumbnail</label>
+            <input type="text" class="form-control" name="thumbnail" value="{{.Thumbnail}}">
+        </div>
+    </div>
+    <h4>Plate-Solve Data</h4>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">RA</label>
+            <input type="text" class="form-control" name="ra" value="{{if .Ra.Valid}}{{.Ra.Float64}}{{end}}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">DEC</label>
+            <input type="text" class="form-control" name="dec" value="{{if .Dec.Valid}}{{.Dec.Float64}}{{end}}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Pixel Scale</label>
+            <input type="text" class="form-control" name="pixscale" value="{{if .Pixscale.Valid}}{{.Pixscale.Float64}}{{end}}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label class="form-label">Field W</label>
+            <input type="text" class="form-control" name="fieldw" value="{{if .Fieldw.Valid}}{{.Fieldw.Float64}}{{end}}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Field H</label>
+            <input type="text" class="form-control" name="fieldh" value="{{if .Fieldh.Valid}}{{.Fieldh.Float64}}{{end}}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Orientation</label>
+            <input type="text" class="form-control" name="orientation" value="{{if .Orientation.Valid}}{{.Orientation.Float64}}{{end}}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Radius</label>
+            <input type="text" class="form-control" name="radius" value="{{if .Radius.Valid}}{{.Radius.Float64}}{{end}}">
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Width (arcsec)</label>
+            <input type="text" class="form-control" name="width_arcsec" value="{{if .WidthArcsec.Valid}}{{.WidthArcsec.Float64}}{{end}}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Height (arcsec)</label>
+            <input type="text" class="form-control" name="height_arcsec" value="{{if .HeightArcsec.Valid}}{{.HeightArcsec.Float64}}{{end}}">
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="/admin" class="btn btn-secondary">Cancel</a>
+</form>
+{{end}}

@@ -1,0 +1,220 @@
+{{template "base" .}}
+{{define "content"}}
+
+<div class="telescope-page">
+    <header class="mb-4">
+        <h1 class="display-4">12" f/4 Newtonian</h1>
+        <p class="lead">This telescope was originally purchased from and branded 'Bintel' but it's manufactured by GSO and sold under different names around the world - the most common being AT12IN.</p>
+        <p>This is the telescope I use the most. It's 'fast' and produces nice stars without any visible chromatic aberration. After many modifications, this is how the scope looks now when it's set up and ready for a night's imaging. I could not be happier with the current setup and performance.</p>
+    </header>
+
+    <div class="text-center mb-5">
+        <img src="/static/images/at12in2025.jpg" alt="AT12IN 2025 Setup" class="img-fluid rounded shadow-sm">
+    </div>
+
+    <!-- Specifications Section -->
+    <section class="mb-5">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h5 mb-0">Specifications</h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <tr><td><strong>Type</strong></td><td>Newtonian</td></tr>
+                                <tr><td><strong>Aperture</strong></td><td>304.8mm</td></tr>
+                                <tr><td><strong>Focal Length</strong></td><td>1200mm</td></tr>
+                                <tr><td><strong>F-ratio</strong></td><td>f/4</td></tr>
+                                <tr><td><strong>Diagonal Mirror Obstruction</strong></td><td>87mm (29%)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header bg-secondary text-white">
+                        <h2 class="h5 mb-0">Weight Breakdown</h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <tr><td>Rings and Dovetail</td><td>2.7 kg</td></tr>
+                                <tr><td>Focuser + Adaptors</td><td>1.0 kg</td></tr>
+                                <tr><td>Secondary &amp; Assembly</td><td>0.6 kg</td></tr>
+                                <tr><td>Mirror Cell Assembly</td><td>2.1 kg</td></tr>
+                                <tr><td>Primary Mirror</td><td>6.3 kg</td></tr>
+                                <tr><td>OTA</td><td>7.3 kg</td></tr>
+                                <tr class="table-active"><td><strong>Total</strong></td><td><strong>~20 kg</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upgrades Section -->
+    <section class="mb-5">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h2 class="h4 mb-0">Upgrades</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text mb-3">I have performed the following upgrades on this scope:</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Carbon fibre OTA:</strong> Replaced the steel OTA tube with a carbon fibre tube from <a href="http://www.klaushelmi.de/en/" target="_blank" rel="noopener noreferrer">Klaus Helmerichs</a>. The new tube is much stronger and has greatly reduced the movement at the base of the focuser.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>TS-Optics 3" Focuser:</strong> Replaced the focuser with a <a href="https://www.teleskop-express.de/en/telescope-accessories-5/focusers-adapters-motorfocus-296/focusers-and-micro-transmission-92/ts-optics-3-newtonian-crayford-focuser-dual-speed-8318" target="_blank" rel="noopener noreferrer">TS-Optics 3" UNCN3</a>. The original focuser ended up breaking - it was not up to the job.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>3" Wynne Corrector:</strong> Added 3" Wynne Corrector 0.95x 3KORRW from ASA.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>ZWO EAF:</strong> Added a ZWO EAF to automate focusing.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>4" Secondary Mirror:</strong> Replaced the secondary with a larger 4" 1/30 Wave PV from <a href="https://antaresoptics.com/product/secondary-elliptical-mirror-4-0-minor-axis-1-30-wave/" target="_blank" rel="noopener noreferrer">Antares Optics</a>.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Custom adaptor:</strong> A custom adaptor from Joshua Bunn at Southern Cross Custom Engineering to connect the ASA Coma corrector to the ASI2600MM Camera M54 thread.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Extended dovetail:</strong> Replaced the dovetail with a longer one for better balance.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Upgraded fan:</strong> Replaced the fan with a larger one for better cooling.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Catseye Hotspot:</strong> Changed the primary mirror center spot with a <a href="https://www.catseyecollimation.com/" target="_blank" rel="noopener noreferrer">Catseye yellow Hotspot</a>.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Primary Mirror Section -->
+    <section class="mb-5">
+        <h2 class="h3 mb-3">Primary Mirror</h2>
+        <p>The mirror is approximately 37mm thick and was already center spotted reasonably accurately. The primary mirror rests on 3 triangles that make up a 9-point cell. Only one corner of each triangle is attached to the mirror with adhesive tape. The other two corners are free to move. Each triangle is made of metal reinforced plastic and has a plastic socket moulded on the back. This socket snaps onto a ball which is attached to the cell by a captive thread. This arrangement allows the triangle to tilt and evenly distribute the weight of the mirror.</p>
+
+        <div class="row mb-3">
+            <div class="col-md-6 mb-3">
+                <img src="/static/images/at12intriangle.jpg" alt="Mirror support triangles" class="img-fluid rounded shadow-sm">
+                <p class="small text-muted mt-2">9-point mirror support triangles</p>
+            </div>
+            <div class="col-md-6 mb-3">
+                <img src="/static/images/at12incell.jpg" alt="Mirror cell assembly" class="img-fluid rounded shadow-sm">
+                <p class="small text-muted mt-2">Mirror cell assembly</p>
+            </div>
+        </div>
+
+        <p>There are 3 standard GSO style rubber mirror clips. These should be checked to make sure they are not touching the mirror (I have removed them in the image below).</p>
+
+        <div class="text-center mb-3">
+            <img src="/static/images/at12inPrimary.jpg" alt="AT12IN Primary mirror" class="img-fluid rounded shadow-sm" style="max-width: 600px;">
+        </div>
+
+        <p>The cell has 3 push and 3 pull screws spaced evenly 60 degrees apart. It works but could be better - the cell can easily be bent by over-tightening the push screws. This is annoying but doesn't affect the optical performance; it just makes the collimation action more 'spongy' and less precise.</p>
+
+        <p>Finally, there is a small 12V fan which blows cool air onto the mirror.</p>
+    </section>
+
+    <!-- Secondary Mirror Section -->
+    <section class="mb-5">
+        <h2 class="h3 mb-3">Secondary Mirror</h2>
+        <p>The secondary is held in place by a GSO standard plastic holder. The four spider vanes are about 1.5 mm thick and are susceptible to bending when the spider is removed from the OTA. The secondary mirror is 87 mm x 123 mm and appears to be offset by about 5 mm away from the focuser (you should be able to see the offset in the image below).</p>
+
+        <div class="text-center mb-3">
+            <img src="/static/images/at12inSecondary.jpg" alt="AT12IN Secondary mirror" class="img-fluid rounded shadow-sm" style="max-width: 600px;">
+        </div>
+
+        <p>Using <a href="https://www.bbastrodesigns.com/NewtDesigner.html#diagonal" target="_blank" rel="noopener noreferrer">this calculator</a>, the required diagonal offset is 5.56mm which is within the error margin of the measured value. The secondary is undersized and doesn't even provide 100% illumination at the centre of the image. Whilst this is not a big problem, I have replaced my secondary with a larger one (4 inch) from  <a href="https://antaresoptics.com/" target="_blank" rel="noopener noreferrer">Antares Optics</a>. The new secondary mirror is <a href="https://antaresoptics.com/product/secondary-elliptical-mirror-4-0-minor-axis-1-30-wave/" target="_blank" rel="noopener noreferrer">4.0 inches 1/30 wave PV</a>.</p>
+    </section>
+
+    <!-- OTA Section -->
+    <section class="mb-5">
+        <h2 class="h3 mb-3">OTA (Optical Tube Assembly)</h2>
+        <p>The original OTA was constructed of 0.74 mm thick sheet steel, is 1150mm long and 357mm in diameter. The outside is powder coated white and the inside is matt black paint. Reflections can be seen when looking down the OTA.</p>
+
+        <p>At night, the top of the OTA is usually about 2 degrees cooler than the underside. For detailed thermal imaging analysis showing temperature distribution across the primary mirror, secondary mirror, and OTA components, see the <a href="/thermalcamera">thermal camera images</a> taken with a Fluke Ti25 IR Fusion Thermal Imager.</p>
+
+        <p>In my experience, the OTA does flex around the base of the focuser. At first I reinforced it with a bar of 3mm aluminium. The following video was made AFTER the OTA was reinforced. By hanging the camera (2.3 kg) off the focuser, and simultaneously looking through a <a href="http://www.catseyecollimation.com/autocol.html" target="_blank" rel="noopener noreferrer">Catseye Infinity XLK</a>, the shift in collimation can be clearly seen by observing movement of the centre spot reflections. This is a highly sensitive test and can be used to check if the focuser or tube is sagging.</p>
+
+        <div class="alert alert-info" role="alert">
+            <strong>Update:</strong> I have since replaced the metal OTA with a carbon fibre tube, the focuser has also been replaced, and my new camera is 1.2kg lighter than the old SBIG - weighing in at only 1.1kg.
+        </div>
+
+        <div class="ratio ratio-16x9 mb-3">
+            <iframe
+                src="https://www.youtube-nocookie.com/embed/TTGCutUicp4?si=xQcs6mP7Y5U8QPQv"
+                title="OTA Flexure Test"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </section>
+
+    <!-- Focuser Section -->
+    <section class="mb-5">
+        <h2 class="h3 mb-3">Focuser</h2>
+        <p>The original focuser was based on a linear bearing. Although smooth, it struggled with heavy loads especially when the orientation needed to lift the camera vertially. Tightening the tension knob (image below) eventually broke the plastic housing.</p>
+
+        <div class="text-center mb-3">
+            <img src="/static/images/at12inFocuser2.jpg" alt="AT12IN Focuser with linear bearing" class="img-fluid rounded shadow-sm" style="max-width: 600px;">
+        </div>
+
+        <p>I have replaced the focuser with a <a href="https://www.teleskop-express.de/en/telescope-accessories-5/focusers-adapters-motorfocus-296/focusers-and-micro-transmission-92/ts-optics-3-newtonian-crayford-focuser-dual-speed-8318" target="_blank" rel="noopener noreferrer">TS-Optics 3" UNCN3</a> Crayford focuser with a ZWO EAF robotic focus motor. This focuser has a dual speed mechanism (10:1 reduction) and copes well with the weight of the camera and coma corrector. This is one of the few focusers that are large enough for a 3" coma corrector.</p>
+
+        <div class="text-center mb-3">
+            <img src="/static/images/at12inFocuser6.jpg" alt="New Focuser with coma corrector" class="img-fluid rounded shadow-sm" style="max-width: 600px;">
+        </div>
+    </section>
+
+    <!-- Coma Corrector Section -->
+    <section class="mb-5">
+        <h2 class="h3 mb-3">Coma Corrector</h2>
+        <p>I have coupled this scope with a <a href="/files/Corr_3Zoll_Wynne.pdf" target="_blank" rel="noopener noreferrer">3" Wynne Corrector 0.95x 3KORRW</a> from ASA. It's the perfect size to fit in the stock focuser. This annotated image shows the 3 inch coma corrector and SBIG STL Camera in place. The first test image taken with the combination can be seen <a href="/show?id=ic4628">here</a>.</p>
+
+        <div class="text-center mb-3">
+            <img src="/static/images/at12inFocuser5_annotated.jpg" alt="New Focuser with coma corrector" class="img-fluid rounded shadow-sm" style="max-width: 600px;">
+        </div>
+
+        <div class="text-center mt-4">
+            <img src="/static/images/comacorrector.jpg" alt="ASA Coma Corrector and Custom Adaptor" class="img-fluid rounded shadow-sm" style="max-width: 600px;">
+            <p class="small text-muted mt-2">ASA Coma corrector and custom adaptor</p>
+        </div>
+    </section>
+</div>
+
+<style>
+.telescope-page img {
+    transition: transform 0.2s;
+}
+
+.telescope-page img:hover {
+    transform: scale(1.02);
+}
+
+.telescope-page .card {
+    transition: box-shadow 0.2s;
+}
+
+.telescope-page .card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.telescope-page .ratio {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+</style>
+
+{{end}}

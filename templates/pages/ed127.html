@@ -1,0 +1,92 @@
+{{template "base" .}}
+{{define "content"}}
+<h1>ED127 APO</h1>
+<p>After experiencing some limitations with the MN152 and WO 72 telescopes, I was looking around for new primary imaging scope.
+      The main contenders on my shopping list were</p>
+<ul>
+      <li>the 8&quot; GSO RC scope for 2,699 AUD</li>
+      <li>Skywatcher ED120 Back Diamond for 2,999 AUD</li>
+      <li>Skywatcher PRO ED 120 for 1,799 AUD</li>
+</ul>
+<p>I carefully reviewed the results others were getting with the above scopes. Each has it's own issues such as field curvature, price, availability etc.
+      Then I came across the ED127, and the amazing results achieved by Gary Honis. My mind was made up and I placed the order.
+      With amazing speed the scope arrived safe and sound in less than a week.</p>
+<p>After some research it seems this scope is made in the same factory that makes the <a href="/mn152">MN152</a> : Jinghua Optics &amp; Electronic Co..
+      This scope has been marketed under several brand names such as Maxvision, Prostar, Explore Scientific,
+      <a href="http://www.opticsplanet.net/meade-series-5000-ed-apo-refractor-telescope-127mm.html" target="_blank">Meade</a> and North Group / Hioptic.
+</p>
+<p>Specifications:</p>
+<ul>
+      <li>Aperture : 127mm (5&quot;) </li>
+      <li>Design : 3-element Apochromatic Refractor </li>
+      <li>Focal Length : 952mm</li>
+      <li>f/ratio : f/7.5 </li>
+      <li>Dew Shield : Built-in Extendable ( Recently there has been an upgrade to the scope -
+            the main difference is that the dew shield is now reversible in the newer scopes.)</li>
+      <li>Focuser : Machined Aluminum Crayford </li>
+      <li>Weight : 8.5 kg</li>
+</ul>
+<img src="/static/images/ed127.jpg" alt="ED127" class="img-fluid">
+<h2>Focuser</h2>
+<p>On the advice of other users and the vendor, I elected to order a more advanced focuser. From my perspective, it's perfectly adequate focuser for imaging with a DSLR.
+      I do find it's a little stretched holding up the weight of the much larger SBIG ST-L 11000M.
+      There is only one thumb screw in the focuser and this pushed against the standard brass compression ring.
+      This compression ring and thumb screw are part of the focuser and can not be removed to screw in a CCD camera.
+      I will tap out some more holes and insert socket head cap screws instead of the thumb screw.
+      I mainly use this scope for imaging, but it should be noted that it is very difficult (or impossible) to reach focus with a 2&quot; diagonal and eyepiece with this focuser.
+      It's not a problem for me, because I only use a 1.24 &quot; diagonal when I'm doing my drift alignment any how.</p>
+<p><img src="/static/images/ed127focus.jpg" alt="ED127" class="img-fluid"></p>
+<p>&nbsp;</p>
+<h2>Chromatic Aberration</h2>
+<p>This scope is sold as an triplet APO, which it is. But it should be noted that there is still some uncorrected Chromatic aberration.
+      The question is how much? I don't have the tools or skills to quantify it, but as many have reported it is minimal.</p>
+<p>The following video shows intra focal/focal/and extra focal performance of the scope on a very very bright star (Sirius? Sorry I can't remember which one)</p>
+<p>The video shows that when it <em>seems</em> the scope is in perfect focus, there is in fact a blue halo. Just out of focus, the halo can be removed.
+      What does this mean? It means that the blue wavelength is not in perfect focus and like all refracting lenses, chromatic aberration is present. </p>
+<iframe width="560" height="315"
+      src="https://www.youtube-nocookie.com/embed/fXQSaIL4WpI?si=7XOAXHJl_9clsyY_"
+      title="YouTube video player"
+
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen></iframe>
+
+<p>&nbsp;</p>
+<p>This got me thinking - how could it be that the Bahtinov mask says it is in focus, when clearly the blue is out of focus?
+      What would happen with a CCD camera and different colored filters? </p>
+<p>&nbsp;</p>
+<p><img src="/static/images/Focus-R-Scaled.jpg" alt="R" class="img-fluid"><img src="/static/images/Focus-G-Scaled.jpg" alt="G" class="img-fluid"><img src="/static/images/Focus-B-Scaled.jpg" alt="B" class="img-fluid"></p>
+<p>The images taken with the Red and Green filters look in focus, but what is going on with the Blue filter? A quick look says it's not in focus.
+      A very close look and something strange is going on - the lines are not straight - they have little curves.</p>
+<p><img src="/static/images/Focus-B-ScaledLines.jpg" alt="BLines" class="img-fluid"></p>
+<p>Of course this makes sense - red, blue and green light are not distinct wavelengths, it is a smooth continuum. So let's look at the Luminance image to see the combination of R+G+B</p>
+<p><img src="/static/images/Focus-L-Scaled.jpg" alt="L" class="img-fluid"></p>
+<p>The little curves are now quite clear.</p>
+<p> To round it out, here is an image taken with the Ha filter in place and a very rough stack of the LRGB images (without any alignment).</p>
+<p><img src="/static/images/Focus-Ha-Scaled.jpg" alt="Ha" class="img-fluid"><img src="/static/images/Focus-LRGB-Scaled.jpg" alt="LRGB" class="img-fluid"></p>
+<p>All this leads me to the following conclusions:</p>
+<ul>
+      <li>Refocus when the blue filter is in place</li>
+      <li> The straightness of the lines in a Bahtinov Mask image can give an indication of the quality of the color correction</li>
+      <li>This might be a good scope for narrowband imaging</li>
+</ul>
+<h2>Image Quality</h2>
+<p>Stars are quite round and tight almost all the way to the edge of the field of a typical DSLR,
+      although there is some slight curvature noticeable at the very edge of the image, but it's not a big deal.
+      I have posted some results from CCD Inspector below. I have found the Astrotech 2&quot; Flattener works really well with a DSLR and this scope.
+      The image below was taken with the Canon 500D and the AT FF under poor conditions.</p>
+<p><a href="/show?id=ngc6523b"><img src="/static/images/ngc6523b_thumb.jpg" alt="Flat" class="img-thumbnail"></a></p>
+<p>With the bigger chip in the ST-L 11000M, I have found the <a href="http://www.teleskop-express.de/shop/product_info.php/language/en/info/p4006_TS-2--Korrektor-fuer-Ritchey-Chr-tiens-ohne-Verkuerzung.html" target="_blank">TSRC Flat2</a> works OK.
+Below is a Ha image taken with this larger chip.</p>
+<p><a href="/show?id=ngc3372stl2"><img src="/static/images/ngc3372stl2_thumb.jpg" alt="Flat" class="img-thumbnail"></a></p>
+<p>CCD Inspector Report (Nikon D50):</p>
+<p>&nbsp;</p>
+<p><img src="/static/images/CCD3d.jpg" alt="CCDIS" class="img-fluid"></p>
+<p>&nbsp;</p>
+<p><img src="/static/images/CCDcurve.jpg" alt="CCDIS" class="img-fluid"></p>
+<p>&nbsp;</p>
+<h2>Summary</h2>
+<p>Overall I'm very happy with this telescope. One day I will upgrade to a FSQ, but for now I'm enjoying using this scope when I don't want the hassle of a long focal length.
+      The light gathering power is impressive and there are no diffraction spikes or collimation to worry about.</p>
+
+{{end}}

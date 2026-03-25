@@ -1,0 +1,76 @@
+{{template "base" .}}
+{{define "head"}}<link href="/static/css/dsp.css" rel="stylesheet" media="screen" />{{end}}
+{{define "content"}}
+{{if .Image.ID}}
+    <h2>{{.Image.Name}}</h2>
+    <p>{{.Image.Notes}}</p>
+    <table class="table">
+      <tr>
+        <th>Camera</th>
+        <td>{{.Image.Camera}}</td>
+        <th>Scope</th>
+        <td>{{.Image.Scope}}</td>
+      </tr>
+      <tr>
+        <th>Mount</th>
+        <td>{{.Image.Mount}}</td>
+        <th>Guiding</th>
+        <td>{{.Image.Guiding}}</td>
+      </tr>
+      <tr>
+        <th>Exposure</th>
+        <td>{{.Image.Exposure}}</td>
+        <th>Location</th>
+        <td>{{.Image.Location}}</td>
+      </tr>
+      <tr>
+        <th>Date</th>
+        <td>{{.Image.Date}}</td>
+        <th>Coordinates</th>
+        <td>{{if .HasRA}}RA: {{.RAStr}} | DEC: {{.DecStr}}{{end}}</td>
+      </tr>
+    </table>
+    <div class="img-container">
+      <style>
+        .imageBox {
+          position: relative;
+          float: left;
+        }
+        .imageBox .hoverImg {
+          position: absolute;
+          left: 0;
+          top: 0;
+          display: none;
+        }
+        .imageBox:hover .hoverImg {
+          display: block;
+        }
+      </style>
+      {{if .Prev}}
+        <a class="btn btn-outline-primary" href="/show?id={{.Prev}}&amp;sort={{.Sort}}&amp;filter={{.Filter}}">Previous</a>
+      {{end}}
+      <a class="btn btn-outline-primary" href="/images/{{.Image.Filename}}">Fullscreen</a>
+      {{if .HasBlink}}
+        <a class="btn btn-outline-primary" href="/images/{{.Image.Blink}}">Astrometry</a>
+      {{end}}
+      {{if .Next}}
+        <a class="btn btn-outline-primary" href="/show?id={{.Next}}&amp;sort={{.Sort}}&amp;filter={{.Filter}}">Next</a>
+      {{end}}
+      <p>
+      <div class="imageBox">
+        <div class="imageInn">
+          <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Filename}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
+        </div>
+        {{if .HasBlink}}
+        <div class="hoverImg">
+          <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Blink}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
+        </div>
+        {{end}}
+      </div>
+    </div>
+{{else}}
+    <h2>Image not found</h2>
+    <p>The requested image ID could not be found.</p>
+{{end}}
+<p class="clearfix"></p>
+{{end}}

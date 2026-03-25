@@ -1,0 +1,100 @@
+{{template "base" .}}
+{{define "content"}}
+<h1>Light Pollution</h1>
+<p>It's the bane of every suburban Astrophotographer : <a href="https://en.wikipedia.org/wiki/Light_pollution" target="_blank">Light pollution</a>. As our cities continue to grow, so does the problem of light pollution. In light polluted skies, it's often impossible to see all but the brightest stars and the planets : if you want to see the Milky Way or faint astronomical objects, the only solution is to hit the road and get away from the city lights. It's only when you arrive at a truly dark site that you are reminded of the beautiful night-time sky that all city dwellers are missing out on. Do you have outside lights on? Go and turn them off now before reading on.</p>
+<h3>The Road Trip Test</h3>
+<p>On 6-Jan-2011 I hatched a plan. After I got the observatory all set up and imaging away I went for a drive up into the hills, departing my house around midnight. I drove for 30 km, stopping every 10 km to take a 30 second exposure of the sky with a Canon 500D set to f/1.8 ISO1600 with a standard 50mm lens and the flash disabled. I aimed the camera directly overhead and used a spirit level and compass to try to get the same orientation each time. The exposures were triggered with a remote timer. The idea was to take all the images on the same moonless night with the same camera within a short period of time. Then on the way home, I repeated the process just in case the sky was still getting dark after sunset (or starting to get lighter due to sunrise). Unfortunately some light clouds interfered with the tests, especially at Site 1. </p>
+<p>The stopovers were as follows: </p>
+<table class="table">
+  <tr>
+    <td>Stop Number</td>
+    <td>Location</td>
+    <td>Distance from Home</td>
+  </tr>
+  <tr>
+    <td>Home</td>
+    <td>Donvale</td>
+    <td>0 km</td>
+  </tr>
+  <tr>
+    <td>Stop 1</td>
+    <td>Kangaroo Ground</td>
+    <td>10 km</td>
+  </tr>
+  <tr>
+    <td>Stop 2</td>
+    <td>St. Andrews</td>
+    <td>20 km</td>
+  </tr>
+  <tr>
+    <td>Stop 3</td>
+    <td>King Lake</td>
+    <td>30 km</td>
+  </tr>
+</table>
+<p>This image shows the journey in relation to Melbourne and the ASV Dark Sky site at Heathcote (upper left)</p>
+<p><img src="/static/images/lightpollutionmelbourne.jpg" class="img-fluid" alt="Light Pollution Melbourne"></p>
+<h3>Results</h3>
+<p>In the end I didn't really need the camera - I could see the difference with my own eyes. King Lake was looking beautiful compared to my back yard!
+  Below are some samples from the images (from left to right) taken at home, 10 km, 20 km and 30 km.</p>
+<p><img src="/static/images/lightpollutionsample.jpg" alt="Light Pollution Sample" class="img-fluid"></p>
+<p>Using CCDStack, I measured the sky background using the Mode function. The mode function gives the most common value, so it ignores the higher star values.</p>
+<p>In the image below you can see how I made the measurement. I selected an area near the centre, and in the information box you can see the &quot;Int Mode&quot; value is 1,342.</p>
+<p><img src="/static/images/lightpollutionccdstack.jpg" alt="Light Pollution CCD Stack" class="img-fluid"></p>
+<p>&nbsp;</p>
+<p>The graph below shows the result of the test. To give some sense of scale, this camera has a maximum pixel value of 16,383.</p>
+<p><img src="/static/images/lightpollutiongrapg.jpg" class="img-fluid" alt="Light Pollution Graph"></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+<table class="table">
+  <tr>
+    <td>Stop Number</td>
+    <td>Location</td>
+    <td>Distance from Home</td>
+    <td>Sky Brightness (Mode)</td>
+    <td>Percentage Saturation</td>
+    <td>Percentage Reduction</td>
+  </tr>
+  <tr>
+    <td>Home</td>
+    <td>Donvale</td>
+    <td>0 km</td>
+    <td>2,688</td>
+    <td>16%</td>
+    <td>0%</td>
+  </tr>
+  <tr>
+    <td>Stop 1</td>
+    <td>Kangaroo Ground</td>
+    <td>10 km</td>
+    <td>1,870</td>
+    <td>11%</td>
+    <td>30%</td>
+  </tr>
+  <tr>
+    <td>Stop 2</td>
+    <td>St. Andrews</td>
+    <td>20 km</td>
+    <td>1,468</td>
+    <td>9%</td>
+    <td>45%</td>
+  </tr>
+  <tr>
+    <td>Stop 3</td>
+    <td>King Lake</td>
+    <td>30 km</td>
+    <td>1,341</td>
+    <td>8%</td>
+    <td>50%</td>
+  </tr>
+</table>
+<p>In summary the Sky brightness is halved by driving just 30 km away. </p>
+<p>There a quite a few sources of error in this analysis. The sky brightness is heavily influenced by local conditions such as street lights and clouds.
+  I also did not pay enough attention to the focus and this has influenced the measurements to some degree.
+  Looking back at the direction of the star trails in my images, I think my orientation was a bit off, but I don't think this had a big impact on the results.</p>
+<p>Having said that, it is still clear that a reasonably short drive is well worth the effort.</p>
+<p>Before heading home I couldn't resist and took a 30 second shot of Orion through the tress at King Lake. Taken at f/1.8 ISO1600 from a fixed tripod (i.e. no tracking).
+  There is no way I can do this from my back yard.</p>
+<p><img src="/static/images/lightpollutionorion.jpg" class="img-fluid" alt="Orion"></p>
+{{end}}

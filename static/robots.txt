@@ -1,0 +1,6 @@
+User-agent: SERankingBacklinksBot
+Disallow: /
+
+User-agent: *
+Disallow: /files/
+Disallow: /js/
