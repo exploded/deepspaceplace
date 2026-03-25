@@ -1,8 +1,7 @@
 {{template "base" .}}
-{{define "head"}}<link href="/static/css/dsp.css" rel="stylesheet" media="screen" />{{end}}
 {{define "content"}}
 {{if .Image.ID}}
-    <h2>{{.Image.Name}}</h2>
+    <h1>{{.Image.Name}}</h1>
     <p>{{.Image.Notes}}</p>
     <table class="table">
       <tr>
