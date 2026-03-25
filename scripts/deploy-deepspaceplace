@@ -1,0 +1,63 @@
+#!/bin/bash
+# /usr/local/bin/deploy-deepspaceplace
+# Runs as root (via sudo) during GitHub Actions deployments.
+#
+# To update: include scripts/deploy-deepspaceplace in the SCP bundle —
+# it will self-update and re-exec before doing anything else.
+
+set -e
+
+DEPLOY_SRC="${1:-/tmp/deepspaceplace-deploy}"
+DEPLOY_DIR=/var/www/deepspaceplace.com
+
+# Self-update: if the bundle contains a newer version, install and re-exec.
+BUNDLE_SCRIPT="$DEPLOY_SRC/scripts/deploy-deepspaceplace"
+if [ -f "$BUNDLE_SCRIPT" ] && ! diff -q /usr/local/bin/deploy-deepspaceplace "$BUNDLE_SCRIPT" > /dev/null 2>&1; then
+    echo "[deploy] Updating deploy script from bundle..."
+    install -m 755 "$BUNDLE_SCRIPT" /usr/local/bin/deploy-deepspaceplace
+    exec /usr/local/bin/deploy-deepspaceplace "$@"
+fi
+
+# Read service owner from systemd — no hardcoded username
+SERVICE_USER=$(systemctl show deepspaceplace --property=User --value)
+SERVICE_GROUP=$(systemctl show deepspaceplace --property=Group --value)
+
+if [ -z "$SERVICE_USER" ]; then
+    echo "[deploy] ERROR: Could not read User from deepspaceplace.service"
+    exit 1
+fi
+
+echo "[deploy] Stopping service..."
+systemctl stop deepspaceplace || true
+
+echo "[deploy] Installing binary to $DEPLOY_DIR/deepspaceplace..."
+rm -f "$DEPLOY_DIR/deepspaceplace"
+cp "$DEPLOY_SRC/deepspaceplace" "$DEPLOY_DIR/deepspaceplace"
+chmod +x "$DEPLOY_DIR/deepspaceplace"
+
+echo "[deploy] Updating web assets..."
+cp -r "$DEPLOY_SRC/templates/"  "$DEPLOY_DIR/"
+cp -r "$DEPLOY_SRC/static/"    "$DEPLOY_DIR/"
+cp -r "$DEPLOY_SRC/data/"      "$DEPLOY_DIR/"
+cp -r "$DEPLOY_SRC/files/"     "$DEPLOY_DIR/"
+cp -r "$DEPLOY_SRC/db/"        "$DEPLOY_DIR/"
+cp -f "$DEPLOY_SRC/favicon.ico" "$DEPLOY_DIR/" 2>/dev/null || true
+cp -f "$DEPLOY_SRC/robots.txt"  "$DEPLOY_DIR/" 2>/dev/null || true
+
+chown -R "$SERVICE_USER:$SERVICE_GROUP" "$DEPLOY_DIR"
+
+echo "[deploy] Starting service..."
+systemctl start deepspaceplace
+
+echo "[deploy] Verifying service is active..."
+sleep 2
+if ! systemctl is-active --quiet deepspaceplace; then
+    echo "[deploy] ERROR: Service failed to start. Status:"
+    systemctl status deepspaceplace --no-pager --lines=30
+    exit 1
+fi
+
+echo "[deploy] Cleaning up..."
+rm -rf "$DEPLOY_SRC"
+
+echo "[deploy] Done — deepspaceplace is running."

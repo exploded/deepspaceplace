@@ -122,7 +122,7 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static"))))))
 	mux.Handle("/images/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 	mux.Handle("/files/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
-	mux.Handle("/meteor/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
+	mux.Handle("/meteor/", http.StripPrefix("/meteor/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "meteor"))))))
 	mux.Handle("/data/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 
 	// Build server with middleware
