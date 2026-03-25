@@ -90,7 +90,23 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Render(w, "converter.html", ConverterData{})
+	// Pre-fill with example values
+	h, m, s := splitHMS(115.624)
+	sign, d, dm, ds := splitDMS(-14.819)
+	raDecResult := parseHMS("07 41 46.0")
+	decResult, _ := parseDMS("-14 30 00")
+	Render(w, "converter.html", ConverterData{
+		RADecimal:  "115.624",
+		DecDecimal: "-14.819",
+		ShowHMS:    true,
+		ResultHMS:  fmt.Sprintf("RA: %02dh %02dm %06.3fs", h, m, s),
+		ResultDMS:  fmt.Sprintf("DEC: %s%02d° %02d' %06.3f\"", sign, d, dm, ds),
+		RAHMS:      "07h 41m 46.0s",
+		DecDMS:     "-14° 30' 00\"",
+		ShowDec:    true,
+		ResultRA:   fmt.Sprintf("RA: %.6f°", raDecResult*15.0),
+		ResultDec:  fmt.Sprintf("DEC: %.6f°", decResult),
+	})
 }
 
 func parseHMS(input string) float64 {
