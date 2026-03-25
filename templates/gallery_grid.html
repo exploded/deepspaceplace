@@ -1,12 +1,12 @@
 {{define "gallery_grid.html"}}
-<p>Sort by :</p>
+<p>Sort by:</p>
 <div class="btn-group" role="group">
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=ID&amp;filter={{.Filter}}" hx-target="#gallery-container" hx-push-url="/images?sort=ID&amp;filter={{.Filter}}">Name</a>
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=Date&amp;filter={{.Filter}}" hx-target="#gallery-container" hx-push-url="/images?sort=Date&amp;filter={{.Filter}}">Date</a>
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=Type&amp;filter={{.Filter}}" hx-target="#gallery-container" hx-push-url="/images?sort=Type&amp;filter={{.Filter}}">Object Type</a>
 	<a class="btn btn-success btn-skymap" href="/skymap">New - Skymap</a>
 </div>
-<p>Filter by image type :</p>
+<p>Filter by image type:</p>
 <div class="btn-group" role="group">
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=all" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=all">All</a>
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=Date&amp;filter=new" hx-target="#gallery-container" hx-push-url="/images?sort=Date&amp;filter=new">New Images</a>
@@ -15,7 +15,7 @@
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=Globular" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=Globular">Globular</a>
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=Cluster" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=Cluster">Cluster</a>
 </div>
-<p>Filter by equipment :</p>
+<p>Filter by equipment:</p>
 <div class="btn-group" role="group">
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=TOA130NS" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=TOA130NS">TOA 130NS</a>
 	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=AT8IN" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=AT8IN">AT8IN</a>
