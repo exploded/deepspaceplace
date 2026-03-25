@@ -51,6 +51,7 @@ func main() {
 
 	queries := database.New(db)
 	handlers.DB = queries
+	handlers.Prod = prod
 
 	// Parse templates
 	templates, err := parseTemplates()
@@ -90,6 +91,8 @@ func main() {
 	mux.HandleFunc("/admin/edit", handlers.HandleAdminEdit)
 	mux.HandleFunc("/admin/new", handlers.HandleAdminNew)
 	mux.HandleFunc("/admin/delete", handlers.HandleAdminDelete)
+	mux.HandleFunc("/admin/resize", handlers.HandleAdminResize)
+	mux.HandleFunc("/admin/platesolve", handlers.HandleAdminPlateSolve)
 
 	// Static content pages
 	mux.HandleFunc("/equipment", handlers.StaticPage("equipment.html"))

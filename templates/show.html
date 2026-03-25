@@ -30,21 +30,6 @@
       </tr>
     </table>
     <div class="img-container">
-      <style>
-        .imageBox {
-          position: relative;
-          float: left;
-        }
-        .imageBox .hoverImg {
-          position: absolute;
-          left: 0;
-          top: 0;
-          display: none;
-        }
-        .imageBox:hover .hoverImg {
-          display: block;
-        }
-      </style>
       {{if .Prev}}
         <a class="btn btn-outline-primary" href="/show?id={{.Prev}}&amp;sort={{.Sort}}&amp;filter={{.Filter}}">Previous</a>
       {{end}}
@@ -55,8 +40,7 @@
       {{if .Next}}
         <a class="btn btn-outline-primary" href="/show?id={{.Next}}&amp;sort={{.Sort}}&amp;filter={{.Filter}}">Next</a>
       {{end}}
-      <p>
-      <div class="imageBox">
+      <div class="imageBox" style="margin-top: 1rem;">
         <div class="imageInn">
           <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Filename}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
         </div>

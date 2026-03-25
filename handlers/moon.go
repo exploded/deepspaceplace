@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/exploded/riseset"
@@ -18,7 +19,35 @@ type MoonData struct {
 	Days []MoonDay
 }
 
+var (
+	moonCache     MoonData
+	moonCacheDate string
+	moonCacheMu   sync.Mutex
+)
+
 func HandleMoon(w http.ResponseWriter, r *http.Request) {
+	today := time.Now().Format("2006-01-02")
+
+	moonCacheMu.Lock()
+	if moonCacheDate == today {
+		data := moonCache
+		moonCacheMu.Unlock()
+		Render(w, "moon.html", data)
+		return
+	}
+	moonCacheMu.Unlock()
+
+	data := computeMoonData()
+
+	moonCacheMu.Lock()
+	moonCache = data
+	moonCacheDate = today
+	moonCacheMu.Unlock()
+
+	Render(w, "moon.html", data)
+}
+
+func computeMoonData() MoonData {
 	lon := 144.9
 	lat := -37.8
 	zon := 10.0
@@ -26,7 +55,7 @@ func HandleMoon(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	numDays := 60
 
-	var days []MoonDay
+	days := make([]MoonDay, 0, numDays)
 	for i := 0; i < numDays; i++ {
 		date := now.AddDate(0, 0, i)
 		rs := riseset.Riseset(riseset.Moon, date, lon, lat, zon)
@@ -50,7 +79,5 @@ func HandleMoon(w http.ResponseWriter, r *http.Request) {
 		days = append(days, day)
 	}
 
-	data := MoonData{Days: days}
-
-	Render(w, "moon.html", data)
+	return MoonData{Days: days}
 }

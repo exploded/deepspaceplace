@@ -351,6 +351,9 @@ nav.navbar:last-child svg { opacity: 0.5; }
   letter-spacing: 0.04em;
   margin-bottom: 0.3rem;
 }
+.form-text {
+  color: var(--text-secondary) !important;
+}
 
 /* ── Alerts ── */
 .alert-danger {
@@ -461,19 +464,16 @@ figure.figure:hover { transform: translateY(-3px); }
   letter-spacing: 0.04em;
 }
 
-/* Converter result boxes */
-div[style*="background-color: #e9ecef"] {
-  background: var(--bg-elevated) !important;
-  border: 1px solid var(--border-medium) !important;
-  border-radius: var(--radius-md) !important;
-  color: var(--accent-blue) !important;
-  font-family: var(--font-mono) !important;
-}
-div[style*="background-color: #fff3cd"] {
-  background: rgba(200, 164, 110, 0.06) !important;
-  border: 1px solid rgba(200, 164, 110, 0.15) !important;
-  border-radius: var(--radius-md) !important;
-  color: var(--text-primary) !important;
+/* Converter result box */
+.converter-result {
+  margin-top: 15px;
+  padding: 15px;
+  font-weight: bold;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--accent-blue);
+  font-family: var(--font-mono);
 }
 
 /* ── Skymap ── */

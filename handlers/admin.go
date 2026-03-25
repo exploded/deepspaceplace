@@ -63,7 +63,7 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 				Value:    token,
 				Path:     "/admin",
 				HttpOnly: true,
-				Secure:   true,
+				Secure:   Prod,
 				SameSite: http.SameSiteStrictMode,
 			})
 			http.Redirect(w, r, "/admin", http.StatusSeeOther)
