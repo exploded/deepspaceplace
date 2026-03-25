@@ -10,6 +10,7 @@
         <p>Resize all images in <code>/images/</code> so the longest side does not exceed the specified maximum. Thumbnails (<code>_thumb</code> files) are skipped.</p>
         <p>Images are saved as JPEG quality 90. <strong>This overwrites the original files.</strong></p>
         <form method="POST" action="/admin/resize">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
             <div class="mb-3">
                 <label for="max_dimension" class="form-label">Max dimension (px)</label>
                 <input type="number" class="form-control" id="max_dimension" name="max_dimension"

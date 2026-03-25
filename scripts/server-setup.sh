@@ -75,7 +75,6 @@ else
     cat > "$SITE_DIR/.env" << 'EOF'
 PORT=8686
 PROD=True
-ADMIN_USER=admin
 ADMIN_PASSWORD=CHANGE_ME_NOW
 EOF
     chmod 600 "$SITE_DIR/.env"

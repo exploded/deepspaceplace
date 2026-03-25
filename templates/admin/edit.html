@@ -4,6 +4,7 @@
 {{define "content"}}
 <h1>{{if .ID}}Edit Image: {{.ID}}{{else}}New Image{{end}}</h1>
 <form method="post" action="{{if .ID}}/admin/edit{{else}}/admin/new{{end}}">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">ID</label>

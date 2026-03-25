@@ -34,117 +34,120 @@ type calibration struct {
 }
 
 func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
-	adminAuth(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-		// Extend write deadline — solving takes minutes
-		rc := http.NewResponseController(w)
-		rc.SetWriteDeadline(time.Now().Add(10 * time.Minute))
+	// Extend write deadline — solving takes minutes
+	rc := http.NewResponseController(w)
+	rc.SetWriteDeadline(time.Now().Add(10 * time.Minute))
 
-		r.ParseForm()
-		id := r.FormValue("id")
-		if id == "" {
-			writesolveResult(w, id, "danger", "No image ID")
-			return
-		}
+	r.ParseForm()
+	if !validateCSRF(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
-		ctx := r.Context()
-		img, err := DB.GetImage(ctx, id)
-		if err != nil {
-			writesolveResult(w, id, "danger", "Image not found")
-			return
-		}
+	id := r.FormValue("id")
+	if id == "" {
+		writesolveResult(w, id, "danger", "No image ID")
+		return
+	}
 
-		apiKey := os.Getenv("ASTROMETRY_API_KEY")
-		if apiKey == "" {
-			writesolveResult(w, id, "danger", "API key not configured")
-			return
-		}
+	ctx := r.Context()
+	img, err := DB.GetImage(ctx, id)
+	if err != nil {
+		writesolveResult(w, id, "danger", "Image not found")
+		return
+	}
 
-		// Login
-		session, err := astrometryLogin(apiKey)
-		if err != nil {
-			log.Printf("Astrometry login failed: %v", err)
-			writesolveResult(w, id, "danger", "Login failed")
-			return
-		}
+	apiKey := os.Getenv("ASTROMETRY_API_KEY")
+	if apiKey == "" {
+		writesolveResult(w, id, "danger", "API key not configured")
+		return
+	}
 
-		// Submit
-		imageURL := imageBaseURL + img.Filename
-		subID, err := astrometrySubmit(session, imageURL, img.Camera, img.Scope)
-		if err != nil {
-			log.Printf("Astrometry submit failed for %s: %v", id, err)
-			writesolveResult(w, id, "danger", "Submit failed")
-			return
-		}
-		log.Printf("Plate solve submitted for %s: sub=%d", id, subID)
+	// Login
+	session, err := astrometryLogin(apiKey)
+	if err != nil {
+		log.Printf("Astrometry login failed: %v", err)
+		writesolveResult(w, id, "danger", "Login failed")
+		return
+	}
 
-		// Poll for job ID
-		var jobID int
-		for i := 0; i < 30; i++ {
-			time.Sleep(5 * time.Second)
-			jobID = astrometryCheckSubmission(subID)
-			if jobID > 0 {
-				break
-			}
-		}
-		if jobID == 0 {
-			markSolveFailed(ctx, id)
-			writesolveResult(w, id, "warning", "Timeout waiting for job")
-			return
-		}
+	// Submit
+	imageURL := imageBaseURL + img.Filename
+	subID, err := astrometrySubmit(session, imageURL, img.Camera, img.Scope)
+	if err != nil {
+		log.Printf("Astrometry submit failed for %s: %v", id, err)
+		writesolveResult(w, id, "danger", "Submit failed")
+		return
+	}
+	log.Printf("Plate solve submitted for %s: sub=%d", id, subID)
 
-		// Poll for result
-		var status string
-		for i := 0; i < 60; i++ {
-			time.Sleep(5 * time.Second)
-			status = astrometryCheckJob(jobID)
-			if status == "success" || status == "failure" {
-				break
-			}
+	// Poll for job ID
+	var jobID int
+	for i := 0; i < 30; i++ {
+		time.Sleep(5 * time.Second)
+		jobID = astrometryCheckSubmission(subID)
+		if jobID > 0 {
+			break
 		}
+	}
+	if jobID == 0 {
+		markSolveFailed(ctx, id)
+		writesolveResult(w, id, "warning", "Timeout waiting for job")
+		return
+	}
 
-		if status != "success" {
-			markSolveFailed(ctx, id)
-			writesolveResult(w, id, "danger", "Solve failed")
-			return
+	// Poll for result
+	var status string
+	for i := 0; i < 60; i++ {
+		time.Sleep(5 * time.Second)
+		status = astrometryCheckJob(jobID)
+		if status == "success" || status == "failure" {
+			break
 		}
+	}
 
-		// Get calibration
-		cal, err := astrometryGetCalibration(jobID)
-		if err != nil {
-			log.Printf("Calibration fetch failed for %s job %d: %v", id, jobID, err)
-			markSolveFailed(ctx, id)
-			writesolveResult(w, id, "danger", "Calibration error")
-			return
-		}
+	if status != "success" {
+		markSolveFailed(ctx, id)
+		writesolveResult(w, id, "danger", "Solve failed")
+		return
+	}
 
-		// Update DB
-		err = DB.UpdateImagePlateSolve(ctx, database.UpdateImagePlateSolveParams{
-			ID:           id,
-			Solved:       "y",
-			Ra:           sql.NullFloat64{Float64: cal.RA, Valid: true},
-			Dec:          sql.NullFloat64{Float64: cal.DEC, Valid: true},
-			Pixscale:     sql.NullFloat64{Float64: cal.PixScale, Valid: true},
-			Radius:       sql.NullFloat64{Float64: cal.Radius, Valid: true},
-			WidthArcsec:  sql.NullFloat64{Float64: cal.WidthAS, Valid: true},
-			HeightArcsec: sql.NullFloat64{Float64: cal.HeightAS, Valid: true},
-			Fieldw:       sql.NullFloat64{Float64: cal.FieldW, Valid: true},
-			Fieldh:       sql.NullFloat64{Float64: cal.FieldH, Valid: true},
-			Orientation:  sql.NullFloat64{Float64: cal.Orientation, Valid: true},
-		})
-		if err != nil {
-			log.Printf("DB update failed for %s: %v", id, err)
-			writesolveResult(w, id, "danger", "DB update failed")
-			return
-		}
+	// Get calibration
+	cal, err := astrometryGetCalibration(jobID)
+	if err != nil {
+		log.Printf("Calibration fetch failed for %s job %d: %v", id, jobID, err)
+		markSolveFailed(ctx, id)
+		writesolveResult(w, id, "danger", "Calibration error")
+		return
+	}
 
-		log.Printf("Plate solve success for %s: RA=%.3f DEC=%.3f", id, cal.RA, cal.DEC)
-		writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC))
-	})(w, r)
+	// Update DB
+	err = DB.UpdateImagePlateSolve(ctx, database.UpdateImagePlateSolveParams{
+		ID:           id,
+		Solved:       "y",
+		Ra:           sql.NullFloat64{Float64: cal.RA, Valid: true},
+		Dec:          sql.NullFloat64{Float64: cal.DEC, Valid: true},
+		Pixscale:     sql.NullFloat64{Float64: cal.PixScale, Valid: true},
+		Radius:       sql.NullFloat64{Float64: cal.Radius, Valid: true},
+		WidthArcsec:  sql.NullFloat64{Float64: cal.WidthAS, Valid: true},
+		HeightArcsec: sql.NullFloat64{Float64: cal.HeightAS, Valid: true},
+		Fieldw:       sql.NullFloat64{Float64: cal.FieldW, Valid: true},
+		Fieldh:       sql.NullFloat64{Float64: cal.FieldH, Valid: true},
+		Orientation:  sql.NullFloat64{Float64: cal.Orientation, Valid: true},
+	})
+	if err != nil {
+		log.Printf("DB update failed for %s: %v", id, err)
+		writesolveResult(w, id, "danger", "DB update failed")
+		return
+	}
+
+	log.Printf("Plate solve success for %s: RA=%.3f DEC=%.3f", id, cal.RA, cal.DEC)
+	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC))
 }
 
 func markSolveFailed(ctx context.Context, id string) {

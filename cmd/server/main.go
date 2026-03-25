@@ -85,14 +85,15 @@ func main() {
 	mux.HandleFunc("/weather", handlers.HandleWeather)
 	mux.HandleFunc("/api/bom-satellite", handlers.HandleBOMProxy)
 
-	// Admin
+	// Admin (login/logout are public, everything else requires auth)
 	mux.HandleFunc("/admin/login", handlers.HandleAdminLogin)
-	mux.HandleFunc("/admin", handlers.HandleAdmin)
-	mux.HandleFunc("/admin/edit", handlers.HandleAdminEdit)
-	mux.HandleFunc("/admin/new", handlers.HandleAdminNew)
-	mux.HandleFunc("/admin/delete", handlers.HandleAdminDelete)
-	mux.HandleFunc("/admin/resize", handlers.HandleAdminResize)
-	mux.HandleFunc("/admin/platesolve", handlers.HandleAdminPlateSolve)
+	mux.HandleFunc("/admin/logout", handlers.HandleAdminLogout)
+	mux.HandleFunc("/admin", handlers.AdminAuth(handlers.HandleAdmin))
+	mux.HandleFunc("/admin/edit", handlers.AdminAuth(handlers.HandleAdminEdit))
+	mux.HandleFunc("/admin/new", handlers.AdminAuth(handlers.HandleAdminNew))
+	mux.HandleFunc("/admin/delete", handlers.AdminAuth(handlers.HandleAdminDelete))
+	mux.HandleFunc("/admin/resize", handlers.AdminAuth(handlers.HandleAdminResize))
+	mux.HandleFunc("/admin/platesolve", handlers.AdminAuth(handlers.HandleAdminPlateSolve))
 
 	// Static content pages
 	mux.HandleFunc("/equipment", handlers.StaticPage("equipment.html"))

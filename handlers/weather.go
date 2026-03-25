@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -11,9 +10,6 @@ import (
 
 var bomClient = &http.Client{
 	Timeout: 10 * time.Second,
-	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	},
 }
 
 func HandleWeather(w http.ResponseWriter, r *http.Request) {

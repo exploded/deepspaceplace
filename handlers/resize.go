@@ -40,44 +40,51 @@ type ResizeData struct {
 }
 
 func HandleAdminResize(w http.ResponseWriter, r *http.Request) {
-	adminAuth(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			rc := http.NewResponseController(w)
-			rc.SetWriteDeadline(time.Now().Add(10 * time.Minute))
-
-			r.ParseForm()
-			maxDim := defaultMaxDimension
-			if v := r.FormValue("max_dimension"); v != "" {
-				if d, err := strconv.Atoi(v); err == nil && d >= 800 && d <= 7680 {
-					maxDim = d
-				}
-			}
-
-			results := resizeAllImages("images", maxDim)
-
-			data := ResizeData{
-				Results: results,
-				Done:    true,
-				MaxDim:  maxDim,
-			}
-			for _, res := range results {
-				switch res.Status {
-				case "resized":
-					data.Resized++
-				case "skipped":
-					data.Skipped++
-				case "error":
-					data.Errors++
-				}
-			}
-			data.Total = len(results)
-
-			Render(w, "resize.html", data)
+	if r.Method == http.MethodPost {
+		r.ParseForm()
+		if !validateCSRF(r) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
 
-		Render(w, "resize.html", ResizeData{MaxDim: defaultMaxDimension})
-	})(w, r)
+		rc := http.NewResponseController(w)
+		rc.SetWriteDeadline(time.Now().Add(10 * time.Minute))
+
+		maxDim := defaultMaxDimension
+		if v := r.FormValue("max_dimension"); v != "" {
+			if d, err := strconv.Atoi(v); err == nil && d >= 800 && d <= 7680 {
+				maxDim = d
+			}
+		}
+
+		results := resizeAllImages("images", maxDim)
+
+		data := ResizeData{
+			Results: results,
+			Done:    true,
+			MaxDim:  maxDim,
+		}
+		for _, res := range results {
+			switch res.Status {
+			case "resized":
+				data.Resized++
+			case "skipped":
+				data.Skipped++
+			case "error":
+				data.Errors++
+			}
+		}
+		data.Total = len(results)
+
+		Render(w, "resize.html", data)
+		return
+	}
+
+	type resizePageData struct {
+		ResizeData
+		CSRFToken string
+	}
+	Render(w, "resize.html", resizePageData{ResizeData: ResizeData{MaxDim: defaultMaxDimension}, CSRFToken: getCSRFToken()})
 }
 
 func resizeAllImages(dir string, maxDim int) []ResizeResult {
