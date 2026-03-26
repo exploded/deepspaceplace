@@ -1,6 +1,9 @@
 .env
 *.exe
+deepspaceplace
 *.db
+*.db-wal
+*.db-shm
 .vscode/
 .DS_Store
 Thumbs.db
