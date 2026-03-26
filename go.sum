@@ -1,5 +1,7 @@
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
+github.com/exploded/monitor v0.0.0-20260326133010-e5d47c4e4244 h1:HtqUD4RsGGDdVFBzRzxFyys1z5bAkIl9zVs3Lrac9tM=
+github.com/exploded/monitor v0.0.0-20260326133010-e5d47c4e4244/go.mod h1:WFBw9Z+xIfAt9OWoNfOQ5DMY9tfStvFvKuv2j9wFw2A=
 github.com/exploded/riseset v1.0.0 h1:qdXzKgiEieF8hJSvmONRYcX4QalBMkFnUf1xuW6YIxM=
 github.com/exploded/riseset v1.0.0/go.mod h1:VjRq5iJAosiDcmN6cIemg4Koh/g/MirLmI9djQoiuYs=
 github.com/exploded/riseset v1.0.1-0.20260220080739-24891d86367a h1:9zXloV9qOl/7d9DUghsbK2l0w1xM0ebmEjMWk8KCS4Y=

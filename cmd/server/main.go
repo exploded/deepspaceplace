@@ -5,23 +5,47 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	"strings"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
 	"deepspaceplace/handlers"
 	"deepspaceplace/internal/database"
 
+	"github.com/exploded/monitor/pkg/logship"
 	_ "modernc.org/sqlite"
 )
 
 func main() {
 	loadEnvFile(".env")
+
+	// Set up log shipping to monitor portal
+	var ship *logship.Handler
+	monitorURL := os.Getenv("MONITOR_URL")
+	monitorKey := os.Getenv("MONITOR_API_KEY")
+
+	if monitorURL != "" && monitorKey != "" {
+		ship = logship.New(logship.Options{
+			Endpoint: monitorURL + "/api/logs",
+			APIKey:   monitorKey,
+			App:      "deepspaceplace",
+			Level:    slog.LevelWarn,
+		})
+
+		logger := slog.New(logship.Multi(
+			slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}),
+			ship,
+		))
+		slog.SetDefault(logger)
+	} else {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo})))
+	}
 
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {
@@ -159,6 +183,9 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("Server forced to shutdown: %v", err)
+	}
+	if ship != nil {
+		ship.Shutdown()
 	}
 	log.Println("Server exited")
 }
