@@ -1,6 +1,6 @@
 #!/bin/bash
 # One-time server setup for deepspaceplace
-# Usage: curl -fsSL https://raw.githubusercontent.com/exploded/deepspaceplace/master/scripts/server-setup.sh | sudo bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/exploded/deepspaceplace/main/scripts/server-setup.sh | sudo bash
 
 set -e
 

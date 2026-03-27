@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Deep Space Place (deepspaceplace.com) — an astrophotography portfolio and tools website. Converted from PHP/MySQL to Go/HTMX/SQLC/SQLite. Hosted on Linode (Debian), deployed via GitHub Actions on push to `master`.
+Deep Space Place (deepspaceplace.com) — an astrophotography portfolio and tools website. Converted from PHP/MySQL to Go/HTMX/SQLC/SQLite. Hosted on Linode (Debian), deployed via GitHub Actions on push to `main`.
 
 ## Build & Run
 
@@ -73,7 +73,7 @@ CSS: `bootstrap.css`, `dsp.css`. JS: `bootstrap.bundle.js`, `htmx.min.js`. Astro
 
 ## Deployment
 
-Push to `master` triggers GitHub Actions (`.github/workflows/deploy.yml`):
+Push to `main` triggers GitHub Actions (`.github/workflows/deploy.yml`):
 1. Tests run (`go test -v ./...`)
 2. Builds static Linux binary (`CGO_ENABLED=0`)
 3. SCPs binary + assets to Linode
