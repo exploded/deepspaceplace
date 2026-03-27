@@ -8,7 +8,7 @@
 set -e
 
 DEPLOY_SRC="${1:-/tmp/deepspaceplace-deploy}"
-DEPLOY_DIR=/var/www/deepspaceplace.com
+DEPLOY_DIR=/var/www/deepspaceplace
 
 # Self-update: if the bundle contains a newer version, install and re-exec.
 BUNDLE_SCRIPT="$DEPLOY_SRC/scripts/deploy-deepspaceplace"
