@@ -11,15 +11,16 @@ import (
 )
 
 type ShowData struct {
-	Image    database.Image
-	Prev     string
-	Next     string
-	Sort     string
-	Filter   string
-	HasRA    bool
-	HasBlink bool
-	RAStr    string
-	DecStr   string
+	Image        database.Image
+	Prev         string
+	Next         string
+	Sort         string
+	Filter       string
+	HasRA        bool
+	HasBlink     bool
+	RAStr        string
+	DecStr       string
+	CanonicalURL string
 }
 
 func HandleShow(w http.ResponseWriter, r *http.Request) {
@@ -48,13 +49,14 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	next := getNext(ctx, id, sort)
 
 	data := ShowData{
-		Image:    img,
-		Prev:     prev,
-		Next:     next,
-		Sort:     sort,
-		Filter:   filter,
-		HasRA:    img.Ra.Valid && img.Dec.Valid,
-		HasBlink: img.Blink != "na" && img.Blink != "",
+		Image:        img,
+		Prev:         prev,
+		Next:         next,
+		Sort:         sort,
+		Filter:       filter,
+		HasRA:        img.Ra.Valid && img.Dec.Valid,
+		HasBlink:     img.Blink != "na" && img.Blink != "",
+		CanonicalURL: "https://deepspaceplace.com/show?id=" + id,
 	}
 
 	if data.HasRA {

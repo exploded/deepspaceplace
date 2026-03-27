@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -13,12 +14,13 @@ import (
 const maxPerPage = 120
 
 type GalleryData struct {
-	Images     []database.Image
-	Sort       string
-	Filter     string
-	Page       int
-	TotalPages int
-	TotalRows  int
+	Images       []database.Image
+	Sort         string
+	Filter       string
+	Page         int
+	TotalPages   int
+	TotalRows    int
+	CanonicalURL string
 }
 
 func HandleGallery(w http.ResponseWriter, r *http.Request) {
@@ -67,13 +69,29 @@ func buildGalleryData(r *http.Request) GalleryData {
 		totalPages = int((totalRows - 1) / maxPerPage)
 	}
 
+	canonical := "https://deepspaceplace.com/images"
+	q := url.Values{}
+	if sort != "" {
+		q.Set("sort", sort)
+	}
+	if filter != "" {
+		q.Set("filter", filter)
+	}
+	if page > 0 {
+		q.Set("pageNum_rsImages", strconv.Itoa(page))
+	}
+	if len(q) > 0 {
+		canonical += "?" + q.Encode()
+	}
+
 	return GalleryData{
-		Images:     images,
-		Sort:       sort,
-		Filter:     filter,
-		Page:       page,
-		TotalPages: totalPages,
-		TotalRows:  int(totalRows),
+		Images:       images,
+		Sort:         sort,
+		Filter:       filter,
+		Page:         page,
+		TotalPages:   totalPages,
+		TotalRows:    int(totalRows),
+		CanonicalURL: canonical,
 	}
 }
 
