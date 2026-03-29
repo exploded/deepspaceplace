@@ -5,9 +5,50 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 
 	"deepspaceplace/internal/database"
 )
+
+var TemplateFuncs = template.FuncMap{
+	"queryParams": queryParams,
+}
+
+func queryParams(pairs ...string) template.URL {
+	q := url.Values{}
+	for i := 0; i+1 < len(pairs); i += 2 {
+		if pairs[i+1] != "" {
+			q.Set(pairs[i], pairs[i+1])
+		}
+	}
+	if len(q) == 0 {
+		return ""
+	}
+	return template.URL("?" + q.Encode())
+}
+
+// redirectIfEmptyParams strips empty query parameters and issues a 301 redirect
+// if the cleaned URL differs from the original. Returns true if a redirect was sent.
+func redirectIfEmptyParams(w http.ResponseWriter, r *http.Request) bool {
+	q := r.URL.Query()
+	clean := url.Values{}
+	for k, vals := range q {
+		for _, v := range vals {
+			if v != "" {
+				clean.Add(k, v)
+			}
+		}
+	}
+	if len(clean) == len(q) {
+		return false
+	}
+	target := r.URL.Path
+	if len(clean) > 0 {
+		target += "?" + clean.Encode()
+	}
+	http.Redirect(w, r, target, http.StatusMovedPermanently)
+	return true
+}
 
 var Templates map[string]*template.Template
 var DB *database.Queries

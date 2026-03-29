@@ -51,6 +51,9 @@ type GalleryData struct {
 }
 
 func HandleGallery(w http.ResponseWriter, r *http.Request) {
+	if redirectIfEmptyParams(w, r) {
+		return
+	}
 	if !validSorts[r.URL.Query().Get("sort")] || !validFilters[r.URL.Query().Get("filter")] {
 		http.NotFound(w, r)
 		return
@@ -60,6 +63,9 @@ func HandleGallery(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGalleryPartial(w http.ResponseWriter, r *http.Request) {
+	if redirectIfEmptyParams(w, r) {
+		return
+	}
 	if !validSorts[r.URL.Query().Get("sort")] || !validFilters[r.URL.Query().Get("filter")] {
 		http.NotFound(w, r)
 		return

@@ -24,6 +24,9 @@ type ShowData struct {
 }
 
 func HandleShow(w http.ResponseWriter, r *http.Request) {
+	if redirectIfEmptyParams(w, r) {
+		return
+	}
 	ctx := r.Context()
 	id := r.URL.Query().Get("id")
 	sort := r.URL.Query().Get("sort")

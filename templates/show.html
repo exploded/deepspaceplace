@@ -32,14 +32,14 @@
     </table>
     <div class="img-container">
       {{if .Prev}}
-        <a class="btn btn-outline-primary" href="/show?id={{.Prev}}&amp;sort={{.Sort}}&amp;filter={{.Filter}}">Previous</a>
+        <a class="btn btn-outline-primary" href="/show{{queryParams "id" .Prev "sort" .Sort "filter" .Filter}}">Previous</a>
       {{end}}
       <a class="btn btn-outline-primary" href="/images/{{.Image.Filename}}">Fullscreen</a>
       {{if .HasBlink}}
         <a class="btn btn-outline-primary" href="/images/{{.Image.Blink}}">Astrometry</a>
       {{end}}
       {{if .Next}}
-        <a class="btn btn-outline-primary" href="/show?id={{.Next}}&amp;sort={{.Sort}}&amp;filter={{.Filter}}">Next</a>
+        <a class="btn btn-outline-primary" href="/show{{queryParams "id" .Next "sort" .Sort "filter" .Filter}}">Next</a>
       {{end}}
       <div class="imageBox">
         <div class="imageInn">

@@ -1,37 +1,37 @@
 {{define "gallery_grid.html"}}
 <p>Sort by:</p>
 <div class="btn-group" role="group">
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=ID&amp;filter={{.Filter}}" hx-target="#gallery-container" hx-push-url="/images?sort=ID&amp;filter={{.Filter}}">Name</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=Date&amp;filter={{.Filter}}" hx-target="#gallery-container" hx-push-url="/images?sort=Date&amp;filter={{.Filter}}">Date</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=Type&amp;filter={{.Filter}}" hx-target="#gallery-container" hx-push-url="/images?sort=Type&amp;filter={{.Filter}}">Object Type</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" "ID" "filter" .Filter}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" "ID" "filter" .Filter}}">Name</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" "Date" "filter" .Filter}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" "Date" "filter" .Filter}}">Date</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" "Type" "filter" .Filter}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" "Type" "filter" .Filter}}">Object Type</a>
 	<a class="btn btn-success btn-skymap" href="/skymap">New - Skymap</a>
 </div>
 <p>Filter by image type:</p>
 <div class="btn-group" role="group">
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=all" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=all">All</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort=Date&amp;filter=new" hx-target="#gallery-container" hx-push-url="/images?sort=Date&amp;filter=new">New Images</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=Galaxy" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=Galaxy">Galaxy</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=Nebula" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=Nebula">Nebula</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=Globular" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=Globular">Globular</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=Cluster" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=Cluster">Cluster</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "all"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "all"}}">All</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" "Date" "filter" "new"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" "Date" "filter" "new"}}">New Images</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "Galaxy"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "Galaxy"}}">Galaxy</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "Nebula"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "Nebula"}}">Nebula</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "Globular"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "Globular"}}">Globular</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "Cluster"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "Cluster"}}">Cluster</a>
 </div>
 <p>Filter by equipment:</p>
 <div class="btn-group" role="group">
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=TOA130NS" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=TOA130NS">TOA 130NS</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=AT8IN" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=AT8IN">AT8IN</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=AT12IN" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=AT12IN">AT12IN</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=ED127" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=ED127">ED127</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=GSO8RC" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=GSO8RC">GSO RC</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=STL" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=STL">STL-11000M</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=QHY9" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=QHY9">QHY9</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=500D" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=500D">Canon 500D</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=D50" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=D50">D50</a>
-	<a class="btn btn-outline-primary" hx-get="/images/partial?sort={{.Sort}}&amp;filter=ASI2600MM" hx-target="#gallery-container" hx-push-url="/images?sort={{.Sort}}&amp;filter=ASI2600MM">ASI2600MM DUO</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "TOA130NS"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "TOA130NS"}}">TOA 130NS</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "AT8IN"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "AT8IN"}}">AT8IN</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "AT12IN"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "AT12IN"}}">AT12IN</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "ED127"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "ED127"}}">ED127</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "GSO8RC"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "GSO8RC"}}">GSO RC</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "STL"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "STL"}}">STL-11000M</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "QHY9"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "QHY9"}}">QHY9</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "500D"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "500D"}}">Canon 500D</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "D50"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "D50"}}">D50</a>
+	<a class="btn btn-outline-primary" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "ASI2600MM"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "ASI2600MM"}}">ASI2600MM DUO</a>
 </div>
 <p>Click on the image to view a larger version with details.</p>
 {{range .Images}}
 <figure class="figure">
-	<a href="/show?id={{.ID}}&amp;sort={{$.Sort}}&amp;filter={{$.Filter}}">
+	<a href="/show{{queryParams "id" .ID "sort" $.Sort "filter" $.Filter}}">
 		<img src="/images/{{.Thumbnail}}" class="img-thumbnail" alt="{{.ID}}">
 	</a>
 	<figcaption class="figure-caption">{{.Name}}</figcaption>

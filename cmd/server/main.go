@@ -244,7 +244,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 
 			// Each page gets its own template set: base + page
 			name := filepath.Base(match)
-			t, err := template.New("").ParseFiles("templates/base.html", match)
+			t, err := template.New("").Funcs(handlers.TemplateFuncs).ParseFiles("templates/base.html", match)
 			if err != nil {
 				return nil, fmt.Errorf("parsing %s: %w", match, err)
 			}
