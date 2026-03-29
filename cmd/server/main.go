@@ -141,9 +141,23 @@ func main() {
 	mux.HandleFunc("/maximdltips", handlers.StaticPage("maximdltips.html"))
 	mux.HandleFunc("/thermalcamera", handlers.StaticPage("thermalcamera.html"))
 
-	// Favicon and robots.txt
+	// Legacy .php redirects (301) — old site used .php extensions
+	phpPages := []string{
+		"index", "images", "show", "equipment", "observatory", "links",
+		"timelapse", "terrestrial", "8se", "at8in", "at12in", "ed127",
+		"gso8rc", "mn152", "meteor", "lightpollution", "gso8rcpointing",
+		"gso8rccollimate", "abbreviations", "eq6", "bahtinovmask",
+		"maximdltips", "thermalcamera", "moon", "weather", "skymap",
+		"coordinate-converter", "bom_satellite_proxy",
+	}
+	for _, name := range phpPages {
+		mux.HandleFunc("/"+name+".php", handlers.HandlePHPRedirect)
+	}
+
+	// Favicon, robots.txt, sitemap
 	mux.HandleFunc("/favicon.ico", handlers.HandleFavicon)
 	mux.HandleFunc("/robots.txt", handlers.HandleRobotsTxt)
+	mux.HandleFunc("/sitemap.xml", handlers.HandleSitemap)
 
 	// Static file servers - serve from original paths to preserve URLs
 	path, err := os.Getwd()

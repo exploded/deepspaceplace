@@ -13,6 +13,33 @@ import (
 
 const maxPerPage = 120
 
+var validSorts = map[string]bool{
+	"":     true,
+	"Date": true,
+	"Type": true,
+}
+
+var validFilters = map[string]bool{
+	"":          true,
+	"all":       true,
+	"new":       true,
+	"TOA130NS":  true,
+	"ED127":     true,
+	"GSO8RC":    true,
+	"AT8IN":     true,
+	"AT12IN":    true,
+	"MN152":     true,
+	"STL":       true,
+	"QHY9":      true,
+	"500D":      true,
+	"D50":       true,
+	"ASI2600MM": true,
+	"Galaxy":    true,
+	"Nebula":    true,
+	"Globular":  true,
+	"Cluster":   true,
+}
+
 type GalleryData struct {
 	Images       []database.Image
 	Sort         string
@@ -24,11 +51,19 @@ type GalleryData struct {
 }
 
 func HandleGallery(w http.ResponseWriter, r *http.Request) {
+	if !validSorts[r.URL.Query().Get("sort")] || !validFilters[r.URL.Query().Get("filter")] {
+		http.NotFound(w, r)
+		return
+	}
 	data := buildGalleryData(r)
 	Render(w, "gallery.html", data)
 }
 
 func HandleGalleryPartial(w http.ResponseWriter, r *http.Request) {
+	if !validSorts[r.URL.Query().Get("sort")] || !validFilters[r.URL.Query().Get("filter")] {
+		http.NotFound(w, r)
+		return
+	}
 	data := buildGalleryData(r)
 	RenderPartial(w, "gallery.html", "gallery_grid.html", data)
 }

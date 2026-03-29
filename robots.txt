@@ -4,3 +4,6 @@ Disallow: /
 User-agent: *
 Disallow: /files/
 Disallow: /js/
+Disallow: /admin/
+
+Sitemap: https://deepspaceplace.com/sitemap.xml

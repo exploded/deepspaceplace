@@ -29,7 +29,7 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	sort := r.URL.Query().Get("sort")
 	filter := r.URL.Query().Get("filter")
 
-	if id == "" {
+	if id == "" || !validSorts[sort] || !validFilters[filter] {
 		http.NotFound(w, r)
 		return
 	}
@@ -37,7 +37,7 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	img, err := DB.GetImage(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			Render(w, "show.html", ShowData{})
+			http.NotFound(w, r)
 			return
 		}
 		log.Printf("Error fetching image %s: %v", id, err)
