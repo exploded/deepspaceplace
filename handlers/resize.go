@@ -5,7 +5,7 @@ import (
 	"image"
 	"image/jpeg"
 	_ "image/png"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -111,7 +111,7 @@ func resizeAllImages(dir string, maxDim int) []ResizeResult {
 		result := resizeImage(path, maxDim)
 		results = append(results, result)
 		if result.Status == "resized" {
-			log.Printf("Resized: %s %dx%d -> %dx%d", path, result.OldW, result.OldH, result.NewW, result.NewH)
+			slog.Info("Resized image", "path", path, "from", fmt.Sprintf("%dx%d", result.OldW, result.OldH), "to", fmt.Sprintf("%dx%d", result.NewW, result.NewH))
 		}
 		return nil
 	})

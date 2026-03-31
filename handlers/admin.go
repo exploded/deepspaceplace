@@ -5,7 +5,7 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/hex"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -81,7 +81,7 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		if !loginLockedUntil.IsZero() && time.Now().Before(loginLockedUntil) {
 			remaining := time.Until(loginLockedUntil).Round(time.Second)
 			loginMu.Unlock()
-			log.Printf("Login locked out, %s remaining", remaining)
+			slog.Warn("Login locked out", "remaining", remaining)
 			Render(w, "login.html", "Too many failed attempts. Try again later.")
 			return
 		}
@@ -91,7 +91,7 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 
 		adminPass := os.Getenv("ADMIN_PASSWORD")
 		if adminPass == "" {
-			log.Println("WARNING: ADMIN_PASSWORD not set, admin login disabled")
+			slog.Warn("ADMIN_PASSWORD not set, admin login disabled")
 			Render(w, "login.html", "Admin login disabled (no password configured)")
 			return
 		}
@@ -128,7 +128,7 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		loginAttempts++
 		if loginAttempts >= maxLoginAttempts {
 			loginLockedUntil = time.Now().Add(loginLockoutDur)
-			log.Printf("Login locked out for %s after %d failed attempts", loginLockoutDur, loginAttempts)
+			slog.Warn("Login locked out", "duration", loginLockoutDur, "attempts", loginAttempts)
 			loginAttempts = 0
 		}
 		loginMu.Unlock()
@@ -167,7 +167,7 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	images, err := DB.ListAllImages(ctx)
 	if err != nil {
-		log.Printf("Error listing images: %v", err)
+		slog.Error("Error listing images", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -208,7 +208,7 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := DB.UpdateImage(ctx, params); err != nil {
-			log.Printf("Error updating image: %v", err)
+			slog.Error("Error updating image", "error", err)
 			http.Error(w, "Error updating image", http.StatusInternalServerError)
 			return
 		}
@@ -262,7 +262,7 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := DB.CreateImage(ctx, params); err != nil {
-			log.Printf("Error creating image: %v", err)
+			slog.Error("Error creating image", "error", err)
 			http.Error(w, "Error creating image", http.StatusInternalServerError)
 			return
 		}
@@ -298,7 +298,7 @@ func HandleAdminDelete(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 
 	if err := DB.DeleteImage(ctx, id); err != nil {
-		log.Printf("Error deleting image %s: %v", id, err)
+		slog.Error("Error deleting image", "id", id, "error", err)
 		http.Error(w, "Error deleting image", http.StatusInternalServerError)
 		return
 	}

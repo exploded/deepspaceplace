@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -22,7 +22,7 @@ func HandleSkymap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	rows, err := DB.ListObservations(ctx)
 	if err != nil {
-		log.Printf("Error listing observations for skymap: %v", err)
+		slog.Error("Error listing observations for skymap", "error", err)
 		Render(w, "skymap.html", nil)
 		return
 	}
@@ -43,7 +43,7 @@ func HandleSkymap(w http.ResponseWriter, r *http.Request) {
 
 	obsJSON, err := json.Marshal(observations)
 	if err != nil {
-		log.Printf("Error marshaling observations: %v", err)
+		slog.Error("Error marshaling observations", "error", err)
 		Render(w, "skymap.html", nil)
 		return
 	}
@@ -58,7 +58,7 @@ func HandleObservationsJSON(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	rows, err := DB.ListObservations(ctx)
 	if err != nil {
-		log.Printf("Error listing observations: %v", err)
+		slog.Error("Error listing observations", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -80,6 +80,6 @@ func HandleObservationsJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	if err := json.NewEncoder(w).Encode(observations); err != nil {
-		log.Printf("Error encoding observations JSON: %v", err)
+		slog.Error("Error encoding observations JSON", "error", err)
 	}
 }

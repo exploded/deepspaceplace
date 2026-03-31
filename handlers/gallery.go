@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -96,13 +96,13 @@ func buildGalleryData(r *http.Request) GalleryData {
 	// Count total
 	totalRows, err = countFiltered(ctx, filter, filterType, filterCamera, filterScope)
 	if err != nil {
-		log.Printf("Error counting images: %v", err)
+		slog.Error("Error counting images", "error", err)
 	}
 
 	// Fetch images
 	images, err = listFiltered(ctx, sort, filter, filterType, filterCamera, filterScope, limit, offset)
 	if err != nil {
-		log.Printf("Error listing images: %v", err)
+		slog.Error("Error listing images", "error", err)
 	}
 
 	totalPages := 0

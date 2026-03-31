@@ -3,7 +3,7 @@ package handlers
 import (
 	"bytes"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -58,13 +58,13 @@ var Prod bool
 func Render(w http.ResponseWriter, name string, data interface{}) {
 	t, ok := Templates[name]
 	if !ok {
-		log.Printf("Template %s not found", name)
+		slog.Error("Template not found", "name", name)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	var buf bytes.Buffer
 	if err := t.ExecuteTemplate(&buf, "base", data); err != nil {
-		log.Printf("Error executing template %s: %v", name, err)
+		slog.Error("Error executing template", "name", name, "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -76,13 +76,13 @@ func Render(w http.ResponseWriter, name string, data interface{}) {
 func RenderPartial(w http.ResponseWriter, hostTemplate, partialName string, data interface{}) {
 	t, ok := Templates[hostTemplate]
 	if !ok {
-		log.Printf("Template %s not found for partial %s", hostTemplate, partialName)
+		slog.Error("Template not found for partial", "template", hostTemplate, "partial", partialName)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	var buf bytes.Buffer
 	if err := t.ExecuteTemplate(&buf, partialName, data); err != nil {
-		log.Printf("Error executing partial %s: %v", partialName, err)
+		slog.Error("Error executing partial", "partial", partialName, "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

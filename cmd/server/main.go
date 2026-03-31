@@ -54,8 +54,7 @@ func main() {
 	httpPort = ":" + httpPort
 
 	prod := os.Getenv("PROD") == "True"
-	log.Printf("Production: %v", prod)
-	log.Printf("HTTP Port: %s", httpPort)
+	slog.Info("Config", "prod", prod, "port", httpPort)
 
 	// Open SQLite database
 	db, err := sql.Open("sqlite", "deepspaceplace.db")
@@ -181,7 +180,7 @@ func main() {
 
 	// Start server
 	go func() {
-		log.Printf("Starting HTTP server on %s", srv.Addr)
+		slog.Info("Starting HTTP server", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe() failed: %v", err)
 		}
@@ -191,17 +190,17 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown: %v", err)
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 	if ship != nil {
 		ship.Shutdown()
 	}
-	log.Println("Server exited")
+	slog.Info("Server exited")
 }
 
 func loadEnvFile(path string) {
@@ -261,7 +260,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 			}
 
 			templates[name] = t
-			log.Printf("Loaded template: %s", name)
+			slog.Info("Loaded template", "name", name)
 		}
 	}
 

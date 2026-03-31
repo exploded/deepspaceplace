@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"deepspaceplace/internal/database"
@@ -43,7 +43,7 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		log.Printf("Error fetching image %s: %v", id, err)
+		slog.Error("Error fetching image", "id", id, "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

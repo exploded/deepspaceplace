@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -50,7 +50,7 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := bomClient.Do(req)
 		if err != nil {
-			log.Printf("BOM fetch error for %s: %v", url, err)
+			slog.Warn("BOM fetch error", "url", url, "error", err)
 			continue
 		}
 
@@ -58,12 +58,12 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "image/jpeg")
 			w.Header().Set("Cache-Control", "max-age=1800")
 			if _, err := io.Copy(w, resp.Body); err != nil {
-				log.Printf("BOM proxy write error: %v", err)
+				slog.Error("BOM proxy write error", "error", err)
 			}
 			resp.Body.Close()
 			return
 		}
-		log.Printf("BOM %s returned %d", url, resp.StatusCode)
+		slog.Warn("BOM returned non-200", "url", url, "status", resp.StatusCode)
 		resp.Body.Close()
 	}
 

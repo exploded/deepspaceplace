@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -40,7 +40,7 @@ var staticPages = []string{
 func HandleSitemap(w http.ResponseWriter, r *http.Request) {
 	images, err := DB.ListAllImages(r.Context())
 	if err != nil {
-		log.Printf("Error generating sitemap: %v", err)
+		slog.Error("Error generating sitemap", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

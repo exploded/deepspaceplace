@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
@@ -71,7 +71,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	// Login
 	session, err := astrometryLogin(apiKey)
 	if err != nil {
-		log.Printf("Astrometry login failed: %v", err)
+		slog.Error("Astrometry login failed", "error", err)
 		writesolveResult(w, id, "danger", "Login failed")
 		return
 	}
@@ -80,11 +80,11 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	imageURL := imageBaseURL + img.Filename
 	subID, err := astrometrySubmit(session, imageURL, img.Camera, img.Scope)
 	if err != nil {
-		log.Printf("Astrometry submit failed for %s: %v", id, err)
+		slog.Error("Astrometry submit failed", "id", id, "error", err)
 		writesolveResult(w, id, "danger", "Submit failed")
 		return
 	}
-	log.Printf("Plate solve submitted for %s: sub=%d", id, subID)
+	slog.Info("Plate solve submitted", "id", id, "sub", subID)
 
 	// Poll for job ID
 	var jobID int
@@ -120,7 +120,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	// Get calibration
 	cal, err := astrometryGetCalibration(jobID)
 	if err != nil {
-		log.Printf("Calibration fetch failed for %s job %d: %v", id, jobID, err)
+		slog.Error("Calibration fetch failed", "id", id, "job", jobID, "error", err)
 		markSolveFailed(ctx, id)
 		writesolveResult(w, id, "danger", "Calibration error")
 		return
@@ -141,12 +141,12 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 		Orientation:  sql.NullFloat64{Float64: cal.Orientation, Valid: true},
 	})
 	if err != nil {
-		log.Printf("DB update failed for %s: %v", id, err)
+		slog.Error("DB update failed", "id", id, "error", err)
 		writesolveResult(w, id, "danger", "DB update failed")
 		return
 	}
 
-	log.Printf("Plate solve success for %s: RA=%.3f DEC=%.3f", id, cal.RA, cal.DEC)
+	slog.Info("Plate solve success", "id", id, "ra", cal.RA, "dec", cal.DEC)
 	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC))
 }
 
