@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -40,6 +41,17 @@ func SecurityHeaders(next http.Handler) http.Handler {
 			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://clearoutside.com https://www.yr.no http://www.skippysky.com.au https://www.bom.gov.au; connect-src 'self'; frame-src https://www.youtube-nocookie.com")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func WWWRedirect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.Host, "www.") {
+			target := "https://deepspaceplace.com" + r.RequestURI
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

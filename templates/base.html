@@ -7,7 +7,9 @@
     <link href="/static/css/bootstrap.css" rel="stylesheet">
     <link href="/static/css/dsp.css" rel="stylesheet">
     <script src="/static/js/htmx.min.js"></script>
-    <title>Deep Space Place{{block "title" .}}{{end}}</title>
+    <title>{{if .}}{{if .Title}}{{.Title}} - {{end}}{{end}}Deep Space Place</title>
+    {{if .}}{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}{{end}}
+    {{if .}}{{if .CanonicalURL}}<link rel="canonical" href="{{.CanonicalURL}}">{{end}}{{end}}
     {{block "head" .}}{{end}}
 </head>
 

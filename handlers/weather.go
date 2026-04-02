@@ -13,7 +13,11 @@ var bomClient = &http.Client{
 }
 
 func HandleWeather(w http.ResponseWriter, r *http.Request) {
-	Render(w, "weather.html", nil)
+	Render(w, "weather.html", PageData{
+		CanonicalURL: "https://deepspaceplace.com/weather",
+		Title:        "Weather",
+		Description:  "Australian Bureau of Meteorology satellite imagery for astrophotography planning.",
+	})
 }
 
 func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {

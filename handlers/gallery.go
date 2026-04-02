@@ -48,6 +48,8 @@ type GalleryData struct {
 	TotalPages   int
 	TotalRows    int
 	CanonicalURL string
+	Title        string
+	Description  string
 }
 
 func HandleGallery(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +135,8 @@ func buildGalleryData(r *http.Request) GalleryData {
 		TotalPages:   totalPages,
 		TotalRows:    int(totalRows),
 		CanonicalURL: canonical,
+		Title:        "Deep Space Gallery",
+		Description:  "Astrophotography gallery of deep space objects including galaxies, nebulae, and star clusters.",
 	}
 }
 

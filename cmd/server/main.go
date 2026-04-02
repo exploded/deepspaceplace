@@ -120,26 +120,46 @@ func main() {
 	mux.HandleFunc("/admin/platesolve", handlers.AdminAuth(handlers.HandleAdminPlateSolve))
 
 	// Static content pages
-	mux.HandleFunc("/equipment", handlers.StaticPage("equipment.html"))
-	mux.HandleFunc("/observatory", handlers.StaticPage("observatory.html"))
-	mux.HandleFunc("/links", handlers.StaticPage("links.html"))
-	mux.HandleFunc("/timelapse", handlers.StaticPage("timelapse.html"))
-	mux.HandleFunc("/terrestrial", handlers.StaticPage("terrestrial.html"))
-	mux.HandleFunc("/8se", handlers.StaticPage("8se.html"))
-	mux.HandleFunc("/at8in", handlers.StaticPage("at8in.html"))
-	mux.HandleFunc("/at12in", handlers.StaticPage("at12in.html"))
-	mux.HandleFunc("/ed127", handlers.StaticPage("ed127.html"))
-	mux.HandleFunc("/gso8rc", handlers.StaticPage("gso8rc.html"))
-	mux.HandleFunc("/mn152", handlers.StaticPage("mn152.html"))
-	mux.HandleFunc("/meteor", handlers.StaticPage("meteor.html"))
-	mux.HandleFunc("/lightpollution", handlers.StaticPage("lightpollution.html"))
-	mux.HandleFunc("/gso8rcpointing", handlers.StaticPage("gso8rcpointing.html"))
-	mux.HandleFunc("/gso8rccollimate", handlers.StaticPage("gso8rccollimate.html"))
-	mux.HandleFunc("/abbreviations", handlers.StaticPage("abbreviations.html"))
-	mux.HandleFunc("/eq6", handlers.StaticPage("eq6.html"))
-	mux.HandleFunc("/bahtinovmask", handlers.StaticPage("bahtinovmask.html"))
-	mux.HandleFunc("/maximdltips", handlers.StaticPage("maximdltips.html"))
-	mux.HandleFunc("/thermalcamera", handlers.StaticPage("thermalcamera.html"))
+	mux.HandleFunc("/equipment", handlers.StaticPage("equipment.html", "/equipment",
+		"Equipment", "Astrophotography telescope and camera equipment summary with field of view and resolution comparisons."))
+	mux.HandleFunc("/observatory", handlers.StaticPage("observatory.html", "/observatory",
+		"Observatory", "Home observatory build with roll-off roof design for astrophotography."))
+	mux.HandleFunc("/links", handlers.StaticPage("links.html", "/links",
+		"Links", "Useful astrophotography links including software, gear, and Australian astrophotography resources."))
+	mux.HandleFunc("/timelapse", handlers.StaticPage("timelapse.html", "/timelapse",
+		"Timelapse Videos", "Timelapse and astrophotography videos."))
+	mux.HandleFunc("/terrestrial", handlers.StaticPage("terrestrial.html", "/terrestrial",
+		"Terrestrial Images", "Terrestrial landscape photography from Australia and Europe."))
+	mux.HandleFunc("/8se", handlers.StaticPage("8se.html", "/8se",
+		"Celestron NexStar 8 SE", "Celestron NexStar 8 SE telescope setup and review for astrophotography."))
+	mux.HandleFunc("/at8in", handlers.StaticPage("at8in.html", "/at8in",
+		"Astro-Tech 8\" f/4 Newtonian", "Astro-Tech 8\" f/4 Imaging Newtonian telescope setup, collimation, and focusing tips."))
+	mux.HandleFunc("/at12in", handlers.StaticPage("at12in.html", "/at12in",
+		"12\" f/4 Newtonian", "12\" f/4 Newtonian reflector telescope build and upgrades for deep space imaging."))
+	mux.HandleFunc("/ed127", handlers.StaticPage("ed127.html", "/ed127",
+		"ED127 APO", "ED127 APO refractor review with chromatic aberration tests and image quality analysis."))
+	mux.HandleFunc("/gso8rc", handlers.StaticPage("gso8rc.html", "/gso8rc",
+		"GSO 8\" RC", "GSO 8\" Ritchey-Chretien telescope setup and guides for astrophotography."))
+	mux.HandleFunc("/mn152", handlers.StaticPage("mn152.html", "/mn152",
+		"MN152 Maksutov-Newtonian", "Maxvision MN152 F4.8 Maksutov-Newtonian telescope review and specifications."))
+	mux.HandleFunc("/meteor", handlers.StaticPage("meteor.html", "/meteor",
+		"Meteor Camera", "UFOCapture meteor detection camera setup and gallery of captured meteors."))
+	mux.HandleFunc("/lightpollution", handlers.StaticPage("lightpollution.html", "/lightpollution",
+		"Light Pollution", "Light pollution information and resources for astrophotography site selection."))
+	mux.HandleFunc("/gso8rcpointing", handlers.StaticPage("gso8rcpointing.html", "/gso8rcpointing",
+		"GSO 8\" RC Pointing Accuracy", "Pointing accuracy tests and results for the GSO 8\" Ritchey-Chretien telescope."))
+	mux.HandleFunc("/gso8rccollimate", handlers.StaticPage("gso8rccollimate.html", "/gso8rccollimate",
+		"GSO 8\" RC Collimation", "Step-by-step collimation guide for the GSO 8\" Ritchey-Chretien telescope."))
+	mux.HandleFunc("/abbreviations", handlers.StaticPage("abbreviations.html", "/abbreviations",
+		"Astrophotography Terminology", "Glossary of astrophotography terms, abbreviations, and definitions."))
+	mux.HandleFunc("/eq6", handlers.StaticPage("eq6.html", "/eq6",
+		"EQ6 Tuneup", "Skywatcher EQ6 Pro mount tuneup and maintenance guide for astrophotography."))
+	mux.HandleFunc("/bahtinovmask", handlers.StaticPage("bahtinovmask.html", "/bahtinovmask",
+		"Bahtinov Mask", "Bahtinov mask focusing aid for precise telescope focus in astrophotography."))
+	mux.HandleFunc("/maximdltips", handlers.StaticPage("maximdltips.html", "/maximdltips",
+		"MaximDL Tips", "Tips and techniques for using MaxIm DL imaging software in astrophotography."))
+	mux.HandleFunc("/thermalcamera", handlers.StaticPage("thermalcamera.html", "/thermalcamera",
+		"Thermal Camera", "Thermal camera images of telescope and observatory equipment."))
 
 	// Legacy .php redirects (301) — old site used .php extensions
 	phpPages := []string{
@@ -176,7 +196,7 @@ func main() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
-		Handler:      handlers.RequestLogger(handlers.SecurityHeaders(mux)),
+		Handler:      handlers.RequestLogger(handlers.WWWRedirect(handlers.SecurityHeaders(mux))),
 	}
 
 	// Start server

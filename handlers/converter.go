@@ -16,16 +16,19 @@ var (
 )
 
 type ConverterData struct {
-	RADecimal  string
-	DecDecimal string
-	RAHMS      string
-	DecDMS     string
-	ResultHMS  string
-	ResultDMS  string
-	ResultRA   string
-	ResultDec  string
-	ShowHMS    bool
-	ShowDec    bool
+	CanonicalURL string
+	Title        string
+	Description  string
+	RADecimal    string
+	DecDecimal   string
+	RAHMS        string
+	DecDMS       string
+	ResultHMS    string
+	ResultDMS    string
+	ResultRA     string
+	ResultDec    string
+	ShowHMS      bool
+	ShowDec      bool
 }
 
 func HandleConverter(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +36,11 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		r.ParseForm()
-		data := ConverterData{}
+		data := ConverterData{
+			CanonicalURL: "https://deepspaceplace.com/converter",
+			Title:        "Coordinate Converter",
+			Description:  "Convert between decimal degrees and HMS/DMS formats for RA and Dec celestial coordinates.",
+		}
 
 		if r.FormValue("convert_to_hms") != "" {
 			data.RADecimal = strings.TrimSpace(r.FormValue("ra_decimal"))
@@ -96,7 +103,10 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 	raDecResult := parseHMS("07 41 46.0")
 	decResult, _ := parseDMS("-14 30 00")
 	Render(w, "converter.html", ConverterData{
-		RADecimal:  "115.624",
+		CanonicalURL: "https://deepspaceplace.com/converter",
+		Title:        "Coordinate Converter",
+		Description:  "Convert between decimal degrees and HMS/DMS formats for RA and Dec celestial coordinates.",
+		RADecimal:    "115.624",
 		DecDecimal: "-14.819",
 		ShowHMS:    true,
 		ResultHMS:  fmt.Sprintf("RA: %02dh %02dm %06.3fs", h, m, s),

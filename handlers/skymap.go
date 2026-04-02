@@ -23,7 +23,7 @@ func HandleSkymap(w http.ResponseWriter, r *http.Request) {
 	rows, err := DB.ListObservations(ctx)
 	if err != nil {
 		slog.Error("Error listing observations for skymap", "error", err)
-		Render(w, "skymap.html", nil)
+		Render(w, "skymap.html", PageData{CanonicalURL: "https://deepspaceplace.com/skymap", Title: "Sky Map", Description: "Interactive sky map of plate-solved astrophotography observations."})
 		return
 	}
 
@@ -44,11 +44,14 @@ func HandleSkymap(w http.ResponseWriter, r *http.Request) {
 	obsJSON, err := json.Marshal(observations)
 	if err != nil {
 		slog.Error("Error marshaling observations", "error", err)
-		Render(w, "skymap.html", nil)
+		Render(w, "skymap.html", PageData{CanonicalURL: "https://deepspaceplace.com/skymap", Title: "Sky Map", Description: "Interactive sky map of plate-solved astrophotography observations."})
 		return
 	}
 
 	data := map[string]interface{}{
+		"CanonicalURL":     "https://deepspaceplace.com/skymap",
+		"Title":            "Sky Map",
+		"Description":      "Interactive sky map of plate-solved astrophotography observations.",
 		"ObservationsJSON": template.JS(string(obsJSON)),
 	}
 	Render(w, "skymap.html", data)

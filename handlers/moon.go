@@ -16,7 +16,10 @@ type MoonDay struct {
 }
 
 type MoonData struct {
-	Days []MoonDay
+	CanonicalURL string
+	Title        string
+	Description  string
+	Days         []MoonDay
 }
 
 var (
@@ -79,5 +82,10 @@ func computeMoonData() MoonData {
 		days = append(days, day)
 	}
 
-	return MoonData{Days: days}
+	return MoonData{
+		CanonicalURL: "https://deepspaceplace.com/moon",
+		Title:        "Moon Rise & Set",
+		Description:  "60-day moon rise and set forecast for Melbourne, Australia.",
+		Days:         days,
+	}
 }

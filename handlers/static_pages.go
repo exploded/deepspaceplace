@@ -54,6 +54,12 @@ var Templates map[string]*template.Template
 var DB *database.Queries
 var Prod bool
 
+type PageData struct {
+	CanonicalURL string
+	Title        string
+	Description  string
+}
+
 // Render executes a named template with the "base" definition and the given data.
 func Render(w http.ResponseWriter, name string, data interface{}) {
 	t, ok := Templates[name]
@@ -90,9 +96,13 @@ func RenderPartial(w http.ResponseWriter, hostTemplate, partialName string, data
 	buf.WriteTo(w)
 }
 
-func StaticPage(templateName string) http.HandlerFunc {
+func StaticPage(templateName, pagePath, title, description string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		Render(w, templateName, nil)
+		Render(w, templateName, PageData{
+			CanonicalURL: "https://deepspaceplace.com" + pagePath,
+			Title:        title,
+			Description:  description,
+		})
 	}
 }
 
@@ -101,7 +111,9 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	Render(w, "index.html", nil)
+	Render(w, "index.html", PageData{
+		CanonicalURL: "https://deepspaceplace.com/",
+	})
 }
 
 func HandleFavicon(w http.ResponseWriter, r *http.Request) {
