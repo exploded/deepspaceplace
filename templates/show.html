@@ -3,32 +3,45 @@
 {{if .Image.ID}}
     <h1>{{.Image.Name}}</h1>
     <p>{{.Image.Notes}}</p>
-    <table class="table">
-      <tr>
-        <th>Camera</th>
-        <td>{{.Image.Camera}}</td>
-        <th>Scope</th>
-        <td>{{.Image.Scope}}</td>
-      </tr>
-      <tr>
-        <th>Mount</th>
-        <td>{{.Image.Mount}}</td>
-        <th>Guiding</th>
-        <td>{{.Image.Guiding}}</td>
-      </tr>
-      <tr>
-        <th>Exposure</th>
-        <td>{{.Image.Exposure}}</td>
-        <th>Location</th>
-        <td>{{.Image.Location}}</td>
-      </tr>
-      <tr>
-        <th>Date</th>
-        <td>{{.Image.Date}}</td>
-        <th>Coordinates</th>
-        <td>{{if .HasRA}}RA: {{.RAStr}} | DEC: {{.DecStr}}{{end}}</td>
-      </tr>
-    </table>
+    <details class="show-details" open>
+      <summary class="show-details-toggle">Image Details</summary>
+      <div class="show-details-grid">
+        <div class="show-detail-item">
+          <span class="show-detail-label">Camera</span>
+          <span class="show-detail-value">{{.Image.Camera}}</span>
+        </div>
+        <div class="show-detail-item">
+          <span class="show-detail-label">Scope</span>
+          <span class="show-detail-value">{{.Image.Scope}}</span>
+        </div>
+        <div class="show-detail-item">
+          <span class="show-detail-label">Mount</span>
+          <span class="show-detail-value">{{.Image.Mount}}</span>
+        </div>
+        <div class="show-detail-item">
+          <span class="show-detail-label">Guiding</span>
+          <span class="show-detail-value">{{.Image.Guiding}}</span>
+        </div>
+        <div class="show-detail-item">
+          <span class="show-detail-label">Exposure</span>
+          <span class="show-detail-value">{{.Image.Exposure}}</span>
+        </div>
+        <div class="show-detail-item">
+          <span class="show-detail-label">Location</span>
+          <span class="show-detail-value">{{.Image.Location}}</span>
+        </div>
+        <div class="show-detail-item">
+          <span class="show-detail-label">Date</span>
+          <span class="show-detail-value">{{.Image.Date}}</span>
+        </div>
+        {{if .HasRA}}
+        <div class="show-detail-item">
+          <span class="show-detail-label">Coordinates</span>
+          <span class="show-detail-value">RA: {{.RAStr}}<br>DEC: {{.DecStr}}</span>
+        </div>
+        {{end}}
+      </div>
+    </details>
     <div class="img-container">
       {{if .Prev}}
         <a class="btn btn-outline-primary" href="/show{{queryParams "id" .Prev "sort" .Sort "filter" .Filter}}">Previous</a>
