@@ -174,9 +174,10 @@ func main() {
 		mux.HandleFunc("/"+name+".php", handlers.HandlePHPRedirect)
 	}
 
-	// Favicon, robots.txt, sitemap
+	// Favicon, robots.txt, sitemap, webmanifest
 	mux.HandleFunc("/favicon.ico", handlers.HandleFavicon)
 	mux.HandleFunc("/robots.txt", handlers.HandleRobotsTxt)
+	mux.HandleFunc("/site.webmanifest", handlers.HandleWebManifest)
 	mux.HandleFunc("/sitemap.xml", handlers.HandleSitemap)
 
 	// Static file servers - serve from original paths to preserve URLs

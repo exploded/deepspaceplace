@@ -123,3 +123,7 @@ func HandleFavicon(w http.ResponseWriter, r *http.Request) {
 func HandleRobotsTxt(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/robots.txt")
 }
+
+func HandleWebManifest(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/site.webmanifest")
+}
