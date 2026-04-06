@@ -60,6 +60,7 @@ func HandleGallery(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	setGalleryPrefsCookie(w, r.URL.Query().Get("sort"), r.URL.Query().Get("filter"))
 	data := buildGalleryData(r)
 	Render(w, "gallery.html", data)
 }
@@ -72,6 +73,7 @@ func HandleGalleryPartial(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	setGalleryPrefsCookie(w, r.URL.Query().Get("sort"), r.URL.Query().Get("filter"))
 	data := buildGalleryData(r)
 	RenderPartial(w, "gallery.html", "gallery_grid.html", data)
 }
@@ -251,4 +253,43 @@ func listByScopeFilter(ctx context.Context, sort, scope string, limit, offset in
 	default:
 		return DB.ListImagesByIDFilterScope(ctx, database.ListImagesByIDFilterScopeParams{Scope: scope, Limit: limit, Offset: offset})
 	}
+}
+
+func setGalleryPrefsCookie(w http.ResponseWriter, sort, filter string) {
+	v := url.Values{}
+	if sort != "" {
+		v.Set("sort", sort)
+	}
+	if filter != "" {
+		v.Set("filter", filter)
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "gallery_prefs",
+		Value:    v.Encode(),
+		Path:     "/",
+		MaxAge:   2592000, // 30 days
+		HttpOnly: true,
+		Secure:   Prod,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func getGalleryPrefs(r *http.Request) (string, string) {
+	c, err := r.Cookie("gallery_prefs")
+	if err != nil {
+		return "", ""
+	}
+	v, err := url.ParseQuery(c.Value)
+	if err != nil {
+		return "", ""
+	}
+	sort := v.Get("sort")
+	filter := v.Get("filter")
+	if !validSorts[sort] {
+		sort = ""
+	}
+	if !validFilters[filter] {
+		filter = ""
+	}
+	return sort, filter
 }

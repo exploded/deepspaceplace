@@ -31,7 +31,7 @@
 <p>Click on the image to view a larger version with details.</p>
 {{range .Images}}
 <figure class="figure">
-	<a href="/show{{queryParams "id" .ID "sort" $.Sort "filter" $.Filter}}">
+	<a href="/show?id={{.ID}}">
 		<img src="/images/{{.Thumbnail}}" class="img-thumbnail" alt="{{.ID}}">
 	</a>
 	<figcaption class="figure-caption">{{.Name}}</figcaption>

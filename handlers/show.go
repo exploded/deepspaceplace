@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 
 	"deepspaceplace/internal/database"
 )
@@ -14,8 +15,6 @@ type ShowData struct {
 	Image        database.Image
 	Prev         string
 	Next         string
-	Sort         string
-	Filter       string
 	HasRA        bool
 	HasBlink     bool
 	RAStr        string
@@ -31,10 +30,14 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	id := r.URL.Query().Get("id")
-	sort := r.URL.Query().Get("sort")
-	filter := r.URL.Query().Get("filter")
 
-	if id == "" || !validSorts[sort] || !validFilters[filter] {
+	// Redirect legacy URLs with sort/filter to clean canonical URL
+	if r.URL.Query().Get("sort") != "" || r.URL.Query().Get("filter") != "" {
+		http.Redirect(w, r, "/show?id="+url.QueryEscape(id), http.StatusMovedPermanently)
+		return
+	}
+
+	if id == "" {
 		http.NotFound(w, r)
 		return
 	}
@@ -50,15 +53,13 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prev := getPrev(ctx, id, sort)
-	next := getNext(ctx, id, sort)
+	sort, filter := getGalleryPrefs(r)
+	prev, next := getFilteredPrevNext(ctx, id, sort, filter)
 
 	data := ShowData{
 		Image:        img,
 		Prev:         prev,
 		Next:         next,
-		Sort:         sort,
-		Filter:       filter,
 		HasRA:        img.Ra.Valid && img.Dec.Valid,
 		HasBlink:     img.Blink != "na" && img.Blink != "",
 		CanonicalURL: "https://deepspaceplace.com/show?id=" + id,
@@ -74,42 +75,25 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	Render(w, "show.html", data)
 }
 
-func getPrev(ctx context.Context, id, sort string) string {
-	var prevID string
-	var err error
-
-	switch sort {
-	case "Date":
-		prevID, err = DB.GetPrevByDate(ctx, database.GetPrevByDateParams{ID: id, ID_2: id, ID_3: id})
-	case "Type":
-		prevID, err = DB.GetPrevByType(ctx, database.GetPrevByTypeParams{ID: id, ID_2: id, ID_3: id})
-	default:
-		prevID, err = DB.GetPrevByID(ctx, id)
-	}
-
+func getFilteredPrevNext(ctx context.Context, id, sort, filter string) (prev, next string) {
+	filterScope, filterCamera, filterType := resolveFilter(filter)
+	images, err := listFiltered(ctx, sort, filter, filterType, filterCamera, filterScope, 10000, 0)
 	if err != nil {
-		return ""
+		slog.Error("Error listing images for prev/next", "error", err)
+		return "", ""
 	}
-	return prevID
-}
-
-func getNext(ctx context.Context, id, sort string) string {
-	var nextID string
-	var err error
-
-	switch sort {
-	case "Date":
-		nextID, err = DB.GetNextByDate(ctx, database.GetNextByDateParams{ID: id, ID_2: id, ID_3: id})
-	case "Type":
-		nextID, err = DB.GetNextByType(ctx, database.GetNextByTypeParams{ID: id, ID_2: id, ID_3: id})
-	default:
-		nextID, err = DB.GetNextByID(ctx, id)
+	for i, img := range images {
+		if img.ID == id {
+			if i > 0 {
+				prev = images[i-1].ID
+			}
+			if i < len(images)-1 {
+				next = images[i+1].ID
+			}
+			return prev, next
+		}
 	}
-
-	if err != nil {
-		return ""
-	}
-	return nextID
+	return "", ""
 }
 
 // splitHMS splits a decimal RA (degrees) into hours, minutes, and seconds.
