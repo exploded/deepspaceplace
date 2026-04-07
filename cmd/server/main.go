@@ -160,6 +160,8 @@ func main() {
 		"MaximDL Tips", "Tips and techniques for using MaxIm DL imaging software in astrophotography."))
 	mux.HandleFunc("/thermalcamera", handlers.StaticPage("thermalcamera.html", "/thermalcamera",
 		"Thermal Camera", "Thermal camera images of telescope and observatory equipment."))
+	mux.HandleFunc("/currentsetup", handlers.StaticPage("currentsetup.html", "/currentsetup",
+		"Current Setup", "Current astrophotography equipment setup: Paramount ME mount, ASI2600MM Duo camera, Baader filters, and 12 inch f/4 Newtonian telescope."))
 
 	// Legacy .php redirects (301) — old site used .php extensions
 	phpPages := []string{

@@ -1,0 +1,246 @@
+{{template "base" .}}
+{{define "content"}}
+
+<div class="telescope-page">
+    <header class="mb-4">
+        <h1>Current Setup</h1>
+        <p class="lead">My current astrophotography rig, built around a 12" f/4 Newtonian on a Paramount ME mount with a cooled mono camera and narrowband filters. Everything is remotely controlled from the warm room.</p>
+    </header>
+
+    <div class="text-center mb-5">
+        <img src="/static/images/at12in2025.jpg" alt="Current astrophotography setup - 12 inch Newtonian on Paramount ME" class="img-fluid rounded shadow-sm">
+        <p class="small text-muted mt-2">The complete imaging rig ready for a night's work</p>
+    </div>
+
+    <!-- Mount -->
+    <section class="mb-5">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Mount</h2>
+            </div>
+            <div class="card-body">
+                <h3><a href="https://www.bisque.com/product/paramount-me/" target="_blank" rel="noopener noreferrer">Software Bisque Paramount ME</a></h3>
+                <p>The Paramount ME is a research-grade German equatorial mount from <a href="https://www.bisque.com/" target="_blank" rel="noopener noreferrer">Software Bisque</a>. It uses a friction drive system with zero backlash, giving extremely precise tracking and pointing accuracy. The mount is rated for payloads up to 68 kg, which comfortably handles the 12" Newtonian and all accessories.</p>
+                <p>Key features:</p>
+                <ul>
+                    <li>Zero-backlash friction drive on both axes</li>
+                    <li>Homing sensors for repeatable startup alignment</li>
+                    <li>Controlled natively by <a href="https://www.bisque.com/product/thesky/" target="_blank" rel="noopener noreferrer">TheSky Professional</a> via USB</li>
+                    <li>Periodic error correction (PEC) with sub-arcsecond tracking</li>
+                    <li>68 kg payload capacity</li>
+                </ul>
+                <p>I purchased this mount in December 2009 when I built the <a href="/observatory">observatory</a>. It's been an incredibly reliable mount that just works night after night.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Imaging Camera -->
+    <section class="mb-5">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h2 class="mb-0">Camera</h2>
+            </div>
+            <div class="card-body">
+                <h3><a href="https://www.zwoastro.com/product/asi2600mm-duo/" target="_blank" rel="noopener noreferrer">ZWO ASI2600MM Duo</a></h3>
+                <p>This is a cooled monochrome (black and white) camera with an integrated guide camera built in. The "Duo" design eliminates the need for a separate off-axis guider or guide scope by embedding a second sensor directly into the camera body.</p>
+
+                <div class="row mt-3">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Imaging Sensor</strong></div>
+                            <div class="card-body">
+                                <table class="table table-sm mb-0">
+                                    <tbody>
+                                        <tr><td><strong>Sensor</strong></td><td><a href="/files/IMX571BLR-J_Flyer.pdf" target="_blank">Sony IMX571</a> (back-illuminated)</td></tr>
+                                        <tr><td><strong>Type</strong></td><td>APS-C (23.5 x 15.7 mm)</td></tr>
+                                        <tr><td><strong>Resolution</strong></td><td>6,248 x 4,176 (26 MP)</td></tr>
+                                        <tr><td><strong>Pixel Size</strong></td><td>3.76 &micro;m</td></tr>
+                                        <tr><td><strong>Cooling</strong></td><td>TEC, delta -35&deg;C below ambient</td></tr>
+                                        <tr><td><strong>Read Noise</strong></td><td>1.0e- (at gain 100)</td></tr>
+                                        <tr><td><strong>Full Well</strong></td><td>50,000e-</td></tr>
+                                        <tr><td><strong>Weight</strong></td><td>1.1 kg</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Guide Sensor</strong></div>
+                            <div class="card-body">
+                                <table class="table table-sm mb-0">
+                                    <tbody>
+                                        <tr><td><strong>Sensor</strong></td><td>SC2210 (1/1.8")</td></tr>
+                                        <tr><td><strong>Resolution</strong></td><td>1,920 x 1,080</td></tr>
+                                        <tr><td><strong>Pixel Size</strong></td><td>4.0 &micro;m</td></tr>
+                                        <tr><td><strong>Connection</strong></td><td>Separate USB port</td></tr>
+                                    </tbody>
+                                </table>
+                                <p class="mt-2 mb-0 small text-muted">The built-in guide camera feeds directly into PHD2 for autoguiding, removing the need for a separate guide scope or off-axis guider.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="mt-2">Being a monochrome camera, colour and narrowband images are captured by shooting through individual filters and combining the channels in post-processing. This approach gives much higher sensitivity and flexibility compared to a one-shot colour camera.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filter Wheel & Filters -->
+    <section class="mb-5">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h2 class="mb-0">Filter Wheel &amp; Filters</h2>
+            </div>
+            <div class="card-body">
+                <h3><a href="https://www.zwoastro.com/product/efw/" target="_blank" rel="noopener noreferrer">ZWO ASI EFW</a> (Electronic Filter Wheel)</h3>
+                <p>The ZWO EFW is a motorised filter wheel that allows automated filter changes during an imaging session. N.I.N.A. controls the filter wheel and coordinates filter changes with the camera exposures, so the entire LRGB or narrowband sequence can run unattended.</p>
+
+                <h4 class="mt-4">Baader 2" Filters</h4>
+                <p>I use a set of <a href="https://www.baader-planetarium.com/" target="_blank" rel="noopener noreferrer">Baader</a> 2-inch filters:</p>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Broadband (LRGB)</strong></div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                                    <li><strong>L</strong> (Luminance) - captures fine detail and structure</li>
+                                    <li><strong>R</strong> (Red) - 610-700 nm</li>
+                                    <li><strong>G</strong> (Green) - 500-570 nm</li>
+                                    <li><strong>B</strong> (Blue) - 400-510 nm</li>
+                                </ul>
+                                <p class="mt-2 mb-0 small text-muted">Used for natural-colour images of galaxies, star clusters, and reflection nebulae.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Narrowband (SHO) - 6.5nm</strong></div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                                    <li><strong>S</strong> (SII) - Sulphur II at 672 nm</li>
+                                    <li><strong>H</strong> (Ha) - Hydrogen Alpha at 656 nm</li>
+                                    <li><strong>O</strong> (OIII) - Oxygen III at 496/501 nm</li>
+                                </ul>
+                                <p class="mt-2 mb-0 small text-muted">6.5nm bandpass filters that isolate specific emission lines from nebulae. These work well even under light-polluted skies and can be combined in the Hubble Palette (SHO) for dramatic false-colour images.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Focuser -->
+    <section class="mb-5">
+        <div class="card border-warning">
+            <div class="card-header bg-warning">
+                <h2 class="mb-0">Focuser</h2>
+            </div>
+            <div class="card-body">
+                <h3>ZWO EAF on TS-Optics 3" UNCN3 Crayford Focuser</h3>
+                <p>The <a href="https://www.zwoastro.com/product/eaf/" target="_blank" rel="noopener noreferrer">ZWO EAF</a> (Electronic Automatic Focuser) is a motorised focus controller that attaches to the <a href="https://www.teleskop-express.de/en/telescope-accessories-5/focusers-adapters-motorfocus-296/focusers-and-micro-transmission-92/ts-optics-3-newtonian-crayford-focuser-dual-speed-8318" target="_blank" rel="noopener noreferrer">TS-Optics 3" UNCN3</a> Crayford focuser. N.I.N.A. runs autofocus routines throughout the night to keep stars sharp as the temperature changes.</p>
+                <ul>
+                    <li>Dual-speed 10:1 reduction ratio for precise manual control</li>
+                    <li>3" drawtube accommodates the ASA 3" Wynne coma corrector</li>
+                    <li>ZWO EAF has a built-in temperature sensor for temperature-compensated focusing</li>
+                    <li>Backlash compensation handled in software</li>
+                </ul>
+
+                <div class="text-center mt-3">
+                    <img src="/static/images/uncn3-focuser.jpg" alt="TS-Optics 3 inch UNCN3 Crayford focuser" class="img-fluid rounded shadow-sm img-constrained">
+                    <p class="small text-muted mt-2">TS-Optics 3" UNCN3 Crayford focuser</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Telescope -->
+    <section class="mb-5">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h2 class="mb-0">Telescope</h2>
+            </div>
+            <div class="card-body">
+                <h3><a href="/at12in">300mm f/4 Newtonian</a></h3>
+                <p>A 12-inch (300mm) f/4 Newtonian reflector with a GSO primary mirror and a custom carbon fibre tube from <a href="http://www.klaushelmi.de/en/" target="_blank" rel="noopener noreferrer">Klaus Helmerichs</a>. The carbon fibre tube is lighter, stiffer, and cools faster than the original steel tube.</p>
+
+                <table class="table table-sm mt-3" style="max-width: 400px;">
+                    <tbody>
+                        <tr><td><strong>Aperture</strong></td><td>304.8 mm (12")</td></tr>
+                        <tr><td><strong>Focal Length</strong></td><td>1,200 mm (native) / 1,140 mm (with corrector)</td></tr>
+                        <tr><td><strong>F-ratio</strong></td><td>f/4 (native) / f/3.8 (with corrector)</td></tr>
+                        <tr><td><strong>Image Scale</strong></td><td>0.64"/px (native) / 0.68"/px (with corrector)</td></tr>
+                        <tr><td><strong>Field of View</strong></td><td>~66 x 44 arcmin (ASI2600MM)</td></tr>
+                        <tr><td><strong>Weight</strong></td><td>~20 kg</td></tr>
+                    </tbody>
+                </table>
+
+                <p>Coupled with an <a href="/files/Corr_3Zoll_Wynne.pdf" target="_blank" rel="noopener noreferrer">ASA 3" Wynne Corrector 0.95x</a> to correct coma across the full APS-C sensor. See the <a href="/at12in">full telescope page</a> for detailed specifications and upgrade history.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Software & Control -->
+    <section class="mb-5">
+        <div class="card border-secondary">
+            <div class="card-header bg-secondary text-white">
+                <h2 class="mb-0">Software &amp; Control</h2>
+            </div>
+            <div class="card-body">
+                <p>Everything is controlled from an <strong>ASUS NUC</strong> mini PC mounted in the observatory, running Windows 11. I connect from the warm room (or anywhere) via Windows Remote Desktop.</p>
+
+                <div class="row mt-3">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Imaging &amp; Automation</strong></div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                                    <li><a href="https://nighttime-imaging.eu/" target="_blank" rel="noopener noreferrer"><strong>N.I.N.A.</strong></a> (Nighttime Imaging 'N' Astronomy) - the main imaging sequencer that orchestrates the entire capture session: camera control, filter changes, plate solving, autofocus, meridian flips, and dithering. Free and open source.</li>
+                                    <li><a href="https://www.bisque.com/product/thesky/" target="_blank" rel="noopener noreferrer"><strong>TheSky Professional</strong></a> - planetarium and telescope control from Software Bisque. Provides native control of the Paramount ME mount including TPoint pointing model and ProTrack real-time tracking corrections.</li>
+                                    <li><a href="https://openphdguiding.org/" target="_blank" rel="noopener noreferrer"><strong>PHD2</strong></a> - autoguiding software that reads the built-in guide camera on the ASI2600MM Duo and sends corrections to the mount. Free and open source.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Infrastructure</strong></div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                                    <li><a href="https://ascom-standards.org/" target="_blank" rel="noopener noreferrer"><strong>ASCOM</strong></a> - the standard driver platform that allows N.I.N.A., TheSky, and PHD2 to communicate with the mount, camera, filter wheel, and focuser. All hardware exposes ASCOM-compatible drivers.</li>
+                                    <li><strong>Windows Remote Desktop</strong> - used to connect to the observatory NUC from the warm room or remotely. The entire imaging session can be monitored and controlled without stepping outside.</li>
+                                    <li><strong>ASUS NUC (Windows 11)</strong> - compact mini PC with enough power to run all the imaging software simultaneously. Low power consumption and fanless operation keep heat and vibration to a minimum.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Power -->
+    <section class="mb-5">
+        <div class="card border-dark">
+            <div class="card-header bg-dark text-white">
+                <h2 class="mb-0">Power Management</h2>
+            </div>
+            <div class="card-body">
+                <h3>Xiaomi Mi Smart Plug Mini (240V)</h3>
+                <p>Multiple <a href="https://www.mi.com/global" target="_blank" rel="noopener noreferrer">Xiaomi / Mi</a> Smart Plug Mini switches are used to control 240V power to individual pieces of equipment. Each plug is controlled via the <strong>Mi Home</strong> app on a phone or tablet, allowing me to power on or off any component without going out to the observatory.</p>
+                <p>This is useful for:</p>
+                <ul>
+                    <li>Power-cycling the mount or camera if they become unresponsive</li>
+                    <li>Turning on the dew heaters when humidity rises</li>
+                    <li>Shutting everything down at the end of a session from bed</li>
+                    <li>Scheduling automatic power-on before an imaging session</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+{{end}}

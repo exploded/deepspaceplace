@@ -35,6 +35,7 @@ var staticPages = []string{
 	"/bahtinovmask",
 	"/maximdltips",
 	"/thermalcamera",
+	"/currentsetup",
 }
 
 func HandleSitemap(w http.ResponseWriter, r *http.Request) {
