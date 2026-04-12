@@ -30,6 +30,7 @@ type ResizeResult struct {
 }
 
 type ResizeData struct {
+	PageData
 	Results []ResizeResult
 	Resized int
 	Skipped int

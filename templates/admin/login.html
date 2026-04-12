@@ -7,8 +7,8 @@
         <div class="card">
             <div class="card-header"><h4 class="mb-0">Admin Login</h4></div>
             <div class="card-body">
-                {{if .}}
-                <div class="alert alert-danger">{{.}}</div>
+                {{if .Error}}
+                <div class="alert alert-danger">{{.Error}}</div>
                 {{end}}
                 <form method="post" action="/admin/login">
                     <div class="mb-3">

@@ -72,6 +72,11 @@ func validateCSRF(r *http.Request) bool {
 	return subtle.ConstantTimeCompare([]byte(token), []byte(expected)) == 1
 }
 
+type loginData struct {
+	PageData
+	Error string
+}
+
 func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		r.ParseForm()
@@ -82,7 +87,7 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 			remaining := time.Until(loginLockedUntil).Round(time.Second)
 			loginMu.Unlock()
 			slog.Warn("Login locked out", "remaining", remaining)
-			Render(w, "login.html", "Too many failed attempts. Try again later.")
+			Render(w, "login.html", loginData{Error: "Too many failed attempts. Try again later."})
 			return
 		}
 		loginMu.Unlock()
@@ -92,7 +97,7 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		adminPass := os.Getenv("ADMIN_PASSWORD")
 		if adminPass == "" {
 			slog.Warn("ADMIN_PASSWORD not set, admin login disabled")
-			Render(w, "login.html", "Admin login disabled (no password configured)")
+			Render(w, "login.html", loginData{Error: "Admin login disabled (no password configured)"})
 			return
 		}
 
@@ -133,11 +138,11 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 		}
 		loginMu.Unlock()
 
-		Render(w, "login.html", "Invalid password")
+		Render(w, "login.html", loginData{Error: "Invalid password"})
 		return
 	}
 
-	Render(w, "login.html", nil)
+	Render(w, "login.html", loginData{})
 }
 
 func HandleAdminLogout(w http.ResponseWriter, r *http.Request) {
@@ -173,6 +178,7 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type adminListData struct {
+		PageData
 		Images    []database.Image
 		CSRFToken string
 	}
@@ -229,6 +235,7 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type editData struct {
+		PageData
 		database.Image
 		CSRFToken string
 	}
@@ -276,6 +283,7 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type editData struct {
+		PageData
 		database.Image
 		CSRFToken string
 	}
