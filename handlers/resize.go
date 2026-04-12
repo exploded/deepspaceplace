@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"html/template"
 	"image"
 	"image/jpeg"
 	_ "image/png"
@@ -51,6 +52,12 @@ func HandleAdminResize(w http.ResponseWriter, r *http.Request) {
 		rc := http.NewResponseController(w)
 		rc.SetWriteDeadline(time.Now().Add(10 * time.Minute))
 
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+			return
+		}
+
 		maxDim := defaultMaxDimension
 		if v := r.FormValue("max_dimension"); v != "" {
 			if d, err := strconv.Atoi(v); err == nil && d >= 800 && d <= 7680 {
@@ -58,26 +65,88 @@ func HandleAdminResize(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		results := resizeAllImages("images", maxDim)
+		// Stream the page header so the connection stays alive during resize.
+		// Render the base template up to the content block, then stream rows.
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 
-		data := ResizeData{
-			Results: results,
-			Done:    true,
-			MaxDim:  maxDim,
-		}
-		for _, res := range results {
-			switch res.Status {
-			case "resized":
-				data.Resized++
-			case "skipped":
-				data.Skipped++
-			case "error":
-				data.Errors++
+		// Write the page shell (everything before the dynamic content).
+		fmt.Fprint(w, `<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/dsp.css" rel="stylesheet">
+    <title>Resize Images - Deep Space Place</title>
+</head>
+<body>
+<script src="/static/js/bootstrap.bundle.js"></script>
+<div class="container">
+<h1>Admin - Resize Images</h1>
+<div class="mb-3"><strong>Processing images (max `)
+		fmt.Fprintf(w, "%dpx)...</strong></div>\n", maxDim)
+		fmt.Fprint(w, `<table class="table table-sm table-striped">
+<thead><tr><th>File</th><th>Original</th><th>Result</th><th>Status</th></tr></thead>
+<tbody>
+`)
+		flusher.Flush()
+
+		// Process images one at a time, streaming each result row.
+		var resized, skipped, errors, total int
+		filepath.Walk("images", func(path string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return nil
 			}
-		}
-		data.Total = len(results)
+			lower := strings.ToLower(info.Name())
+			if strings.Contains(lower, "_thumb") {
+				return nil
+			}
+			ext := strings.ToLower(filepath.Ext(info.Name()))
+			if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+				return nil
+			}
 
-		Render(w, "resize.html", data)
+			result := resizeImage(path, maxDim)
+			total++
+
+			var badge, detail string
+			switch result.Status {
+			case "resized":
+				resized++
+				badge = `<span class="badge bg-success">resized</span>`
+				detail = fmt.Sprintf("%d x %d", result.NewW, result.NewH)
+				slog.Info("Resized image", "path", path,
+					"from", fmt.Sprintf("%dx%d", result.OldW, result.OldH),
+					"to", fmt.Sprintf("%dx%d", result.NewW, result.NewH))
+			case "skipped":
+				skipped++
+				badge = `<span class="badge bg-secondary">skipped</span>`
+				detail = fmt.Sprintf("%d x %d (ok)", result.NewW, result.NewH)
+			case "error":
+				errors++
+				badge = `<span class="badge bg-danger">error</span>`
+				detail = result.Error
+			}
+
+			fmt.Fprintf(w, "<tr><td>%s</td><td>%d x %d</td><td>%s</td><td>%s</td></tr>\n",
+				template.HTMLEscapeString(filepath.ToSlash(result.Filename)),
+				result.OldW, result.OldH, detail, badge)
+			flusher.Flush()
+			return nil
+		})
+
+		// Write summary and close the page.
+		fmt.Fprint(w, "</tbody></table>\n")
+		fmt.Fprintf(w, `<div class="alert alert-info">
+    <strong>Done:</strong> %d images scanned —
+    %d resized, %d already OK, %d errors.
+    Max dimension: %dpx.
+</div>
+<a href="/admin" class="btn btn-primary mt-3">Back to Admin</a>
+</div></body></html>`, total, resized, skipped, errors, maxDim)
+		flusher.Flush()
 		return
 	}
 
@@ -86,38 +155,6 @@ func HandleAdminResize(w http.ResponseWriter, r *http.Request) {
 		CSRFToken string
 	}
 	Render(w, "resize.html", resizePageData{ResizeData: ResizeData{MaxDim: defaultMaxDimension}, CSRFToken: getCSRFToken()})
-}
-
-func resizeAllImages(dir string, maxDim int) []ResizeResult {
-	var results []ResizeResult
-
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil
-		}
-		if info.IsDir() {
-			return nil
-		}
-
-		lower := strings.ToLower(info.Name())
-		if strings.Contains(lower, "_thumb") {
-			return nil
-		}
-
-		ext := strings.ToLower(filepath.Ext(info.Name()))
-		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
-			return nil
-		}
-
-		result := resizeImage(path, maxDim)
-		results = append(results, result)
-		if result.Status == "resized" {
-			slog.Info("Resized image", "path", path, "from", fmt.Sprintf("%dx%d", result.OldW, result.OldH), "to", fmt.Sprintf("%dx%d", result.NewW, result.NewH))
-		}
-		return nil
-	})
-
-	return results
 }
 
 func resizeImage(path string, maxDim int) ResizeResult {

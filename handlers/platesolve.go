@@ -96,7 +96,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if jobID == 0 {
-		markSolveFailed(ctx, id)
+		markSolveFailed(id)
 		writesolveResult(w, id, "warning", "Timeout waiting for job")
 		return
 	}
@@ -112,7 +112,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if status != "success" {
-		markSolveFailed(ctx, id)
+		markSolveFailed(id)
 		writesolveResult(w, id, "danger", "Solve failed")
 		return
 	}
@@ -121,13 +121,16 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	cal, err := astrometryGetCalibration(jobID)
 	if err != nil {
 		slog.Error("Calibration fetch failed", "id", id, "job", jobID, "error", err)
-		markSolveFailed(ctx, id)
+		markSolveFailed(id)
 		writesolveResult(w, id, "danger", "Calibration error")
 		return
 	}
 
-	// Update DB
-	err = DB.UpdateImagePlateSolve(ctx, database.UpdateImagePlateSolveParams{
+	// Update DB — use background context so the write succeeds even if the
+	// HTTP client disconnected during the long polling phase.
+	dbCtx, dbCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer dbCancel()
+	err = DB.UpdateImagePlateSolve(dbCtx, database.UpdateImagePlateSolveParams{
 		ID:           id,
 		Solved:       "y",
 		Ra:           sql.NullFloat64{Float64: cal.RA, Valid: true},
@@ -150,7 +153,9 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC))
 }
 
-func markSolveFailed(ctx context.Context, id string) {
+func markSolveFailed(id string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	DB.UpdateImagePlateSolve(ctx, database.UpdateImagePlateSolveParams{
 		ID:     id,
 		Solved: "f",
