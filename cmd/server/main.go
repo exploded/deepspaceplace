@@ -117,6 +117,7 @@ func main() {
 	mux.HandleFunc("/admin/new", handlers.AdminAuth(handlers.HandleAdminNew))
 	mux.HandleFunc("/admin/delete", handlers.AdminAuth(handlers.HandleAdminDelete))
 	mux.HandleFunc("/admin/resize", handlers.AdminAuth(handlers.HandleAdminResize))
+	mux.HandleFunc("/admin/upload", handlers.AdminAuth(handlers.HandleAdminUpload))
 	mux.HandleFunc("/admin/platesolve", handlers.AdminAuth(handlers.HandleAdminPlateSolve))
 
 	// Static content pages
