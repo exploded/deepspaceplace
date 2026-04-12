@@ -16,8 +16,9 @@ import (
 
 const (
 	maxUploadSize  = 50 << 20 // 50 MB
-	thumbMaxDim    = 400
-	thumbQuality   = 85
+	thumbWidth   = 200
+	thumbHeight  = 150
+	thumbQuality = 85
 )
 
 func HandleAdminUpload(w http.ResponseWriter, r *http.Request) {
@@ -107,20 +108,32 @@ func thumbFilename(name string) string {
 }
 
 func generateThumbnail(img image.Image, path string) error {
+	// Center-crop the source to 4:3 (200:150) aspect ratio, then scale to 200x150.
+	// This preserves aspect ratio without letterboxing.
 	bounds := img.Bounds()
-	w, h := bounds.Dx(), bounds.Dy()
+	srcW, srcH := bounds.Dx(), bounds.Dy()
 
-	var newW, newH int
-	if w >= h {
-		newW = thumbMaxDim
-		newH = int(float64(h) * float64(thumbMaxDim) / float64(w))
+	// Target aspect ratio
+	targetRatio := float64(thumbWidth) / float64(thumbHeight) // 4:3
+
+	// Calculate the largest 4:3 crop from the center of the source
+	var cropW, cropH int
+	if float64(srcW)/float64(srcH) > targetRatio {
+		// Source is wider than 4:3 — crop sides
+		cropH = srcH
+		cropW = int(float64(srcH) * targetRatio)
 	} else {
-		newH = thumbMaxDim
-		newW = int(float64(w) * float64(thumbMaxDim) / float64(h))
+		// Source is taller than 4:3 — crop top/bottom
+		cropW = srcW
+		cropH = int(float64(srcW) / targetRatio)
 	}
 
-	dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
-	draw.CatmullRom.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
+	x0 := bounds.Min.X + (srcW-cropW)/2
+	y0 := bounds.Min.Y + (srcH-cropH)/2
+	cropRect := image.Rect(x0, y0, x0+cropW, y0+cropH)
+
+	dst := image.NewRGBA(image.Rect(0, 0, thumbWidth, thumbHeight))
+	draw.CatmullRom.Scale(dst, dst.Bounds(), img, cropRect, draw.Over, nil)
 
 	out, err := os.Create(path)
 	if err != nil {
