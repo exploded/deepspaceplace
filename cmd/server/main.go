@@ -105,6 +105,9 @@ func main() {
 	// Moon rise/set
 	mux.HandleFunc("/moon", handlers.HandleMoon)
 
+	// Em-dash visualization
+	mux.HandleFunc("/emdash", handlers.HandleEmdash)
+
 	// Weather
 	mux.HandleFunc("/weather", handlers.HandleWeather)
 	mux.HandleFunc("/api/bom-satellite", handlers.HandleBOMProxy)

@@ -1,0 +1,426 @@
+{{template "base" .}}
+{{define "content"}}
+<style>
+.emdash-hero {
+    margin: 2rem 0 1.5rem;
+}
+.emdash-hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.6rem;
+    line-height: 1.1;
+    margin: 0 0 0.6rem;
+    color: var(--text-bright);
+}
+.emdash-hero h1 .dash {
+    color: var(--accent-gold);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.emdash-hero p.lede {
+    color: var(--text-secondary);
+    max-width: 64ch;
+    font-size: 1.05rem;
+    line-height: 1.55;
+}
+.emdash-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0 2rem;
+}
+.emdash-stat {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+}
+.emdash-stat .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    color: var(--accent-blue);
+    font-weight: 500;
+    line-height: 1.1;
+}
+.emdash-stat .num.peak { color: var(--accent-gold); }
+.emdash-stat .num.about { color: var(--green); }
+.emdash-stat .label {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.3rem;
+}
+.emdash-chart-wrap {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-medium);
+    border-radius: 8px;
+    padding: 1.2rem;
+    overflow-x: auto;
+}
+.emdash-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+    min-width: 700px;
+}
+.emdash-chart .bar {
+    fill: var(--accent-blue);
+    opacity: 0.85;
+    transition: opacity 0.15s, fill 0.15s;
+}
+.emdash-chart .bar.peak {
+    fill: var(--accent-gold);
+}
+.emdash-chart .bar:hover {
+    opacity: 1;
+    fill: var(--text-bright);
+}
+.emdash-chart .grid-line {
+    stroke: var(--border-subtle);
+    stroke-width: 1;
+}
+.emdash-chart .axis-text {
+    fill: var(--text-tertiary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+.emdash-chart .axis-text-y {
+    text-anchor: end;
+}
+.emdash-chart .axis-text-yr {
+    text-anchor: start;
+    fill: var(--green);
+}
+.emdash-chart .axis-title-r {
+    fill: var(--green);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.emdash-chart .axis-text-x {
+    text-anchor: middle;
+}
+.emdash-chart .axis-title {
+    fill: var(--text-secondary);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.emdash-chart .annotation {
+    fill: var(--accent-gold);
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    text-anchor: middle;
+}
+.emdash-chart .about-line {
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 1.5;
+    opacity: 0.9;
+}
+.emdash-chart .about-dot {
+    fill: var(--green);
+    stroke: var(--bg-surface);
+    stroke-width: 1;
+}
+.emdash-chart .about-dot:hover {
+    fill: var(--text-bright);
+    r: 4;
+}
+.emdash-legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+.emdash-legend .swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+.emdash-legend .swatch.bar { background: var(--accent-blue); }
+.emdash-legend .swatch.line {
+    background: var(--green);
+    height: 3px;
+    margin-bottom: 4px;
+}
+.emdash-chart[data-scale="linear"] .scale-log,
+.emdash-chart[data-scale="log"] .scale-linear {
+    display: none;
+}
+.emdash-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+.emdash-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border-medium);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-elevated);
+}
+.emdash-toggle button {
+    background: transparent;
+    border: 0;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.9rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.emdash-toggle button:hover {
+    color: var(--text-bright);
+}
+.emdash-toggle button.active {
+    background: var(--accent-blue);
+    color: var(--bg-void);
+}
+.emdash-caption {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    margin-top: 0.8rem;
+    font-style: italic;
+}
+.emdash-section {
+    margin: 2.5rem 0;
+}
+.emdash-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--accent-gold);
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+}
+.emdash-section p {
+    color: var(--text-primary);
+    line-height: 1.65;
+    max-width: 70ch;
+}
+.emdash-sql {
+    background: var(--bg-void);
+    border: 1px solid var(--border-medium);
+    border-left: 3px solid var(--accent-blue);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+.emdash-sql .kw { color: var(--accent-blue); }
+.emdash-sql .str { color: var(--accent-gold); }
+.emdash-sql .com { color: var(--text-tertiary); font-style: italic; }
+</style>
+
+<div class="emdash-hero">
+    <h1>The Rise of the <span class="dash">Em&mdash;Dash</span></h1>
+    <p class="lede">
+        Counting GitHub issues each month that contain an em-dash (&mdash;) or the literal phrase
+        &ldquo;em dash&rdquo;. What was once a niche typographic flourish has, since mid-2025,
+        become a near-unmistakable fingerprint of LLM-generated text flooding the world's largest code host.
+    </p>
+</div>
+
+<div class="emdash-stats">
+    <div class="emdash-stat">
+        <div class="num">{{.Total}}</div>
+        <div class="label">Total issues, 2021&ndash;2026</div>
+    </div>
+    <div class="emdash-stat">
+        <div class="num peak">{{.Peak.Count}}</div>
+        <div class="label">Peak month ({{.Peak.Month}})</div>
+    </div>
+    <div class="emdash-stat">
+        <div class="num">{{.Latest.Count}}</div>
+        <div class="label">Latest ({{.Latest.Month}})</div>
+    </div>
+    <div class="emdash-stat">
+        <div class="num about">{{.AboutTotal}}</div>
+        <div class="label">Issues <em>about</em> em-dashes (total)</div>
+    </div>
+    <div class="emdash-stat">
+        <div class="num about">{{.AboutPeak.Count}}</div>
+        <div class="label">About-peak ({{.AboutPeak.Month}})</div>
+    </div>
+</div>
+
+<div class="emdash-chart-wrap">
+    <div class="emdash-toolbar">
+        <div class="emdash-legend">
+            <span><span class="swatch bar"></span>Issues containing an em-dash (broad)</span>
+            <span><span class="swatch line"></span>Issues mentioning &ldquo;em dash&rdquo; / &ldquo;em-dash&rdquo; (about)</span>
+        </div>
+        <div class="emdash-toggle" role="group" aria-label="Y-axis scale">
+            <button type="button" data-scale="linear" class="active">Linear</button>
+            <button type="button" data-scale="log">Log</button>
+        </div>
+    </div>
+    <svg class="emdash-chart" id="emdashChart" data-scale="linear" viewBox="0 0 {{.ChartW}} {{.ChartH}}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Chart of em-dash GitHub issues per month">
+
+        <g class="scale-linear">
+            {{range .YTicksLin}}
+                <line class="grid-line" x1="{{$.PlotX}}" y1="{{.Y}}" x2="{{add $.PlotX $.PlotW}}" y2="{{.Y}}" />
+                <text class="axis-text axis-text-y" x="{{sub $.PlotX 8.0}}" y="{{add .Y 4.0}}">{{.Label}}</text>
+            {{end}}
+            {{range .YTicksLinR}}
+                <text class="axis-text axis-text-yr" x="{{add (add $.PlotX $.PlotW) 8.0}}" y="{{add .Y 4.0}}">{{.Label}}</text>
+            {{end}}
+            {{range .Points}}
+                <rect class="bar{{if .IsPeak}} peak{{end}}"
+                      x="{{add .X 1.0}}" y="{{.YLin}}"
+                      width="{{sub $.BarW 2.0}}" height="{{.HLin}}">
+                    <title>{{.Month}}: {{.Count}} issues</title>
+                </rect>
+            {{end}}
+            <path class="about-line" d="{{.LinePathLin}}" />
+            {{range .LinePoints}}
+                <circle class="about-dot" cx="{{.X}}" cy="{{.YLin}}" r="2.5">
+                    <title>{{.Month}}: {{.Count}} issues mentioning em-dash</title>
+                </circle>
+            {{end}}
+            <text class="annotation" x="{{add .Peak.X (div .BarW 2.0)}}" y="{{sub .Peak.YLin 8.0}}">{{.Peak.Month}} &uarr;</text>
+        </g>
+
+        <g class="scale-log">
+            {{range .YTicksLog}}
+                <line class="grid-line" x1="{{$.PlotX}}" y1="{{.Y}}" x2="{{add $.PlotX $.PlotW}}" y2="{{.Y}}" />
+                <text class="axis-text axis-text-y" x="{{sub $.PlotX 8.0}}" y="{{add .Y 4.0}}">{{.Label}}</text>
+            {{end}}
+            {{range .YTicksLogR}}
+                <text class="axis-text axis-text-yr" x="{{add (add $.PlotX $.PlotW) 8.0}}" y="{{add .Y 4.0}}">{{.Label}}</text>
+            {{end}}
+            {{range .Points}}
+                <rect class="bar{{if .IsPeak}} peak{{end}}"
+                      x="{{add .X 1.0}}" y="{{.YLog}}"
+                      width="{{sub $.BarW 2.0}}" height="{{.HLog}}">
+                    <title>{{.Month}}: {{.Count}} issues</title>
+                </rect>
+            {{end}}
+            <path class="about-line" d="{{.LinePathLog}}" />
+            {{range .LinePoints}}
+                <circle class="about-dot" cx="{{.X}}" cy="{{.YLog}}" r="2.5">
+                    <title>{{.Month}}: {{.Count}} issues mentioning em-dash</title>
+                </circle>
+            {{end}}
+            <text class="annotation" x="{{add .Peak.X (div .BarW 2.0)}}" y="{{sub .Peak.YLog 8.0}}">{{.Peak.Month}} &uarr;</text>
+        </g>
+
+        <line class="grid-line" x1="{{.PlotX}}" y1="{{add .PlotY .PlotH}}" x2="{{add .PlotX .PlotW}}" y2="{{add .PlotY .PlotH}}" stroke="var(--border-medium)" />
+        {{range .XLabels}}
+            <text class="axis-text axis-text-x" x="{{.X}}" y="{{add (add $.PlotY $.PlotH) 18.0}}">{{.Label}}</text>
+        {{end}}
+        <text class="axis-title" x="16" y="{{add .PlotY (div .PlotH 2.0)}}" transform="rotate(-90 16 {{add .PlotY (div .PlotH 2.0)}})">Any em-dash (left)</text>
+        <text class="axis-title-r" x="{{sub .ChartW 16.0}}" y="{{add .PlotY (div .PlotH 2.0)}}" transform="rotate(90 {{sub .ChartW 16.0}} {{add .PlotY (div .PlotH 2.0)}})">About em-dash (right)</text>
+    </svg>
+    <div class="emdash-caption">
+        <span class="cap-linear">Linear: blue bars on left axis (0&ndash;600K), green line on right axis (0&ndash;150). Two scales because the broad and tighter signals differ by ~4 orders of magnitude.</span>
+        <span class="cap-log" style="display:none">Log: blue bars on left axis (10&ndash;1M), green line on right axis (1&ndash;1K). Both axes logarithmic.</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    var chart = document.getElementById('emdashChart');
+    var buttons = document.querySelectorAll('.emdash-toggle button');
+    var capLin = document.querySelector('.cap-linear');
+    var capLog = document.querySelector('.cap-log');
+    buttons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var scale = btn.getAttribute('data-scale');
+            chart.setAttribute('data-scale', scale);
+            buttons.forEach(function(b) { b.classList.toggle('active', b === btn); });
+            capLin.style.display = scale === 'linear' ? '' : 'none';
+            capLog.style.display = scale === 'log' ? '' : 'none';
+        });
+    });
+})();
+</script>
+
+<div class="emdash-section">
+    <h2>Two signals, one story</h2>
+    <p>
+        The blue bars count <em>any</em> issue with an em-dash anywhere in the title or body &mdash; that's
+        the flood. The green line counts the much narrower set of issues that <em>talk about</em> em-dashes
+        by name (&ldquo;em dash&rdquo; or &ldquo;em-dash&rdquo;) &mdash; bug reports, feature requests, and
+        complaints filed because of em-dashes. From a 2021 baseline of ~25/month, the about-em-dash signal
+        roughly doubles by 2025 and triples in late 2025, peaking at {{.AboutPeak.Count}} in {{.AboutPeak.Month}}.
+        Em-dashes are no longer just appearing &mdash; they're causing enough friction to be noticed.
+    </p>
+</div>
+
+<div class="emdash-section">
+    <h2>What happened?</h2>
+    <p>
+        From 2021 through early 2024 the baseline hovers around 3,000&ndash;8,000 issues per month, with
+        occasional spikes from automated bots and template-text dumps. In mid-2025 the curve breaks loose:
+        July hits six figures, August clears 430,000, and by April 2026 a single month logs over half a
+        million issues containing em-dashes &mdash; roughly a hundredfold rise from the pre-LLM baseline.
+    </p>
+</div>
+
+<div class="emdash-section">
+    <h2>The query</h2>
+    <p>
+        Run against the public <code>githubarchive</code> BigQuery dataset, counting <code>IssuesEvent</code>
+        actions of type <code>opened</code> whose title or body contains an em-dash character or the literal
+        phrase &ldquo;em dash&rdquo;.
+    </p>
+    <pre class="emdash-sql"><span class="kw">SELECT</span>
+  FORMAT_DATE(<span class="str">'%Y-%m'</span>, DATE(created_at)) <span class="kw">AS</span> month,
+  COUNT(*) <span class="kw">AS</span> issue_count
+<span class="kw">FROM</span>
+  `githubarchive.month.*`
+<span class="kw">WHERE</span>
+  type = <span class="str">'IssuesEvent'</span>
+  <span class="kw">AND</span> JSON_EXTRACT_SCALAR(payload, <span class="str">'$.action'</span>) = <span class="str">'opened'</span>
+  <span class="kw">AND</span> (
+    LOWER(JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.title'</span>)) <span class="kw">LIKE</span> <span class="str">'%em dash%'</span>
+    <span class="kw">OR</span> LOWER(JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.body'</span>)) <span class="kw">LIKE</span> <span class="str">'%em dash%'</span>
+    <span class="kw">OR</span> JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.body'</span>) <span class="kw">LIKE</span> <span class="str">'%&mdash;%'</span>
+  )
+  <span class="kw">AND</span> _TABLE_SUFFIX <span class="kw">BETWEEN</span> <span class="str">'2020_01'</span> <span class="kw">AND</span> <span class="str">'2026_04'</span>
+<span class="kw">GROUP BY</span> month
+<span class="kw">ORDER BY</span> month</pre>
+</div>
+
+<div class="emdash-section">
+    <h2>The tighter query (green line)</h2>
+    <p>
+        Drops the em-dash-character match entirely &mdash; only counts issues whose text literally contains
+        the phrase &ldquo;em dash&rdquo; or &ldquo;em-dash&rdquo;. These are issues filed <em>because of</em>
+        em-dashes, not just ones that happen to contain one.
+    </p>
+    <pre class="emdash-sql"><span class="kw">SELECT</span>
+  FORMAT_DATE(<span class="str">'%Y-%m'</span>, DATE(created_at)) <span class="kw">AS</span> month,
+  COUNT(*) <span class="kw">AS</span> issue_count
+<span class="kw">FROM</span>
+  `githubarchive.month.*`
+<span class="kw">WHERE</span>
+  type = <span class="str">'IssuesEvent'</span>
+  <span class="kw">AND</span> JSON_EXTRACT_SCALAR(payload, <span class="str">'$.action'</span>) = <span class="str">'opened'</span>
+  <span class="kw">AND</span> (
+    LOWER(JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.title'</span>)) <span class="kw">LIKE</span> <span class="str">'%em-dash%'</span>
+    <span class="kw">OR</span> LOWER(JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.title'</span>)) <span class="kw">LIKE</span> <span class="str">'%em dash%'</span>
+    <span class="kw">OR</span> LOWER(JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.body'</span>)) <span class="kw">LIKE</span> <span class="str">'%em-dash%'</span>
+    <span class="kw">OR</span> LOWER(JSON_EXTRACT_SCALAR(payload, <span class="str">'$.issue.body'</span>)) <span class="kw">LIKE</span> <span class="str">'%em dash%'</span>
+  )
+  <span class="kw">AND</span> _TABLE_SUFFIX <span class="kw">BETWEEN</span> <span class="str">'2020_01'</span> <span class="kw">AND</span> <span class="str">'2026_04'</span>
+<span class="kw">GROUP BY</span> month
+<span class="kw">ORDER BY</span> month</pre>
+</div>
+
+{{end}}

@@ -12,6 +12,9 @@ import (
 
 var TemplateFuncs = template.FuncMap{
 	"queryParams": queryParams,
+	"add":         func(a, b float64) float64 { return a + b },
+	"sub":         func(a, b float64) float64 { return a - b },
+	"div":         func(a, b float64) float64 { return a / b },
 }
 
 func queryParams(pairs ...string) template.URL {
