@@ -525,6 +525,8 @@ figure.figure:hover { transform: translateY(-3px); }
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.7);
   max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ── Moon Table ── */
