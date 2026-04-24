@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/jmcat/OneDrive/Documents/go/projects/moon/**)"
+      "Read(//c/Users/jmcat/OneDrive/Documents/go/projects/moon/**)",
+      "Read(//c/Users/jmcat/**)",
+      "mcp__chrome-devtools__performance_start_trace",
+      "mcp__chrome-devtools__lighthouse_audit",
+      "mcp__chrome-devtools__performance_analyze_insight",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__hover"
     ]
   }
 }
