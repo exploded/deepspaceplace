@@ -276,7 +276,7 @@ a { color:inherit; }
 .day-plate { position:relative; }
 .day-plate .hero-frame {
   position:relative; aspect-ratio:4/3; background:#05070f; overflow:hidden;
-  border:1px solid var(--gold-faint);
+  border:1px solid var(--gold-faint); cursor:zoom-in;
 }
 .day-plate .hero-frame img {
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
@@ -448,9 +448,15 @@ a { color:inherit; }
 }
 #lightbox.active { display:grid; }
 #lightbox .lb-frame {
-  position:relative; width:min(1100px, 92vw); aspect-ratio:4/3;
+  position:relative; max-width:92vw; max-height:88vh;
   border:1px solid var(--gold); overflow:hidden;
   background:linear-gradient(140deg, var(--plum), var(--bg2));
+}
+#lightbox .lb-frame img {
+  display:block; max-width:92vw; max-height:88vh; object-fit:contain;
+}
+#lightbox .lb-frame video {
+  display:block; max-width:92vw; max-height:88vh; object-fit:contain;
 }
 #lightbox .lb-label {
   position:absolute; left:20px; bottom:16px;
@@ -1323,70 +1329,32 @@ const GALLERY_PLATES = [
   { mode:'exit', label:'Exiting the Great Pyramid', day:13, size:'1x1', video:'photos/day13-exiting-great-pyramid.mp4' },
 ];
 
-// ── STARFIELD (single rAF loop, visibility-gated) ─────────────
-const _starfields = [];
-function initStarfield(container, density, drift, shooting) {
+// ── STARFIELD (static, drawn once) ────────────────────────────
+function initStarfield(container, density) {
   const canvas = container.querySelector('canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let w = 0, h = 0;
-  const maxCanvasH = 1200; // cap canvas pixel height to avoid huge buffers on tall sections
-  const resize = () => { const ow = canvas.offsetWidth, oh = canvas.offsetHeight; const cappedH = Math.min(oh, maxCanvasH); w = canvas.width = Math.round(ow * devicePixelRatio); h = canvas.height = Math.round(cappedH * devicePixelRatio); };
-  resize();
-  const ro = new ResizeObserver(resize); ro.observe(canvas);
-  const n = Math.floor(density);
-  const stars = Array.from({length:n}, () => ({
-    x: Math.random()*10000, y: Math.random()*10000,
-    r: (Math.random()*1.5 + 0.3),
-    a: Math.random()*0.8 + 0.2,
-    tw: Math.random()*0.015 + 0.003,
-    ph: Math.random()*Math.PI*2,
-  }));
-  const sf = { ctx, stars, w:() => w, h:() => h, drift, shooting, shooter: null, visible: false, drawn: false, dpr: devicePixelRatio };
-  // Only draw when visible
-  const obs = new IntersectionObserver(entries => { sf.visible = entries[0].isIntersecting; if (sf.visible) _ensureStarfieldLoop(); }, { rootMargin: '200px' });
-  obs.observe(container);
-  _starfields.push(sf);
-}
-let _sfTick = 0;
-let _sfRunning = false;
-function _tickStarfields() {
-  const anyVisible = _starfields.some(sf => sf.visible);
-  if (!anyVisible) { _sfRunning = false; return; }
-  _sfRunning = true;
-  _sfTick++;
-  for (const sf of _starfields) {
-    if (!sf.visible) continue;
-    const w = sf.w(), h = sf.h(), ctx = sf.ctx, dpr = sf.dpr;
-    if (!w || !h) continue;
+  const dpr = devicePixelRatio;
+  function draw() {
+    const w = canvas.width = Math.round(canvas.offsetWidth * dpr);
+    const h = canvas.height = Math.round(canvas.offsetHeight * dpr);
+    if (!w || !h) return;
     ctx.clearRect(0, 0, w, h);
-    for (const s of sf.stars) {
-      if (s.x > w * 1.5) { s.x = Math.random() * w; s.y = Math.random() * h; }
-      const a = s.a * (0.55 + 0.45 * Math.sin(_sfTick * s.tw + s.ph));
+    const n = Math.floor(density);
+    for (let i = 0; i < n; i++) {
+      const x = Math.random() * w;
+      const y = Math.random() * h;
+      const r = (Math.random() * 1.5 + 0.3) * dpr;
+      const a = Math.random() * 0.8 + 0.2;
       ctx.fillStyle = 'rgba(244,233,200,' + a + ')';
-      ctx.fillRect(Math.round(s.x - s.r * dpr), Math.round(s.y - s.r * dpr), Math.ceil(s.r * dpr * 2), Math.ceil(s.r * dpr * 2));
-      if (sf.drift) { s.x += 0.02 * dpr; if (s.x > w) s.x = 0; }
-    }
-    if (sf.shooting) {
-      if (!sf.shooter && Math.random() < 0.005) {
-        sf.shooter = { x: Math.random()*w*0.6, y: Math.random()*h*0.4, vx: 6*dpr, vy: 2*dpr, life: 60 };
-      }
-      if (sf.shooter) {
-        const sh = sf.shooter;
-        ctx.strokeStyle = 'rgba(244,233,200,' + (sh.life/60) + ')';
-        ctx.lineWidth = 1.5 * dpr;
-        ctx.beginPath();
-        ctx.moveTo(sh.x, sh.y);
-        ctx.lineTo(sh.x - sh.vx*8, sh.y - sh.vy*8);
-        ctx.stroke();
-        sh.x += sh.vx; sh.y += sh.vy; sh.life--;
-        if (sh.life <= 0 || sh.x > w) sf.shooter = null;
-      }
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
-  requestAnimationFrame(_tickStarfields);
+  draw();
+  const ro = new ResizeObserver(draw); ro.observe(canvas);
 }
-function _ensureStarfieldLoop() { if (!_sfRunning) { _sfRunning = true; requestAnimationFrame(_tickStarfields); } }
 // Start the single loop after all starfields are registered (called in DOMContentLoaded)
 
 // ── SVG PLATE ART ─────────────────────────────────────────────
@@ -1748,15 +1716,45 @@ function initTimeline() {
     }
 
     // photo viewer click handlers
-    if (flat.length > 1) {
-      const plate = card.querySelector('.day-plate');
-      if (plate) {
+    const plate = card.querySelector('.day-plate');
+    if (plate) {
+      let currentIdx = 0;
+      const frame = plate.querySelector('.hero-frame');
+
+      // open lightbox when clicking the hero frame
+      frame.addEventListener('click', e => {
+        e.stopPropagation();
+        const photo = flat[currentIdx];
+        const lightbox = document.getElementById('lightbox');
+        const lbFrame = document.getElementById('lb-frame');
+        const lbLabel = document.getElementById('lb-label');
+        // clear old media
+        const oldImg = lbFrame.querySelector('img');
+        if (oldImg) oldImg.remove();
+        const oldVid = lbFrame.querySelector('video');
+        if (oldVid) oldVid.remove();
+        const oldSvg = lbFrame.querySelector('svg');
+        if (oldSvg) oldSvg.remove();
+        if (photo.video) {
+          const vid = document.createElement('video');
+          vid.src = photo.src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
+          lbFrame.insertBefore(vid, lbFrame.firstChild);
+        } else {
+          const img = document.createElement('img');
+          img.src = photo.src; img.alt = photo.caption;
+          lbFrame.insertBefore(img, lbFrame.firstChild);
+        }
+        lbLabel.innerHTML = photo.caption + '<div class="lb-day">DAY ' + String(t.day).padStart(2,'0') + '</div>';
+        lightbox.classList.add('active');
+      });
+
+      if (flat.length > 1) {
         plate.addEventListener('click', e => {
           const btn = e.target.closest('button[data-idx]');
           if (!btn) return;
           const idx = parseInt(btn.dataset.idx);
+          currentIdx = idx;
           const photo = flat[idx];
-          const frame = plate.querySelector('.hero-frame');
           const oldMedia = frame.querySelector('img, video');
           if (photo.video) {
             const vid = document.createElement('video');
@@ -1862,6 +1860,8 @@ function initGallery() {
       if (oldSvg) oldSvg.remove();
       const oldVid = lbFrame.querySelector('video');
       if (oldVid) oldVid.remove();
+      const oldImg = lbFrame.querySelector('img');
+      if (oldImg) oldImg.remove();
       if (p.video) {
         const vid = document.createElement('video');
         vid.src = p.video; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
@@ -1941,16 +1941,14 @@ function initAudio() {
 
 // ── INIT ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Starfields
-  initStarfield(document.getElementById('hero-stars'), 240, true, true);
-  initStarfield(document.getElementById('map-stars'), 70, true, false);
-  initStarfield(document.getElementById('timeline-stars'), 60, true, false);
-  initStarfield(document.getElementById('guides-stars'), 50, true, false);
-  initStarfield(document.getElementById('gallery-stars'), 40, true, false);
-  initStarfield(document.getElementById('journal-stars'), 40, true, false);
-  initStarfield(document.getElementById('theme-stars'), 100, true, true);
-
-  _ensureStarfieldLoop(); // single loop for all starfields
+  // Starfields (static, drawn once)
+  initStarfield(document.getElementById('hero-stars'), 240);
+  initStarfield(document.getElementById('map-stars'), 70);
+  initStarfield(document.getElementById('timeline-stars'), 60);
+  initStarfield(document.getElementById('guides-stars'), 50);
+  initStarfield(document.getElementById('gallery-stars'), 40);
+  initStarfield(document.getElementById('journal-stars'), 40);
+  initStarfield(document.getElementById('theme-stars'), 100);
 
   initMap();
   initTimeline();
