@@ -1907,9 +1907,9 @@ function initAudio() {
         const t = ctx.currentTime + 0.05;
         const osc = ctx.createOscillator();
         const env = ctx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(64, t); osc.frequency.exponentialRampToValueAtTime(40, t+0.6);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(110, t); osc.frequency.exponentialRampToValueAtTime(65, t+0.6);
         env.gain.setValueAtTime(0, t);
-        env.gain.linearRampToValueAtTime(0.12, t+0.02);
+        env.gain.linearRampToValueAtTime(0.35, t+0.02);
         env.gain.exponentialRampToValueAtTime(0.001, t+0.8);
         osc.connect(env).connect(drumGain);
         osc.start(t); osc.stop(t+0.9);
@@ -1921,13 +1921,18 @@ function initAudio() {
       nodes = { noise, lfo, windGain, drumGain };
     } else {
       if (drumTimer) clearTimeout(drumTimer);
-      if (nodes.windGain) {
+      if (ctx) {
         try {
+          // Disconnect LFO so it stops fighting the fade-out ramp
+          nodes.lfo.disconnect();
+          nodes.windGain.gain.cancelScheduledValues(ctx.currentTime);
+          nodes.windGain.gain.setValueAtTime(nodes.windGain.gain.value, ctx.currentTime);
           nodes.windGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-          setTimeout(() => { nodes.noise.stop(); nodes.lfo.stop(); ctx.close(); }, 350);
+          nodes.drumGain.gain.setValueAtTime(0, ctx.currentTime);
+          setTimeout(() => { try { nodes.noise.stop(); nodes.lfo.stop(); ctx.close(); } catch(e) {} }, 350);
         } catch(e) {}
       }
-      nodes = {};
+      ctx = null; nodes = {};
     }
   });
 }
