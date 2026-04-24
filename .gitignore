@@ -13,4 +13,7 @@ Thumbs.db
 *.backup
 *.bak
 /images/
+/static/egypt/photos/
+/static/egypt/uploads/
+.mcp.json
 .local/

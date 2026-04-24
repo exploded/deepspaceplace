@@ -197,6 +197,10 @@ func main() {
 	mux.Handle("/meteor/", http.StripPrefix("/meteor/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "meteor"))))))
 	mux.Handle("/data/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 
+	// Egypt field record (standalone page)
+	mux.HandleFunc("/egypt", handlers.HandleEgypt)
+	mux.Handle("/egypt/", http.StripPrefix("/egypt/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "egypt"))))))
+
 	// Build server with middleware
 	srv := &http.Server{
 		Addr:         httpPort,
