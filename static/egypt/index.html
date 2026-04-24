@@ -57,9 +57,8 @@ a { color:inherit; }
 }
 .rule span.diamond { color:var(--gold); font-size:8px; letter-spacing:4px; }
 
-/* starfield canvas covers parent */
+/* starfield tiling background */
 .starfield-wrap { position:absolute; inset:0; overflow:hidden; }
-.starfield-wrap canvas { position:absolute; inset:0; width:100%; height:100%; }
 
 /* ══════════════════════════════════════════════
    01  HERO
@@ -279,7 +278,7 @@ a { color:inherit; }
   border:1px solid var(--gold-faint); cursor:zoom-in;
 }
 .day-plate .hero-frame img {
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
   filter:saturate(0.92) contrast(1.02);
 }
 .day-plate .hero-frame .vignette {
@@ -1329,31 +1328,27 @@ const GALLERY_PLATES = [
   { mode:'exit', label:'Exiting the Great Pyramid', day:13, size:'1x1', video:'photos/day13-exiting-great-pyramid.mp4' },
 ];
 
-// ── STARFIELD (static, drawn once) ────────────────────────────
+// ── STARFIELD (tiling background, no persistent canvas) ───────
 function initStarfield(container, density) {
-  const canvas = container.querySelector('canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = devicePixelRatio;
-  function draw() {
-    const w = canvas.width = Math.round(canvas.offsetWidth * dpr);
-    const h = canvas.height = Math.round(canvas.offsetHeight * dpr);
-    if (!w || !h) return;
-    ctx.clearRect(0, 0, w, h);
-    const n = Math.floor(density);
-    for (let i = 0; i < n; i++) {
-      const x = Math.random() * w;
-      const y = Math.random() * h;
-      const r = (Math.random() * 1.5 + 0.3) * dpr;
-      const a = Math.random() * 0.8 + 0.2;
-      ctx.fillStyle = 'rgba(244,233,200,' + a + ')';
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  const tile = 512;
+  const c = document.createElement('canvas');
+  c.width = tile; c.height = tile;
+  const ctx = c.getContext('2d');
+  const n = Math.round(density * (tile * tile) / (1400 * 900));
+  for (let i = 0; i < n; i++) {
+    const x = Math.random() * tile;
+    const y = Math.random() * tile;
+    const r = Math.random() * 1.5 + 0.3;
+    const a = Math.random() * 0.8 + 0.2;
+    ctx.fillStyle = 'rgba(244,233,200,' + a + ')';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
   }
-  draw();
-  const ro = new ResizeObserver(draw); ro.observe(canvas);
+  container.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+  container.style.backgroundSize = tile + 'px ' + tile + 'px';
+  const cv = container.querySelector('canvas');
+  if (cv) cv.remove();
 }
 // Start the single loop after all starfields are registered (called in DOMContentLoaded)
 
@@ -1596,6 +1591,16 @@ function jumpToDay(day) {
   if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
 }
 
+// ── Orientation-aware aspect ratio for hero frames ───────────
+function adjustFrameAspect(img) {
+  const frame = img.closest('.hero-frame');
+  if (!frame) return;
+  const w = img.naturalWidth, h = img.naturalHeight;
+  if (w && h) {
+    frame.style.aspectRatio = (h > w) ? '3/4' : '4/3';
+  }
+}
+
 // ── TIMELINE ──────────────────────────────────────────────────
 function initTimeline() {
   const rail = document.getElementById('timeline-rail');
@@ -1721,6 +1726,13 @@ function initTimeline() {
       let currentIdx = 0;
       const frame = plate.querySelector('.hero-frame');
 
+      // adjust aspect ratio for initial hero image
+      const heroImg = frame && frame.querySelector('img');
+      if (heroImg) {
+        heroImg.addEventListener('load', function() { adjustFrameAspect(this); });
+        if (heroImg.complete) adjustFrameAspect(heroImg);
+      }
+
       // open lightbox when clicking the hero frame
       frame.addEventListener('click', e => {
         e.stopPropagation();
@@ -1761,13 +1773,16 @@ function initTimeline() {
             vid.src = photo.src;
             vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
             vid.style.cssText = 'width:100%;height:100%;object-fit:cover';
+            frame.style.aspectRatio = '4/3';
             oldMedia.replaceWith(vid);
           } else {
             const img = oldMedia.tagName === 'IMG' ? oldMedia : document.createElement('img');
+            img.onload = function() { adjustFrameAspect(this); };
             img.src = photo.src;
             img.style.objectPosition = photo.crop || 'center';
             img.loading = 'lazy'; img.decoding = 'async';
             if (oldMedia !== img) oldMedia.replaceWith(img);
+            if (img.complete) adjustFrameAspect(img);
           }
           plate.querySelector('.caption').innerHTML = photo.caption;
           plate.querySelector('.plate-num').textContent = 'PLATE ' + String(t.day).padStart(2,'0') + ' \xb7 ' + String(idx+1).padStart(2,'0') + ' / ' + String(flat.length).padStart(2,'0');
