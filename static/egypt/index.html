@@ -402,6 +402,15 @@ a { color:inherit; }
   font-size:15px; max-width:380px; line-height:1.6;
 }
 
+/* Hero video */
+.hero-video-wrap {
+  position:relative; margin-bottom:40px; border:1px solid var(--gold-faint);
+  overflow:hidden; background:#000;
+}
+.hero-video-wrap video {
+  display:block; width:100%; max-height:70vh; object-fit:contain; background:#000;
+}
+
 /* Video placeholder */
 .video-placeholder {
   position:relative; margin-bottom:40px; border:1px solid var(--gold-faint);
@@ -790,6 +799,10 @@ a { color:inherit; }
       <div class="subtitle">
         Clips from the DJI Osmo Pocket 3. Click to enlarge.
       </div>
+    </div>
+
+    <div class="hero-video-wrap">
+      <video src="photos/egypt-hero.mp4" controls preload="metadata" poster="photos/thumbs/egypt-hero.jpg"></video>
     </div>
 
     <div class="gallery-grid" id="gallery-grid">
@@ -1728,6 +1741,7 @@ function initTimeline() {
         if (photo.video) {
           const vid = document.createElement('video');
           vid.src = photo.src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
+          vid.controls = true;
           lbFrame.insertBefore(vid, lbFrame.firstChild);
         } else {
           const img = document.createElement('img');
@@ -1858,7 +1872,7 @@ function initGallery() {
       if (p.video) {
         const vid = document.createElement('video');
         vid.src = p.video; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
-        vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+        vid.controls = true;
         lbFrame.insertBefore(vid, lbFrame.firstChild);
       } else {
         lbFrame.insertBefore(createPlateArtSVG(p.mode), lbFrame.firstChild);
@@ -1869,7 +1883,7 @@ function initGallery() {
     grid.appendChild(cell);
   });
 
-  lightbox.addEventListener('click', () => lightbox.classList.remove('active'));
+  lightbox.addEventListener('click', e => { if (e.target.tagName !== 'VIDEO') lightbox.classList.remove('active'); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') lightbox.classList.remove('active'); });
 }
 
