@@ -50,7 +50,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		if Prod {
 			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		}
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://clearoutside.com https://www.yr.no http://www.skippysky.com.au https://www.bom.gov.au; connect-src 'self'; frame-src https://www.youtube-nocookie.com")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://clearoutside.com https://www.yr.no http://www.skippysky.com.au https://www.bom.gov.au; connect-src 'self'; frame-src https://www.youtube-nocookie.com")
 		next.ServeHTTP(w, r)
 	})
 }
