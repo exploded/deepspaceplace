@@ -17,3 +17,4 @@ Thumbs.db
 /static/egypt/uploads/
 .mcp.json
 .local/
+.claude/
