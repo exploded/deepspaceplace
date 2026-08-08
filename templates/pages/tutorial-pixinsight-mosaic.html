@@ -1,0 +1,1000 @@
+{{template "base" .}}
+{{define "head"}}
+<link href="/static/css/tutorial.css" rel="stylesheet">
+<script src="/static/js/tutorial.js" defer></script>
+{{end}}
+{{define "content"}}
+<div class="tutorial">
+<div class="state"></div><div class="state-tag">linear</div>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-mark">Runbook · SHO · 2 panels</div>
+    <p class="rail-title">PixInsight Mosaic Workflow</p>
+    <nav><a class="lvl2" href="#equipment-and-data">Equipment and data</a>
+<a class="lvl2" href="#approach">Approach</a>
+<a class="lvl2" href="#prerequisites">Prerequisites</a>
+<a class="lvl2" href="#filename-suffix-chain">Filename suffix chain</a>
+<a class="lvl1" href="#part-1-calibration-and-integration">Part 1 — Calibration and integration</a>
+<a class="lvl2" href="#step-1-organise-light-frames-by-panel">1 · Organise light frames by panel</a>
+<a class="lvl2" href="#step-2-wbpp-grouping-keyword">2 · WBPP grouping keyword</a>
+<a class="lvl2" href="#step-3-registration-reference-image">3 · Registration reference image</a>
+<a class="lvl2" href="#step-4-verify-the-grouping">4 · Verify the grouping</a>
+<a class="lvl2" href="#step-5-locate-the-masters">5 · Locate the masters</a>
+<a class="lvl1" href="#part-2-per-panel-linear-processing">Part 2 — Per-panel linear processing</a>
+<a class="lvl2" href="#step-6-identify-which-image-holds-the-data">6 · Identify which image holds the data</a>
+<a class="lvl2" href="#step-6a-arrange-the-windows">6a · Arrange the windows</a>
+<a class="lvl2" href="#step-7-load-into-an-imagecontainer">7 · Load into an ImageContainer</a>
+<a class="lvl2" href="#step-8-blurxterminator">8 · BlurXTerminator</a>
+<a class="lvl2" href="#step-9-gradientcorrection">9 · GradientCorrection</a>
+<a class="lvl2" href="#step-10-noisexterminator">10 · NoiseXTerminator</a>
+<a class="lvl2" href="#step-11-save-overwriting-the-_autocrop-files">11 · Save, overwriting the _autocrop files</a>
+<a class="lvl1" href="#part-3-astrometry">Part 3 — Astrometry</a>
+<a class="lvl2" href="#step-12-check-whether-the-panels-are-already-solved">12 · Check whether the panels are already solved</a>
+<a class="lvl2" href="#step-13-batch-imagesolver">13 · Batch ImageSolver</a>
+<a class="lvl1" href="#part-4-reprojection-onto-a-common-grid">Part 4 — Reprojection onto a common grid</a>
+<a class="lvl2" href="#step-14-mosaicbycoordinates">14 · MosaicByCoordinates</a>
+<a class="lvl1" href="#part-5-trimming">Part 5 — Trimming</a>
+<a class="lvl2" href="#step-15-trimmosaictile">15 · TrimMosaicTile</a>
+<a class="lvl1" href="#part-6-the-join">Part 6 — The join</a>
+<a class="lvl2" href="#step-16-photometricmosaic">16 · PhotometricMosaic</a>
+<a class="lvl2" href="#step-17-rename-the-mosaic-views">17 · Rename the mosaic views</a>
+<a class="lvl1" href="#part-7-crop">Part 7 — Crop</a>
+<a class="lvl2" href="#step-18-dynamiccrop-applied-identically-to-all-three">18 · DynamicCrop, applied identically to all three</a>
+<a class="lvl2" href="#step-19-rotate-for-composition">19 · Rotate for composition</a>
+<a class="lvl2" href="#step-20-re-solve">20 · Re-solve</a>
+<a class="lvl1" href="#from-here-back-to-the-standard-workflow">From here — back to the standard workflow</a>
+<a class="lvl1" href="#quick-reference-condensed-sequence">Quick reference — condensed sequence</a>
+<a class="lvl1" href="#gotchas-index">Gotchas index</a></nav>
+    <div class="chips">
+      <span class="chip s">SII 672</span><span class="chip h">H&#945; 656</span><span class="chip o">OIII 501</span>
+    </div>
+    <div class="rail-related">
+      <div class="rail-mark">Related runbook</div>
+      <a href="/tutorials/pixinsight-sho-workflow">PixInsight Standard SHO Workflow</a>
+    </div>
+  </aside>
+  <main><div class="doc">
+    <div class="eyebrow">Runbook · SHO · 2 panels</div>
+    <h1 class="title">PixInsight Mosaic Workflow</h1>
+    <p>Two-panel SHO narrowband, using MosaicByCoordinates and PhotometricMosaic. Documented against RCW 108, August 2026.</p>
+    <dl class="meta"><dt>Reference project</dt><dd>RCW 108, 2 panels, SHO narrowband</dd><dt>Working directory</dt><dd><code>C:/PixInsight/2026-08-01_RCW 108/</code></dd><dt>Date documented</dt><dd>August 2026</dd><dt>PixInsight version</dt><dd>1.9.4</dd></dl>
+<hr />
+<h2 id="equipment-and-data">Equipment and data</h2>
+<table class="noheadings">
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Telescope</td>
+<td>AT12IN (300mm Newtonian), 1156.6 mm focal length</td>
+</tr>
+<tr>
+<td>Camera</td>
+<td>ZWO ASI2600MM Duo, 3.76 µm pixels, mono</td>
+</tr>
+<tr>
+<td>Mount</td>
+<td>Paramount ME</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>NINA</td>
+</tr>
+<tr>
+<td>Image scale</td>
+<td>0.671 ″/px</td>
+</tr>
+<tr>
+<td>Sub exposure</td>
+<td>300 s, bin 1×1, 6248×4176</td>
+</tr>
+</tbody>
+</table>
+<p>Panel layout: stacked in <strong>declination</strong> (panel 1 north, panel 2 south), roughly 22% overlap (~10′ against a 46′ short axis).</p>
+<p>Frame counts:</p>
+<table>
+<thead>
+<tr>
+<th>Filter</th>
+<th>Panel 1</th>
+<th>Panel 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H</td>
+<td>16</td>
+<td>20</td>
+</tr>
+<tr>
+<td>O</td>
+<td>11</td>
+<td>10</td>
+</tr>
+<tr>
+<td>S</td>
+<td>12</td>
+<td>18</td>
+</tr>
+</tbody>
+</table>
+<p>Panels were shot on consecutive nights (1 and 2 August) <strong>on opposite sides of the pier</strong> — panel 1 solved at 179.600° rotation, panel 2 at −0.696°. Reprojection handles this transparently.</p>
+<hr />
+<h2 id="approach">Approach</h2>
+<p>This workflow uses <strong>MosaicByCoordinates + PhotometricMosaic</strong>, not the older
+GradientMergeMosaic + dnaLinearFit route described in most tutorials online.</p>
+<p>Why:</p>
+<ul>
+<li>PhotometricMosaic derives the brightness scale factor photometrically from stars
+  in the overlap, so the separate linear-fit step disappears entirely.</li>
+<li>MosaicByCoordinates uses each panel's own astrometric solution, so no synthetic
+  star field (CatalogStarGenerator) is needed. That whole branch of the classic
+  tutorial is only necessary for larger mosaics.</li>
+<li>GradientMergeMosaic predates PixInsight's astrometry infrastructure and is prone
+  to seam artefacts and pinched stars.</li>
+</ul>
+<p><strong>MultiscaleGradientCorrection (MGC) is not required</strong> and was not used here. MGC
+corrects each panel's absolute gradient against the MARS all-sky reference;
+PhotometricMosaic models the relative gradient between panels from their overlap.
+They're independent. MARS narrowband coverage in the far southern sky is patchy,
+so MGC may not be viable for SHO targets in Ara/Norma anyway — worth testing on a
+single panel before restructuring around it.</p>
+<p><strong>Do the mosaic per-filter in mono, then combine to SHO at the end.</strong> Combining
+first would mean matching intensities across every channel <em>and</em> every panel
+simultaneously.</p>
+<p>Note: PhotometricMosaic's own dialog recommends NormalizeScaleGradient (NSG) during
+preprocessing. This run did not use NSG — WBPP plus GradientCorrection was used
+instead. Results were good, but NSG is the thing to try if seams give trouble.</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<p>PhotometricMosaic, SplitMosaicTile and TrimMosaicTile were <strong>removed from the
+official PixInsight distribution</strong> in 1.8.9-2 build 1588. They're still maintained
+by John Murphy. Add his repository:</p>
+<pre><code>https://pixinsight.astroprocessing.com/
+</code></pre>
+<p>via Resources → Updates → Manage Repositories.</p>
+<hr />
+<h2 id="filename-suffix-chain">Filename suffix chain</h2>
+<p>The naming accumulates through the workflow and is self-documenting:</p>
+<pre><code>_autocrop        WBPP autocrop output — then OVERWRITTEN with BXT/GC/NXT results
+_ast             + astrometric solution (batch ImageSolver)
+_ra              + reprojected onto common mosaic grid (MosaicByCoordinates)
+_trim            + edges eroded (TrimMosaicTile)
+</code></pre>
+<hr />
+<h1 id="part-1-calibration-and-integration">Part 1 — Calibration and integration</h1>
+<p><em>Assumes Steps 1–2 of the standard workflow are done: the process icon set is
+loaded, and the light frames have been culled in Blink. Both apply identically to
+a mosaic — cull each panel's frames separately.</em></p>
+<h2 id="step-1-organise-light-frames-by-panel"><span class="stepno">1</span>Organise light frames by panel</h2>
+<p>Create one folder per panel and sort the lights into them:</p>
+<pre><code>PANEL_1/
+PANEL_2/
+</code></pre>
+<figure><img src="/static/images/tutorials/01-panel-folders.jpg" alt="Panel folders" loading="lazy"></figure>
+<p>Everything downstream runs per-panel, so keeping them separate from the start
+prevents frames from different pointings being mixed into one integration.</p>
+<h2 id="step-2-wbpp-grouping-keyword"><span class="stepno">2</span>WBPP grouping keyword</h2>
+<p>Enable <strong>Grouping Keywords</strong> and add:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Pre</th>
+<th>Post</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PANEL</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/02-wbpp-grouping-keyword.jpg" alt="WBPP grouping keyword" loading="lazy"></figure>
+<p>Both Pre and Post ticked keeps the panels separate through calibration/registration
+<em>and</em> through integration, producing one master light per panel per filter.</p>
+<p>Requires a <code>PANEL</code> keyword in the FITS headers (written by NINA from the sequence).</p>
+<h2 id="step-3-registration-reference-image"><span class="stepno">3</span>Registration reference image</h2>
+<p>Set <strong>Registration Reference Image → Mode: <code>auto by PANEL</code></strong>, file field left on
+<code>auto</code>.</p>
+<figure><img src="/static/images/tutorials/03-wbpp-registration-reference.jpg" alt="Registration reference mode" loading="lazy"></figure>
+<p>This picks a separate reference frame within each PANEL group. A single global
+reference would sit outside the frame for the other panel and registration would
+fail.</p>
+<h2 id="step-4-verify-the-grouping"><span class="stepno">4</span>Verify the grouping</h2>
+<figure><img src="/static/images/tutorials/04-wbpp-light-tab.jpg" alt="WBPP LIGHT tab showing six groups" loading="lazy"></figure>
+<p>The LIGHT tab should show one row per filter × panel — six rows for 3 filters ×
+2 panels. <strong>If only three rows appear, the PANEL keyword isn't being read.</strong></p>
+<p>Other settings this run: bias off, darks and flats applied, cosmetic correction
+AUTO (10), output pedestal AUTO (0.01%).</p>
+<h2 id="step-5-locate-the-masters"><span class="stepno">5</span>Locate the masters</h2>
+<p>WBPP writes 12 files to <code>master/</code> — six masters plus an <code>_autocrop</code> variant of each.</p>
+<figure><img src="/static/images/tutorials/05-master-files.jpg" alt="Master folder contents" loading="lazy"></figure>
+<p><strong>Use the <code>_autocrop</code> files.</strong> The ragged dither/registration borders are already
+trimmed. Uncropped versions carry partial-coverage edge pixels that would poison
+the overlap region.</p>
+<p>Autocrop reduced 6248×4176 → 6207×4139 (panel 1) and 6147×4134 (panel 2).</p>
+<hr />
+<h1 id="part-2-per-panel-linear-processing">Part 2 — Per-panel linear processing</h1>
+<h2 id="step-6-identify-which-image-holds-the-data"><span class="stepno">6</span>Identify which image holds the data</h2>
+<p>Each <code>_autocrop</code> file opens as two images. Apply <strong>STF AutoStretch</strong> (the
+nuclear-symbol button) to see which one has data; close the empty one.</p>
+<figure><img src="/static/images/tutorials/06-stf-autostretch.jpg" alt="STF AutoStretch button" loading="lazy"></figure>
+<p>STF button reference:
+- Click — apply current STF tool settings
+- Shift-Click — single STF across all RGB channels (<em>linked</em>)
+- Ctrl-Click — separate STF per channel (<em>unlinked</em>)</p>
+<p>Mono data, so a plain click.</p>
+<h2 id="step-6a-arrange-the-windows"><span class="stepno">6a</span>Arrange the windows</h2>
+<p>Tile the six views in a grid — <strong>columns by filter, rows by panel</strong>:</p>
+<pre><code>MasterLight_H    MasterLight_O    MasterLight_S     ← panel 1
+MasterLight_H1   MasterLight_O1   MasterLight_S1    ← panel 2
+</code></pre>
+<figure><img src="/static/images/tutorials/07-window-arrangement.jpg" alt="Window arrangement" loading="lazy"></figure>
+<blockquote class="gotcha">
+<p><strong>Gotcha — view ID ambiguity.</strong> PixInsight strips the panel number from the view
+ID on open. The <code>1</code> suffix means "second image opened with this name", <em>not</em>
+"panel 2". It only corresponds to panel 2 because the files were opened in panel
+order. Verify against the file path in the ImageContainer info panel, or rename
+the views.</p>
+</blockquote>
+<h2 id="step-7-load-into-an-imagecontainer"><span class="stepno">7</span>Load into an ImageContainer</h2>
+<p>Add the six views to a new ImageContainer, all ticked. Container options at
+defaults.</p>
+<figure><img src="/static/images/tutorials/08-imagecontainer.jpg" alt="ImageContainer with six views" loading="lazy"></figure>
+<h2 id="step-8-blurxterminator"><span class="stepno">8</span>BlurXTerminator</h2>
+<p>Drag the ImageContainer's <strong>triangle (new instance) onto the BXT dialog</strong> to apply
+to all six at once.</p>
+<p>BXT v2.0.4, AI v4:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sharpen Stars</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>Adjust Star Halos</td>
+<td>−0.26</td>
+</tr>
+<tr>
+<td>Automatic PSF</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Sharpen Nonstellar</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>Correct Only / Correct First / Nonstellar then Stellar</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Luminance Only</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/09-blurxterminator.jpg" alt="BlurXTerminator settings" loading="lazy"></figure>
+<p>BXT runs on linear data, so this belongs here — before stretching, before the join.
+Applying via the container also guarantees both panels get identical parameters,
+which helps the seam blend later.</p>
+<h2 id="step-9-gradientcorrection"><span class="stepno">9</span>GradientCorrection</h2>
+<p>Same technique — drag the container triangle onto the dialog.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Low threshold</td>
+<td>0.20</td>
+</tr>
+<tr>
+<td>Low tolerance</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>High threshold</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td>High tolerance</td>
+<td>0.00</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>5.00</td>
+</tr>
+<tr>
+<td>Smoothness</td>
+<td>0.40</td>
+</tr>
+<tr>
+<td>Automatic convergence</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Generate gradient model</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Simplified Model</td>
+<td>☐ (degree 1)</td>
+</tr>
+<tr>
+<td>Structure Protection</td>
+<td>✓ threshold 0.10, amount 0.50</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/10-gradientcorrection.jpg" alt="GradientCorrection settings" loading="lazy"></figure>
+<p><strong>Why this matters for a mosaic:</strong> each panel was shot at a different pointing and
+carries its own sky gradient from a different altitude/azimuth. Flattening both
+panels independently <em>before</em> joining is what makes the seam blendable. A merge
+tool can smooth a residual step but can't fix two panels with gradients running in
+different directions.</p>
+<h2 id="step-10-noisexterminator"><span class="stepno">10</span>NoiseXTerminator</h2>
+<p>Same technique. NXT v2.3.3, AI v3:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intensity/color separation</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Frequency separation</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Denoise</td>
+<td>0.90</td>
+</tr>
+<tr>
+<td>Iterations</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/11-noisexterminator.jpg" alt="NoiseXTerminator settings" loading="lazy"></figure>
+<p>Linear-stage order is <strong>BXT → GradientCorrection → NXT</strong>, applied identically to
+all six via the container.</p>
+<h2 id="step-11-save-overwriting-the-_autocrop-files"><span class="stepno">11</span>Save, overwriting the <code>_autocrop</code> files</h2>
+<p>Saved back over the original <code>_autocrop</code> filenames.</p>
+<blockquote>
+<p><strong>Consequence:</strong> after this step, <code>_autocrop</code> no longer means "WBPP's raw
+autocrop output" — it means "processed". Easy to forget. Consider saving under
+new names instead.</p>
+</blockquote>
+<hr />
+<h1 id="part-3-astrometry">Part 3 — Astrometry</h1>
+<h2 id="step-12-check-whether-the-panels-are-already-solved"><span class="stepno">12</span>Check whether the panels are already solved</h2>
+<p>WBPP may have plate-solved the masters already, in which case ImageSolver is
+unnecessary.</p>
+<blockquote class="gotcha">
+<p><strong>Gotcha — the coordinate readout is not a reliable test.</strong> Hovering the cursor
+over a solved image <em>should</em> show RA/Dec in the status bar, but it did not in this
+session even though the images were correctly solved. Considerable time was lost
+chasing this.</p>
+<figure><img src="/static/images/tutorials/12-xisf-properties.jpg" alt="XISF properties showing astrometric solution" loading="lazy"></figure>
+<p><strong>Check XISF properties instead.</strong> Right-click the image → the properties viewer.
+Look for the <code>PCL/AstrometricSolution</code> tree. If <code>Catalog</code>, <code>LinearTransformationMatrix</code>,
+<code>ReferenceCelestialCoordinates</code> etc. are present, it's solved.</p>
+<p>Other functional test: Script → Render → AnnotateImage. If it renders, the
+solution is real.</p>
+<p>The Celestial Coordinates readout menu (below) being correctly configured is
+<strong>not</strong> sufficient — it was set to Equatorial here and still showed nothing.</p>
+</blockquote>
+<figure><img src="/static/images/tutorials/13-celestial-coordinates-menu.jpg" alt="Celestial coordinates readout menu" loading="lazy"></figure>
+<p>Useful XISF properties to know:</p>
+<pre><code>Instrument/Sensor/XPixelSize          3.76
+Instrument/Telescope/FocalLength      1.156598   ← METRES, not mm
+Instrument/Camera/XBinning            1
+Observation/Center/RA, /Dec
+PCL/AstrometricSolution/...
+</code></pre>
+<p>The astrometry survived WBPP autocrop <em>and</em> the BXT/GC/NXT chain intact.</p>
+<h2 id="step-13-batch-imagesolver"><span class="stepno">13</span>Batch ImageSolver</h2>
+<p>Run over the six processed files. Output gets an <code>_ast</code> suffix.</p>
+<p>Enable distortion correction. Solutions used Gaia DR3, DDM thin plate spline,
+Gnomonic projection, ICRS.</p>
+<p><strong>Check control point counts and residuals in the console.</strong> A healthy solve
+reports both. This run:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Control points</th>
+<th>Residuals (px)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H P1</td>
+<td>9532</td>
+<td>0.305 / 0.388</td>
+</tr>
+<tr>
+<td>H P2</td>
+<td>6846</td>
+<td>0.422 / 0.458</td>
+</tr>
+<tr>
+<td>O P1</td>
+<td>8974</td>
+<td>0.926 / 1.297</td>
+</tr>
+<tr>
+<td><strong>O P2</strong></td>
+<td><strong>3836</strong></td>
+<td><strong>none reported</strong></td>
+</tr>
+<tr>
+<td>S P1</td>
+<td>18910</td>
+<td>0.953 / 1.211</td>
+</tr>
+<tr>
+<td>S P2</td>
+<td>6780</td>
+<td>0.415 / 0.490</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="gotcha">
+<p><strong>Warning sign:</strong> a solve reporting <em>no</em> surface residuals, with spline lengths
+equal to the control point count, indicates an unreduced and unvalidated fit.
+O panel 2 shows this — it's the thinnest data (10 frames) so has fewest detectable
+stars. If registration softness appears in the overlap for one filter only, this
+is the first suspect, and the fix is re-solving with a lower star detection
+sensitivity threshold — not blaming the merge tool.</p>
+</blockquote>
+<hr />
+<h1 id="part-4-reprojection-onto-a-common-grid">Part 4 — Reprojection onto a common grid</h1>
+<h2 id="step-14-mosaicbycoordinates"><span class="stepno">14</span>MosaicByCoordinates</h2>
+<p><strong>Script → Mosaic → MosaicByCoordinates</strong> (v1.4.2).</p>
+<p><strong>Add all six <code>_ast</code> files in one run</strong>, not one filter at a time.</p>
+<blockquote>
+<p><strong>This is the single most important decision in the workflow.</strong> With Mosaic
+Geometry left on auto, the script computes the output frame from whatever inputs
+it's given. Running each filter separately produces frames that differ by a pixel
+or two — enough to break channel combination at the end. Running all six together
+guarantees an identical grid.</p>
+<p>Observed: the H-only trial run produced 6257×<strong>7356</strong>; the all-six run produced
+6257×<strong>7357</strong>.</p>
+</blockquote>
+<p>Settings:</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mosaic Geometry</td>
+<td><strong>All unchecked</strong> — derived from the panels' astrometric solutions</td>
+</tr>
+<tr>
+<td>Pixel interpolation</td>
+<td>Auto</td>
+</tr>
+<tr>
+<td>Clamping threshold</td>
+<td>0.30</td>
+</tr>
+<tr>
+<td>Output directory</td>
+<td><code>master/mosaic</code></td>
+</tr>
+<tr>
+<td>Output file suffix</td>
+<td><code>_ra</code></td>
+</tr>
+<tr>
+<td>Overwrite existing files</td>
+<td>☐ (first run)</td>
+</tr>
+<tr>
+<td>On error</td>
+<td>Ask User</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/14-mosaicbycoordinates.jpg" alt="MosaicByCoordinates with all six files" loading="lazy"></figure>
+<p>Resulting frame for this project:</p>
+<table class="noheadings">
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Centre</td>
+<td>α 249.911666°, δ −48.711499° (16h 39m 38.8s, −48° 42′ 41″)</td>
+</tr>
+<tr>
+<td>Dimensions</td>
+<td>6257 × 7357 px</td>
+</tr>
+<tr>
+<td>Resolution</td>
+<td>0.670–0.671 ″/px</td>
+</tr>
+<tr>
+<td>Interpolation</td>
+<td>Bicubic spline, c=0.30</td>
+</tr>
+</tbody>
+</table>
+<p>Record the final <code>alpha</code> / <code>delta</code> / <code>width</code> / <code>height</code> line from the optimisation
+loop — that's the frame everything downstream inherits.</p>
+<p>Six <code>_ra</code> files result, one per input:</p>
+<figure><img src="/static/images/tutorials/15-ra-output-files.jpg" alt="Reprojected output files" loading="lazy"></figure>
+<blockquote class="gotcha">
+<h3 id="gotcha-fits-keywords-are-regenerated-wrongly-here">Gotcha — FITS keywords are regenerated wrongly here</h3>
+<p>The console reports <strong>107 image properties in, 17 out</strong>. Reprojection discards most
+of the XISF property tree, including <code>Instrument/Sensor/XPixelSize</code> and
+<code>Instrument/Telescope/FocalLength</code>, and regenerates the FITS keywords from the
+astrometric solution.</p>
+<p>A plate solve constrains <strong>image scale only</strong> — focal length and pixel size are
+degenerate within it, only their ratio is determined. So the regenerated values
+come out as <strong>XPIXSZ 7.40 µm / FOCALLEN 2277 mm</strong>: both wrong by ~2×, but
+preserving the correct 0.671 ″/px.</p>
+<p>PhotometricMosaic reads these keywords and will offer them. <strong>Enter the real
+values manually: 3.76 µm / 1156 mm.</strong></p>
+<p>Capture-time metadata is correct — NINA and the camera driver are not at fault.
+The loss happens at reprojection.</p>
+</blockquote>
+<h3 id="what-the-output-should-look-like">What the output should look like</h3>
+<figure><img src="/static/images/tutorials/16-panels-on-common-grid.jpg" alt="Two panels on the common grid" loading="lazy"></figure>
+<p>Each panel sits in its own portion of the common frame with black filling the rest —
+panel 1 occupying the top (left window), panel 2 the bottom (right window),
+overlapping in the middle. The meridian flip is already resolved: the shared
+nebulosity lines up in sky orientation even though the panels were captured 180°
+apart.</p>
+<p>Note the data/black boundary is slightly angled and ragged — that's what the next
+step removes.</p>
+<hr />
+<h1 id="part-5-trimming">Part 5 — Trimming</h1>
+<h2 id="step-15-trimmosaictile"><span class="stepno">15</span>TrimMosaicTile</h2>
+<p><strong>Script → Mosaic → TrimMosaicTile</strong> (v4.0.1).</p>
+<p>PhotometricMosaic requires <strong>hard edges</strong> — a clean transition from valid data to
+exact zero. Reprojection leaves interpolated partial-coverage pixels around the
+boundary that are non-zero but not valid.</p>
+<blockquote>
+<p><strong>This step is view-based, not file-based</strong> — unlike MosaicByCoordinates either
+side of it. Target view is a dropdown of open images; there's no file list and no
+output directory. Open the six <code>_ra</code> files, run it six times, save six times.</p>
+</blockquote>
+<p>Settings:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Top / Left / Bottom / Right</td>
+<td>5 px each (defaults)</td>
+</tr>
+<tr>
+<td>Check FITS headers for entries required by PhotometricMosaic</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/17-trimmosaictile.jpg" alt="TrimMosaicTile settings" loading="lazy"></figure>
+<p>5 px out of 6257 is negligible; the tool errs safe deliberately. Leave the header
+check ticked — it's a free preflight.</p>
+<blockquote class="gotcha">
+<p><strong>Gotcha — trimmed edges look stepped, not straight.</strong> This is normal and cannot
+be fixed by increasing the trim value. TrimMosaicTile <em>erodes</em> inward from the
+existing boundary, so it reproduces whatever shape that boundary had. The boundary
+is stair-stepped because reprojection rotated each panel by a fraction of a degree
+(0.6° across 6257 px ≈ 65 px of drift, rendered as integer-pixel steps).
+Increasing the trim moves the step; it doesn't remove it.</p>
+<p><strong>Hard edges are the requirement, not straight ones.</strong></p>
+</blockquote>
+<figure><img src="/static/images/tutorials/18-stepped-edge.jpg" alt="Stepped edge after trimming" loading="lazy"><figcaption>Zoomed view of a trimmed edge — hard, but stepped. This is correct.</figcaption></figure>
+<blockquote class="gotcha">
+<p><strong>Gotcha — ImageContainer cannot batch this.</strong> ImageContainer is a <em>target list</em>
+for a process instance dragged onto it; with no process attached, its ▶ button
+just activates the selected view ("Activate view / open file"). There is no
+standalone "write all views to disk" function. Save the six manually
+(File → Save As).</p>
+<figure><img src="/static/images/tutorials/19-imagecontainer-save-attempt.jpg" alt="ImageContainer configured for output — does not work" loading="lazy"><figcaption>Setting Output directory and template looks like it should batch-save. It
+doesn't — the container needs a process instance dragged onto it to do anything.</figcaption></figure>
+</blockquote>
+<p>Save with short, unambiguous names — <code>H_P1_trim</code>, <code>H_P2_trim</code>, <code>O_P1_trim</code>, etc. —
+because these get picked out of dropdowns next.</p>
+<hr />
+<h1 id="part-6-the-join">Part 6 — The join</h1>
+<h2 id="step-16-photometricmosaic"><span class="stepno">16</span>PhotometricMosaic</h2>
+<p><strong>Script → Mosaic → PhotometricMosaic</strong> (v4.0.3). Also view-based.</p>
+<p><strong>Three separate runs, one per filter.</strong> Reference and target must be the same
+filter — the scale factor is derived photometrically from stars in the overlap, and
+a cross-filter comparison would be meaningless. Cross-filter matching happens later
+at the palette stage. The three mosaics stay on the common grid from Step 14, which
+is what lets them combine without further registration.</p>
+<p><strong>Use the same panel as reference across all three filters.</strong></p>
+<h3 id="image-scale-must-be-corrected-every-run">Image scale — must be corrected every run</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Offered</th>
+<th>Enter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pixel size (µm)</td>
+<td>7.40</td>
+<td><strong>3.76</strong></td>
+</tr>
+<tr>
+<td>Focal length (mm)</td>
+<td>2277</td>
+<td><strong>1156</strong></td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/20-photometricmosaic-wrong-scale.jpg" alt="PhotometricMosaic showing wrong image scale" loading="lazy"><figcaption>Wrong values as offered — focal length 2277, pixel size 7.40.</figcaption></figure>
+<figure><img src="/static/images/tutorials/21-manual-entry-corrected.jpg" alt="Manual Entry dialog corrected" loading="lazy"><figcaption>Corrected. Note the focal length field takes integers only.</figcaption></figure>
+<p>The focal length field is <strong>integer only</strong> — 1156, not 1156.6. The rounding is
+immaterial (pixel scale still resolves to 0.67).</p>
+<p>See the Step 14 gotcha for why the offered values are wrong.</p>
+<h3 id="settings-defaults-unchanged">Settings (defaults, unchanged)</h3>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Combination mode</td>
+<td>Overlay</td>
+</tr>
+<tr>
+<td>Outlier %</td>
+<td>2.0</td>
+</tr>
+<tr>
+<td>Join Orientation</td>
+<td>Auto</td>
+</tr>
+<tr>
+<td>Join Position</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Mask</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Scale multiplier L/Red</td>
+<td>1.0000</td>
+</tr>
+<tr>
+<td>Gradient smoothness — overlap region</td>
+<td>−1.0</td>
+</tr>
+<tr>
+<td>Gradient smoothness — target image</td>
+<td>2.0</td>
+</tr>
+<tr>
+<td>Target image gradient correction</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Taper length</td>
+<td>Auto</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/22-photometricmosaic-ready.jpg" alt="PhotometricMosaic ready to run" loading="lazy"></figure>
+<p>The dialog is <strong>modal</strong> — the main window can't be zoomed or interacted with while
+it's open. Hit <strong>Exit</strong> to inspect the result; the mosaic and join mask remain as
+normal windows.</p>
+<p><strong>Ctrl+K toggles the join mask</strong> on the result.</p>
+<h3 id="results-for-this-project">Results for this project</h3>
+<table>
+<thead>
+<tr>
+<th>Filter</th>
+<th>Ref stars</th>
+<th>Target stars</th>
+<th>Photometry stars</th>
+<th>Scale factor</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H</td>
+<td>—</td>
+<td>—</td>
+<td>1945</td>
+<td>1.1599</td>
+<td>8.08 s</td>
+</tr>
+<tr>
+<td>O</td>
+<td>1872</td>
+<td>1700</td>
+<td>1358</td>
+<td><strong>1.3903</strong></td>
+<td>8.40 s</td>
+</tr>
+<tr>
+<td>S</td>
+<td>6305</td>
+<td>5388</td>
+<td>1955</td>
+<td>1.0996</td>
+<td>7.97 s</td>
+</tr>
+</tbody>
+</table>
+<p>Notes on these numbers:</p>
+<ul>
+<li>~1900 photometry stars is a robust fit. The OIII run at 1358 is lower but still
+  ample — stars come through in OIII regardless of how faint the nebulosity is.</li>
+<li><strong>OIII needed a 39% brightness correction</strong> between panels, against 16% for H and
+  10% for S. Frame counts (11 vs 10) don't explain that; it's transparency or sky
+  conditions differing between the two nights. This is exactly the kind of
+  correction that was painful under the old linear-fit approach and which
+  PhotometricMosaic absorbs without intervention.</li>
+<li>Star <em>detection</em> counts vary wildly by filter (S found 6305, H and O ~1900) while
+  photometry counts converge near 1900 after sample reduction.</li>
+</ul>
+<figure><img src="/static/images/tutorials/23-h-join-result.jpg" alt="Hydrogen-alpha join result" loading="lazy"><figcaption>The Hα result. The red horizontal line marks the join — no brightness step, no
+seam artefact, nebulosity and stars running straight through.</figcaption></figure>
+<p>The OIII run uses identical settings with the O views selected:</p>
+<figure><img src="/static/images/tutorials/24-photometricmosaic-oiii.jpg" alt="PhotometricMosaic for OIII" loading="lazy"></figure>
+<figure><img src="/static/images/tutorials/25-oiii-console-output.jpg" alt="OIII console output" loading="lazy"></figure>
+<p><strong>If the join isn't clean,</strong> the first thing to change is Mosaic Join → Combination
+Mode: try Blend or Average instead of Overlay.</p>
+<h2 id="step-17-rename-the-mosaic-views"><span class="stepno">17</span>Rename the mosaic views</h2>
+<p>PhotometricMosaic outputs generic identifiers in run order. Double-click the view
+identifier in the title bar (or Image → Set Image Identifier):</p>
+<table>
+<thead>
+<tr>
+<th>Current</th>
+<th>New</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mosaic</td>
+<td>H_Mosaic</td>
+</tr>
+<tr>
+<td>Mosaic1</td>
+<td>O_Mosaic</td>
+</tr>
+<tr>
+<td>Mosaic2</td>
+<td>S_Mosaic</td>
+</tr>
+</tbody>
+</table>
+<p>Leave <strong>Update history</strong> ticked.</p>
+<figure><img src="/static/images/tutorials/26-set-image-identifier.jpg" alt="Set Image Identifier" loading="lazy"></figure>
+<blockquote>
+<p><strong>General principle, learned the hard way three times in this workflow:</strong>
+PixInsight names views for its own convenience, not yours. Rename at every stage
+where you'll later pick from a dropdown.</p>
+</blockquote>
+<hr />
+<h1 id="part-7-crop">Part 7 — Crop</h1>
+<h2 id="step-18-dynamiccrop-applied-identically-to-all-three"><span class="stepno">18</span>DynamicCrop, applied identically to all three</h2>
+<p><strong>All three mosaics must receive the exact same crop.</strong> Different dimensions will
+break channel combination.</p>
+<ol>
+<li>Open H_Mosaic with STF applied</li>
+<li>Draw the DynamicCrop box excluding the ragged perimeter</li>
+<li><strong>Do not apply it to the image.</strong> Drag the DynamicCrop <strong>triangle onto the
+   PixInsight desktop background</strong> to save it as a process icon</li>
+<li>Drag that desktop icon onto each of the three mosaics</li>
+</ol>
+<p>Crop used for this project:</p>
+<table class="noheadings">
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Width × Height</td>
+<td>6015 × 7250 (from 6257 × 7357)</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>X 3157.50, Y 3675.00</td>
+</tr>
+<tr>
+<td>Rotation</td>
+<td>0.00</td>
+</tr>
+<tr>
+<td>Interpolation</td>
+<td>Auto, clamping 0.30, smoothness 1.50</td>
+</tr>
+</tbody>
+</table>
+<p>That removes ~4% horizontally and ~1.5% vertically. Rotation left at zero — the
+panel tilt is small enough that squaring up to sky isn't worth the extra loss.</p>
+<figure><img src="/static/images/tutorials/28-dynamiccrop.jpg" alt="DynamicCrop settings" loading="lazy"></figure>
+<p>Note the anchor is offset ~29 px right of frame centre, because the panels don't
+overlap perfectly in RA and the valid region isn't centred.</p>
+<blockquote>
+<p><strong>Prompt on applying:</strong> <em>"The following items will be deleted as a result of the
+geometric transformation: Mask."</em> This is PhotometricMosaic's join mask —
+inspection-only, safe to discard. <strong>Click Yes.</strong> Expect the prompt on all three.</p>
+<figure><img src="/static/images/tutorials/27-mask-delete-warning.jpg" alt="Mask deletion warning" loading="lazy"></figure>
+</blockquote>
+<p>Extreme top and bottom of the frame are single-panel regions. That's real data —
+no need to cut it. What's being removed is the interpolated boundary.</p>
+<hr />
+<h2 id="step-19-rotate-for-composition"><span class="stepno">19</span>Rotate for composition</h2>
+<p>The mosaic comes out portrait (6015 × 7250) because the panels were stacked in
+declination. Rotate for aesthetics.</p>
+<p><strong>Process → Geometry → FastRotation → Rotate 90° counter-clockwise</strong></p>
+<p>Use <strong>FastRotation</strong>, not Rotation, for 90/180° turns. FastRotation is a lossless
+pixel remapping with no interpolation and no resampling — the pixel values are
+untouched. Rotation would resample and soften the image for no benefit.</p>
+<p>Result: 7250 × 6015 landscape.</p>
+<h2 id="step-20-re-solve"><span class="stepno">20</span>Re-solve</h2>
+<p>Run <strong>ImageSolver</strong> on the rotated mosaic.</p>
+<p>The astrometric solution was already lost at the DynamicCrop step (Step 18), so
+nothing is being discarded here — this re-establishes it on the finished image in
+its final orientation.</p>
+<p>Worth doing even if you don't plan to annotate: a solved final image can be
+plate-matched against future data of the same target, and it embeds a permanent
+record of what was actually imaged.</p>
+<blockquote>
+<p>Do this <strong>after</strong> rotating, not before. Solving first would produce a solution
+describing an orientation that no longer exists.</p>
+</blockquote>
+<hr />
+<h1 id="from-here-back-to-the-standard-workflow">From here — back to the standard workflow</h1>
+<p>All three mosaics now share the same 6015 × 7250 grid, so nothing further is
+mosaic-specific. They are still <strong>linear</strong> at this point. Continue with the normal
+sequence:</p>
+<pre><code>StarXTerminator          → starless + stars for each channel (still linear)
+PerfectPalettePicker     → starless channels into the chosen palette; DOES THE STRETCH
+GeneralizedHyperbolicStretch  → optional, usually not needed
+NarrowbandNormalization  → after GHS
+NB to RGB Stars          → narrowband stars into natural RGB
+Scripts → Toolbox → Combine Images    → recombine stars with starless
+</code></pre>
+<p>See the <a href="/tutorials/pixinsight-sho-workflow">standard SHO workflow</a> for settings.</p>
+<hr />
+<h1 id="quick-reference-condensed-sequence">Quick reference — condensed sequence</h1>
+<pre><code>1.  Sort lights into PANEL_1 / PANEL_2 folders
+2.  WBPP: Grouping keyword PANEL (Pre ✓ Post ✓)
+3.  WBPP: Registration reference = &quot;auto by PANEL&quot;
+4.  Verify 6 rows in LIGHT tab (3 filters × 2 panels)
+5.  Take the _autocrop masters
+6.  STF to find the real image in each; close the empty one
+7.  Load all 6 into an ImageContainer
+8.  Drag container triangle → BlurXTerminator
+9.  Drag container triangle → GradientCorrection
+10. Drag container triangle → NoiseXTerminator
+11. Save
+12. Confirm astrometric solution via XISF PROPERTIES (not cursor readout)
+13. Batch ImageSolver if needed → _ast
+14. MosaicByCoordinates — ALL SIX FILES IN ONE RUN → _ra
+15. TrimMosaicTile, 5 px, each view individually, save → _trim
+16. PhotometricMosaic ×3 (H+H, O+O, S+S) — FIX IMAGE SCALE TO 3.76 / 1156
+17. Rename views to H_Mosaic / O_Mosaic / S_Mosaic
+18. DynamicCrop via desktop icon, applied to all three
+19. FastRotation — 90° counter-clockwise (lossless)
+20. ImageSolver on the rotated mosaic
+→ continue with the standard workflow from StarXTerminator
+</code></pre>
+<hr />
+<h1 id="gotchas-index">Gotchas index</h1>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Gotcha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>View IDs lose the panel number; <code>_1</code> suffix means "opened second", not "panel 2"</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Overwriting <code>_autocrop</code> files makes the suffix misleading</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Cursor coordinate readout does <strong>not</strong> reliably indicate a solved image — check XISF properties</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>FocalLength</code> in XISF properties is in <strong>metres</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>A solve reporting no surface residuals is unvalidated — treat with suspicion</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Run MosaicByCoordinates on all filters at once</strong> or the grids won't match</td>
+</tr>
+<tr>
+<td>7</td>
+<td>MosaicByCoordinates regenerates FITS keywords wrongly (7.40 µm / 2277 mm)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>TrimMosaicTile is view-based; ImageContainer cannot batch-save it</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Trimmed edges are stepped, not straight — that's fine, hard is what matters</td>
+</tr>
+<tr>
+<td>10</td>
+<td>PhotometricMosaic dialog is modal; Exit before inspecting</td>
+</tr>
+<tr>
+<td>11</td>
+<td>PhotometricMosaic focal length field is integer only</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Crop deletes the join mask — safe, click Yes</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Cropping loses the astrometric solution — re-solve at the end, after rotating</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Use FastRotation (not Rotation) for 90/180° — lossless, no resampling</td>
+</tr>
+</tbody>
+</table>
+  </div></main>
+</div>
+</div>
+{{end}}

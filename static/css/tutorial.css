@@ -1,0 +1,291 @@
+/* ============================================================
+   Tutorial runbooks — PixInsight workflow documents
+   Loaded only by templates/pages/tutorial-*.html via {{block "head"}}.
+
+   Everything is scoped under .tutorial so it cannot leak into the
+   rest of the site. Colours are mapped onto the dsp.css "Deep Field"
+   tokens; the SHO channel coding is kept, since Ha/OIII land almost
+   exactly on the site's gold/blue accents.
+   ============================================================ */
+
+.tutorial {
+  /* SHO channel assignments, brightened for the dark ground */
+  --sii:   #e05555;   /* SII  672nm  -> red   */
+  --ha:    #c8a46e;   /* Ha   656nm  -> gold  */
+  --oiii:  #4a7fff;   /* OIII 501nm  -> blue  */
+
+  --card:  var(--bg-surface);
+  --ink:   var(--text-bright);
+  --ink-2: var(--text-primary);
+  --ink-3: var(--text-secondary);
+  --rule:  var(--border-medium);
+  --rule-2: var(--border-subtle);
+
+  --linear:    #4a7fff;
+  --nonlinear: #e05555;
+
+  --mono: var(--font-mono);
+  --sans: var(--font-body);
+
+  /* the source document was set at 16.5px/1.65; dsp.css body is 15px/1.7.
+     Restate it here so the 74ch measure and the type scale hold. */
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+/* not scopable to .tutorial — but this sheet only loads on tutorial pages */
+html { scroll-padding-top: 1.5rem; }
+
+/* ---------- shell ---------- */
+.tutorial .shell { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 0; }
+
+/* ---------- sidebar ---------- */
+.tutorial .rail {
+  position: sticky; top: 1rem; align-self: start;
+  max-height: calc(100vh - 2rem); overflow-y: auto;
+  padding: .5rem 1.25rem 3rem 0; border-right: 1px solid var(--rule);
+}
+.tutorial .rail-mark {
+  font-family: var(--mono); font-size: .62rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: .4rem;
+}
+.tutorial .rail-title {
+  font-size: 1.02rem; font-weight: 650; line-height: 1.25;
+  letter-spacing: -.01em; margin: 0 0 1.4rem; color: var(--ink);
+}
+.tutorial .rail nav a {
+  display: block; padding: .28rem 0 .28rem .7rem; margin-left: -.05rem;
+  border-left: 2px solid transparent; color: var(--ink-2);
+  font-size: .83rem; line-height: 1.35; text-decoration: none;
+}
+.tutorial .rail nav a:hover { color: var(--ink); border-left-color: var(--rule); }
+.tutorial .rail nav a.lvl1 {
+  font-weight: 640; color: var(--ink); margin-top: 1rem; font-size: .78rem;
+  text-transform: uppercase; letter-spacing: .07em; border-left-color: var(--ha);
+}
+.tutorial .rail nav a.lvl2 { padding-left: 1.1rem; }
+.tutorial .rail nav a.active { color: var(--ink); border-left-color: var(--sii); font-weight: 600; }
+
+/* wavelength chips */
+.tutorial .chips { display: flex; gap: .3rem; margin: 1.6rem 0 0; }
+.tutorial .chip {
+  font-family: var(--mono); font-size: .58rem; letter-spacing: .06em;
+  padding: .22rem .42rem; border-radius: 2px; color: #0a0a12; white-space: nowrap;
+}
+.tutorial .chip.s { background: var(--sii); }
+.tutorial .chip.h { background: var(--ha); }
+.tutorial .chip.o { background: var(--oiii); }
+
+/* related-document block in the rail */
+.tutorial .rail-related {
+  margin-top: 2rem; padding-top: 1.1rem; border-top: 1px solid var(--rule-2);
+}
+.tutorial .rail-related .rail-mark { margin-bottom: .5rem; }
+.tutorial .rail-related a {
+  display: block; font-size: .83rem; line-height: 1.4;
+  color: var(--oiii); text-decoration: none;
+}
+.tutorial .rail-related a:hover { color: var(--ha); text-decoration: underline; }
+
+/* ---------- main ---------- */
+.tutorial main { padding: .5rem 0 6rem 3.5rem; min-width: 0; }
+.tutorial .doc { max-width: 74ch; }
+
+.tutorial .eyebrow {
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: .9rem;
+}
+
+.tutorial h1.title {
+  font-family: var(--sans) !important;
+  font-size: 2.5rem; line-height: 1.08; letter-spacing: -.028em; font-weight: 680;
+  margin: 0 0 1.4rem; max-width: 20ch; color: var(--ink);
+}
+.tutorial h1.title + p { font-size: 1.05rem; color: var(--ink-2); }
+
+/* PART headings */
+.tutorial .doc h1:not(.title) {
+  font-family: var(--sans) !important;
+  font-size: .76rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--ink); margin: 5rem 0 1.6rem; padding-bottom: .7rem;
+  border-bottom: 2px solid var(--ink); max-width: none;
+}
+/* STEP headings */
+.tutorial h2 {
+  font-family: var(--sans) !important;
+  font-size: 1.42rem; letter-spacing: -.015em; font-weight: 640; line-height: 1.25;
+  margin: 3.2rem 0 1rem; position: relative; color: var(--ink);
+}
+/* step number extracted into the gutter (main keeps 3.5rem left padding for it) */
+.tutorial h2 .stepno {
+  position: absolute; left: -3.4rem; top: .32rem; width: 2.6rem; text-align: right;
+  font-family: var(--mono); font-size: .78rem; font-weight: 500; color: var(--ink-3);
+  letter-spacing: 0;
+}
+.tutorial h3 {
+  font-family: var(--sans) !important;
+  font-size: 1.05rem; font-weight: 660; margin: 2rem 0 .6rem;
+  letter-spacing: -.005em; color: var(--ink);
+}
+.tutorial h4 {
+  font-family: var(--sans) !important;
+  font-size: .95rem; font-weight: 640; margin: 1.6rem 0 .5rem; color: var(--ink);
+}
+
+.tutorial p { margin: 0 0 1.05rem; color: var(--ink-2); }
+.tutorial a { color: var(--oiii); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.tutorial a:hover { color: var(--ha); }
+
+.tutorial strong { font-weight: 660; color: var(--ink); }
+.tutorial ul, .tutorial ol { margin: 0 0 1.15rem; padding-left: 1.3rem; }
+.tutorial li { margin-bottom: .42rem; color: var(--ink-2); }
+.tutorial li::marker { color: var(--ink-3); }
+
+.tutorial hr { border: 0; border-top: 1px solid var(--rule); margin: 3.5rem 0; opacity: 1; }
+
+/* ---------- code ---------- */
+.tutorial code {
+  font-family: var(--mono); font-size: .855em; background: var(--bg-elevated);
+  padding: .1em .34em; border-radius: 2px; color: var(--ink);
+}
+.tutorial pre {
+  background: var(--bg-deep); color: var(--text-primary); padding: 1.15rem 1.35rem;
+  border-radius: 3px; overflow-x: auto; font-size: .82rem; line-height: 1.62;
+  margin: 0 0 1.5rem; border: 1px solid var(--rule-2); border-left: 3px solid var(--oiii);
+}
+.tutorial pre code { background: none; padding: 0; color: inherit; font-size: 1em; }
+
+/* ---------- tables ---------- */
+.tutorial table {
+  border-collapse: collapse; width: 100%; margin: 0 0 1.7rem;
+  font-size: .885rem; background: var(--card); border: 1px solid var(--rule);
+}
+.tutorial th {
+  text-align: left; font-family: var(--mono); font-size: .66rem; font-weight: 600;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2);
+  padding: .7rem .85rem; background: var(--bg-elevated);
+  border-bottom: 1px solid var(--rule); white-space: nowrap;
+}
+.tutorial td {
+  padding: .62rem .85rem; border-bottom: 1px solid var(--rule-2);
+  vertical-align: top; color: var(--ink-2);
+}
+.tutorial tr:last-child td { border-bottom: 0; }
+.tutorial tbody tr:hover { background: var(--bg-hover); }
+.tutorial td code { font-size: .82em; }
+
+/* tables with no real header row */
+.tutorial table.noheadings thead { display: none; }
+
+/* metadata block */
+.tutorial .meta {
+  display: grid; grid-template-columns: auto 1fr; gap: .35rem 1.1rem;
+  margin: 0 0 2rem; padding: 1.05rem 1.25rem; background: var(--card);
+  border: 1px solid var(--rule); border-radius: 3px; font-size: .87rem;
+}
+.tutorial .meta dt {
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-3); padding-top: .22rem; white-space: nowrap;
+}
+.tutorial .meta dd { margin: 0; color: var(--ink); }
+
+/* ---------- callouts ---------- */
+.tutorial blockquote {
+  margin: 1.9rem 0; padding: 1.15rem 1.4rem; background: var(--card);
+  border-left: 3px solid var(--ink-3); border-radius: 0 3px 3px 0;
+  font-size: .94rem; color: var(--ink-2);
+}
+.tutorial blockquote > :last-child { margin-bottom: 0; }
+.tutorial blockquote strong { color: var(--ink); }
+.tutorial blockquote h3, .tutorial blockquote h2 {
+  font-family: var(--mono) !important; font-size: .7rem !important; letter-spacing: .13em;
+  text-transform: uppercase; margin: 0 0 .7rem; font-weight: 650;
+}
+.tutorial blockquote h3 .stepno, .tutorial blockquote h2 .stepno { display: none; }
+
+/* gotcha = warning, coded to SII red */
+.tutorial blockquote.gotcha { border-left-color: var(--sii); background: rgba(224, 85, 85, .08); }
+.tutorial blockquote.gotcha h3, .tutorial blockquote.gotcha h2 { color: var(--sii); }
+.tutorial blockquote.gotcha::before {
+  content: "\26A0"; float: left; margin: -.1rem .6rem 0 0; font-size: 1rem; color: var(--sii);
+}
+/* todo = unfinished, coded to Ha gold */
+.tutorial blockquote.todo { border-left-color: var(--ha); background: rgba(200, 164, 110, .08); }
+.tutorial blockquote.todo h3, .tutorial blockquote.todo h2 { color: var(--ha); }
+
+/* ---------- figures ---------- */
+/* The PixInsight screenshots are light-UI. The mat steps the eye
+   page -> surface -> screenshot so they don't glare against the void. */
+.tutorial figure {
+  margin: 1.8rem 0 2.2rem; background: var(--card);
+  border: 1px solid var(--rule-2); border-radius: var(--radius-md); padding: .6rem;
+}
+.tutorial figure img {
+  display: block; max-width: 100%; height: auto; border: 1px solid var(--rule);
+  border-radius: var(--radius-sm); cursor: zoom-in;
+}
+.tutorial figcaption {
+  font-family: var(--mono); font-size: .68rem; color: var(--ink-3);
+  margin: .55rem .15rem 0; letter-spacing: .02em; line-height: 1.5;
+}
+.tutorial figcaption em { font-style: normal; }
+/* a figure nested inside a callout shouldn't double up the mat */
+.tutorial blockquote figure { background: transparent; border: 0; padding: 0; }
+
+/* lightbox — above Bootstrap's .dropdown-menu (z-index 1000) */
+.tutorial-lb {
+  position: fixed; inset: 0; background: rgba(6, 6, 12, .96); display: none;
+  align-items: center; justify-content: center; z-index: 1080; padding: 2rem; cursor: zoom-out;
+}
+.tutorial-lb.on { display: flex; }
+.tutorial-lb img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 3px; }
+
+/* ---------- state rail: the signature element ---------- */
+/* marks whether the data is linear or stretched at each point in the doc */
+.tutorial .state {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 3px; z-index: 5;
+  background: var(--linear); transition: background .45s ease;
+}
+.tutorial .state.nonlinear { background: var(--nonlinear); }
+.tutorial .state-tag {
+  position: fixed; right: 1.1rem; top: 1.4rem; z-index: 6;
+  font-family: var(--mono); font-size: .6rem; letter-spacing: .14em; text-transform: uppercase;
+  color: #0a0a12; background: var(--linear); padding: .3rem .55rem; border-radius: 2px;
+  transition: background .45s ease;
+}
+.tutorial .state-tag.nonlinear { background: var(--nonlinear); }
+
+@media (max-width: 1080px) {
+  .tutorial .shell { grid-template-columns: 1fr; }
+  .tutorial .rail {
+    position: static; max-height: none; border-right: 0;
+    border-bottom: 1px solid var(--rule); padding: 0 0 1.5rem;
+  }
+  .tutorial .rail nav { columns: 2; column-gap: 1.5rem; }
+  .tutorial main { padding: 2rem 0 4rem; }
+  .tutorial h2 .stepno {
+    position: static; display: block; text-align: left; width: auto; margin-bottom: .15rem;
+  }
+  .tutorial .state, .tutorial .state-tag { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial * { transition: none !important; }
+}
+
+@media print {
+  .tutorial .rail, .tutorial .state, .tutorial .state-tag, .tutorial-lb { display: none; }
+  .tutorial .shell { grid-template-columns: 1fr; }
+  .tutorial main { padding: 0; }
+  /* force ink-on-white — the screen tokens are all dark */
+  .tutorial {
+    --card: #fff; --ink: #131c26; --ink-2: #47566a; --ink-3: #7d8b9e;
+    --rule: #d3dae3; --rule-2: #e4e9ef;
+    font-size: 10.5pt; color: #131c26;
+  }
+  .tutorial pre { background: #f4f6f8; color: #18222e; }
+  .tutorial code { background: #e2e7ed; color: #1d2c3c; }
+  .tutorial figure, .tutorial table, .tutorial blockquote, .tutorial pre { break-inside: avoid; }
+  .tutorial h3 { break-after: avoid; }
+}

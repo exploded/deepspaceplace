@@ -1,0 +1,1354 @@
+{{template "base" .}}
+{{define "head"}}
+<link href="/static/css/tutorial.css" rel="stylesheet">
+<script src="/static/js/tutorial.js" defer></script>
+{{end}}
+{{define "content"}}
+<div class="tutorial">
+<div class="state"></div><div class="state-tag">linear</div>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-mark">Runbook · SHO · single panel</div>
+    <p class="rail-title">PixInsight Standard SHO Workflow</p>
+    <nav><a class="lvl2" href="#equipment">Equipment</a>
+<a class="lvl1" href="#part-1-preparation">Part 1 — Preparation</a>
+<a class="lvl2" href="#step-1-set-up-the-process-icon-workspace">1 · Set up the process icon workspace</a>
+<a class="lvl1" href="#part-2-frame-culling">Part 2 — Frame culling</a>
+<a class="lvl2" href="#step-2-blink">2 · Blink</a>
+<a class="lvl1" href="#part-3-calibration-and-integration">Part 3 — Calibration and integration</a>
+<a class="lvl2" href="#step-3-launch-and-reset-wbpp">3 · Launch and reset WBPP</a>
+<a class="lvl2" href="#step-4-set-the-output-directory">4 · Set the output directory</a>
+<a class="lvl2" href="#step-5-add-the-frames">5 · Add the frames</a>
+<a class="lvl2" href="#step-6-check-the-diagnostic-messages">6 · Check the diagnostic messages</a>
+<a class="lvl2" href="#step-7-verify-on-the-post-calibration-tab">7 · Verify on the Post-Calibration tab</a>
+<a class="lvl2" href="#step-8-run">8 · Run</a>
+<a class="lvl2" href="#step-9-check-the-execution-monitor">9 · Check the Execution Monitor</a>
+<a class="lvl2" href="#step-10-save-the-smart-report-then-exit">10 · Save the Smart Report, then exit</a>
+<a class="lvl1" href="#part-4-linear-processing">Part 4 — Linear processing</a>
+<a class="lvl2" href="#step-11-open-the-masters">11 · Open the masters</a>
+<a class="lvl2" href="#step-12-build-the-imagecontainer">12 · Build the ImageContainer</a>
+<a class="lvl2" href="#step-13-blurxterminator">13 · BlurXTerminator</a>
+<a class="lvl2" href="#step-14-gradientcorrection">14 · GradientCorrection</a>
+<a class="lvl2" href="#step-15-noisexterminator">15 · NoiseXTerminator</a>
+<a class="lvl1" href="#part-5-star-separation">Part 5 — Star separation</a>
+<a class="lvl2" href="#step-16-starxterminator">16 · StarXTerminator</a>
+<a class="lvl1" href="#part-6-palette-and-stretch">Part 6 — Palette and stretch</a>
+<a class="lvl2" href="#step-17-perfectpalettepicker">17 · PerfectPalettePicker</a>
+<a class="lvl2" href="#step-18-generalizedhyperbolicstretch">18 · GeneralizedHyperbolicStretch</a>
+<a class="lvl2" href="#step-19-narrowbandnormalization">19 · NarrowbandNormalization</a>
+<a class="lvl1" href="#part-7-stars-and-recombination">Part 7 — Stars and recombination</a>
+<a class="lvl2" href="#step-20-nb-to-rgb-stars">20 · NB to RGB Stars</a>
+<a class="lvl2" href="#step-21-combine-images">21 · Combine Images</a>
+<a class="lvl1" href="#part-8-finishing">Part 8 — Finishing</a>
+<a class="lvl2" href="#step-22-imagesolver">22 · ImageSolver</a>
+<a class="lvl1" href="#relationship-to-the-mosaic-workflow">Relationship to the mosaic workflow</a>
+<a class="lvl1" href="#where-the-stretch-happens">Where the stretch happens</a>
+<a class="lvl1" href="#quick-reference">Quick reference</a>
+<a class="lvl1" href="#gotchas-index">Gotchas index</a></nav>
+    <div class="chips">
+      <span class="chip s">SII 672</span><span class="chip h">H&#945; 656</span><span class="chip o">OIII 501</span>
+    </div>
+    <div class="rail-related">
+      <div class="rail-mark">Related runbook</div>
+      <a href="/tutorials/pixinsight-mosaic-workflow">PixInsight Mosaic Workflow</a>
+    </div>
+  </aside>
+  <main><div class="doc">
+    <div class="eyebrow">Runbook · SHO · single panel</div>
+    <h1 class="title">PixInsight Standard SHO Workflow</h1>
+    <p>Single-panel narrowband processing, from WBPP through to the finished image. Companion to the mosaic runbook.</p>
+    <dl class="meta"><dt>Companion document</dt><dd><a href="/tutorials/pixinsight-mosaic-workflow">PixInsight Mosaic Workflow</a> for multi-panel targets</dd><dt>Documented against</dt><dd>RCW 33, March 2026 · RCW 108, August 2026</dd><dt>PixInsight version</dt><dd>1.9.4 · WBPP 3.0.1</dd></dl>
+<hr />
+<h2 id="equipment">Equipment</h2>
+<table class="noheadings">
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Telescope</td>
+<td>AT12IN (300mm Newtonian), 1156.6 mm focal length</td>
+</tr>
+<tr>
+<td>Camera</td>
+<td>ZWO ASI2600MM Duo, 3.76 µm pixels, mono</td>
+</tr>
+<tr>
+<td>Mount</td>
+<td>Paramount ME</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>NINA</td>
+</tr>
+<tr>
+<td>Image scale</td>
+<td>0.671 ″/px</td>
+</tr>
+</tbody>
+</table>
+<p>Reference project size: RCW 33 was 245 lights at 300 s (80 H / 84 O / 81 S),
+20h 25m total, and took <strong>1h 08m</strong> through WBPP.</p>
+<hr />
+<h1 id="part-1-preparation">Part 1 — Preparation</h1>
+<h2 id="step-1-set-up-the-process-icon-workspace"><span class="stepno">1</span>Set up the process icon workspace</h2>
+<p>Do this once, not per project. Install the scripts and processes the workflow
+depends on, arrange them as icons on the PixInsight workspace <strong>in the order
+they're used</strong>, then save the set so it can be reloaded next session.</p>
+<figure><img src="/static/images/tutorials/s01-process-icons.jpg" alt="Process icon set arranged on the workspace" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Icon</th>
+<th>Tool</th>
+<th>Stage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blink</td>
+<td>Blink</td>
+<td>before WBPP — frame culling</td>
+</tr>
+<tr>
+<td>BlurX</td>
+<td>BlurXTerminator</td>
+<td>linear</td>
+</tr>
+<tr>
+<td>GradientCorection</td>
+<td>GradientCorrection</td>
+<td>linear</td>
+</tr>
+<tr>
+<td>NoiseX</td>
+<td>NoiseXTerminator</td>
+<td>linear</td>
+</tr>
+<tr>
+<td>StarX</td>
+<td>StarXTerminator</td>
+<td>linear</td>
+</tr>
+<tr>
+<td><em>PerfectPalletPicker</em></td>
+<td>PerfectPalettePicker</td>
+<td><strong>stretches here</strong></td>
+</tr>
+<tr>
+<td>GenHypStretch</td>
+<td>GeneralizedHyperbolicStretch</td>
+<td>non-linear</td>
+</tr>
+<tr>
+<td>NarrowBandNormalization</td>
+<td>NarrowbandNormalization</td>
+<td>non-linear</td>
+</tr>
+<tr>
+<td><em>NBtoRGBStars</em></td>
+<td>NB to RGB Stars</td>
+<td>non-linear</td>
+</tr>
+</tbody>
+</table>
+<p>Arranging them in execution order turns the workspace itself into the checklist —
+you work down the column, and a skipped step is visible as an icon you never
+touched.</p>
+<p><em>(Italicised entries are scripts rather than processes, which is why they render
+differently.)</em></p>
+<p><strong>Not kept as icons:</strong> WBPP, Combine Images and ImageSolver, all launched from the
+Scripts menu. Worth considering adding ImageSolver — see the note at Step 22.</p>
+<h3 id="saving-the-set">Saving the set</h3>
+<p><strong>Workspace right-click → Process Icons → Save Process Icons…</strong></p>
+<figure><img src="/static/images/tutorials/s02-save-process-icons.jpg" alt="Saving process icons" loading="lazy"></figure>
+<p>This writes the whole set — including the parameter values baked into each
+instance — to a <code>.xpsm</code> file. <strong>Load Process Icons…</strong> brings them back in a new
+session, so tuned settings survive restarts.</p>
+<table>
+<thead>
+<tr>
+<th>Menu item</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Load Process Icons…</td>
+<td>Restore a saved set at the start of a session</td>
+</tr>
+<tr>
+<td>Merge Process Icons…</td>
+<td>Add a second set without replacing the current one</td>
+</tr>
+<tr>
+<td>Save Selected Process Icons…</td>
+<td>Export just a few icons, e.g. to share</td>
+</tr>
+<tr>
+<td>Remove Process Icons…</td>
+<td>Clear the workspace</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Save the set again whenever you retune a parameter you want to keep — the file
+is a snapshot, not a live link.</p>
+</blockquote>
+<hr />
+<h1 id="part-2-frame-culling">Part 2 — Frame culling</h1>
+<h2 id="step-2-blink"><span class="stepno">2</span>Blink</h2>
+<p><strong>Process → Image Inspection → Blink</strong></p>
+<figure><img src="/static/images/tutorials/s03-blink.jpg" alt="Blink" loading="lazy"></figure>
+<ol>
+<li>Add all the light frames</li>
+<li>Click the <strong>top toolbar button</strong> — <em>"Apply an automatic histogram transformation
+   to all images"</em> — so each frame is stretched <strong>individually</strong></li>
+<li>Play through them (0.05 s default, adjustable) watching for defects</li>
+<li>Move rejects to a subfolder</li>
+<li><strong>Delete them</strong> once the review is done</li>
+</ol>
+<p>Individual stretch rather than one global stretch matters: sky brightness varies
+across a session, and a common stretch makes early and late frames hard to compare.</p>
+<h3 id="what-to-reject-and-what-to-keep">What to reject, and what to keep</h3>
+<table>
+<thead>
+<tr>
+<th>Defect</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cloud</td>
+<td>Always remove</td>
+</tr>
+<tr>
+<td>Tree branches, tracking failures, distorted stars</td>
+<td>Always remove</td>
+</tr>
+<tr>
+<td><strong>Bright satellite trails</strong></td>
+<td>Remove</td>
+</tr>
+<tr>
+<td>Minor satellite trails</td>
+<td>Survivable — integration rejection handles them — but remove anyway if you have plenty of subs</td>
+</tr>
+<tr>
+<td><strong>Slightly out of focus</strong></td>
+<td><strong>Keep</strong> — BlurXTerminator recovers these</td>
+</tr>
+<tr>
+<td>Badly out of focus</td>
+<td>Remove</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The more subs you have, the more aggressive you can be.</strong> With 80 frames per
+filter you can bin the marginal ones; with 15, a flawed frame may beat losing 7% of
+your integration time.</p>
+<p>The point is to leave only clean frames in the LIGHT folder. WBPP has its own
+bad-frame rejection, but culling by eye first is more reliable for obvious failures
+and keeps the measurement and weighting stages from working around junk.</p>
+<p>Filenames are readable in the list
+(<code>2026-03-05_21-59-42_H_-10.00_300.00s_0000</code>), so a run of consecutive bad frames
+shows up as a time block — usually cloud rather than a one-off.</p>
+<hr />
+<h1 id="part-3-calibration-and-integration">Part 3 — Calibration and integration</h1>
+<h2 id="step-3-launch-and-reset-wbpp"><span class="stepno">3</span>Launch and reset WBPP</h2>
+<p><strong>Script → Batch Processing → Weighted Batch Preprocessing (WBPP)</strong></p>
+<p>Before loading a new project, click <strong>Reset</strong>:</p>
+<figure><img src="/static/images/tutorials/s04-wbpp-reset-button.jpg" alt="Reset button" loading="lazy"></figure>
+<figure><img src="/static/images/tutorials/s05-wbpp-reset-dialog.jpg" alt="Reset Engine dialog" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reset all parameters</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>— to factory-default values</td>
+<td>○ <em>(selected but inactive)</em></td>
+</tr>
+<tr>
+<td>— from the settings of the last session</td>
+<td>○</td>
+</tr>
+<tr>
+<td><strong>Clear all file lists</strong></td>
+<td><strong>✓</strong></td>
+</tr>
+<tr>
+<td><strong>Purge cache</strong></td>
+<td><strong>✓</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Leaving <strong>Reset all parameters</strong> unticked keeps tuned settings — grouping keywords,
+cosmetic correction, output pedestal — while clearing the previous project's frames
+and discarding stale calibration data. Same configuration, clean slate for files.</p>
+<h2 id="step-4-set-the-output-directory"><span class="stepno">4</span>Set the output directory</h2>
+<figure><img src="/static/images/tutorials/s06-output-directory.jpg" alt="Output directory" loading="lazy"></figure>
+<p>Point it at the <strong>project root</strong> — the folder containing the light frames, not a
+subfolder:</p>
+<pre><code>C:/PixInsight/2026-03-05_RCW 33
+</code></pre>
+<p>WBPP creates its own structure underneath, including the <code>master/</code> folder. Nothing
+needs creating in advance.</p>
+<p>Naming convention: <code>YYYY-MM-DD_TARGET</code> — date of first session plus target.</p>
+<h2 id="step-5-add-the-frames"><span class="stepno">5</span>Add the frames</h2>
+<figure><img src="/static/images/tutorials/s07-folder-layout.jpg" alt="Folder layout" loading="lazy"></figure>
+<p>If the project root is clean — only calibration and light folders — use
+<strong>+ Directory</strong> and add the whole tree at once.</p>
+<figure><img src="/static/images/tutorials/s08-add-directory.jpg" alt="Add Directory button" loading="lazy"></figure>
+<pre><code>bias/
+dark/
+FLAT/
+LIGHT/
+</code></pre>
+<p>Folder name casing doesn't matter.</p>
+<blockquote>
+<p><strong>If the root contains anything else</strong> — previous WBPP output, stray files, a
+<code>master/</code> folder from an earlier run — <strong>don't add the whole directory.</strong> Add
+folder by folder or file by file, so WBPP doesn't ingest processed data as raw
+frames. This is also why Purge cache and Clear all file lists matter at Step 3.</p>
+</blockquote>
+<h2 id="step-6-check-the-diagnostic-messages"><span class="stepno">6</span>Check the diagnostic messages</h2>
+<figure><img src="/static/images/tutorials/s09-diagnostic-messages.jpg" alt="Diagnostic messages" loading="lazy"></figure>
+<pre><code>=== 307 frames found, 307 added (in 9.466 s) ===
+</code></pre>
+<p><strong>Found should equal added.</strong> A mismatch means frames were rejected — usually
+unreadable files or headers WBPP couldn't classify — and you want to know which
+before running. Click <strong>OK</strong>.</p>
+<p>The NINA filename convention makes problems visible at a glance:</p>
+<pre><code>FLAT_2026-03-10_07-03-26_H_-10.00_4.06s_0000.fits
+type_date_time_filter_temp_exposure_sequence
+</code></pre>
+<p>A wrong filter or sensor temperature is readable directly from the list.</p>
+<h2 id="step-7-verify-on-the-post-calibration-tab"><span class="stepno">7</span>Verify on the Post-Calibration tab</h2>
+<figure><img src="/static/images/tutorials/s10-post-calibration-tab.jpg" alt="Post-Calibration tab" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Frames</th>
+<th>Bin</th>
+<th>Exposure</th>
+<th>Filter</th>
+<th>Colour</th>
+<th>Integration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>80 (6248×4176)</td>
+<td>1×1</td>
+<td>300.00s</td>
+<td>H</td>
+<td>Gray</td>
+<td>6h 40m</td>
+</tr>
+<tr>
+<td>84 (6248×4176)</td>
+<td>1×1</td>
+<td>300.00s</td>
+<td>O</td>
+<td>Gray</td>
+<td>7h 00m</td>
+</tr>
+<tr>
+<td>81 (6248×4176)</td>
+<td>1×1</td>
+<td>300.00s</td>
+<td>S</td>
+<td>Gray</td>
+<td>6h 45m</td>
+</tr>
+</tbody>
+</table>
+<p><strong>This is the last cheap checkpoint.</strong> Confirm the filter count (three rows, not
+more), that frame counts match the sessions, and that dimensions and exposure are
+consistent. For a mosaic you'd see six rows — one per filter × panel.</p>
+<h2 id="step-8-run"><span class="stepno">8</span>Run</h2>
+<figure><img src="/static/images/tutorials/s11-run-button.jpg" alt="Run button" loading="lazy"></figure>
+<p>Then wait. 245 lights at 6248×4176 took <strong>1h 08m</strong>.</p>
+<h3 id="global-options-in-use">Global options in use</h3>
+<figure><img src="/static/images/tutorials/s14-wbpp-full-window.jpg" alt="WBPP full window" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FITS orientation</td>
+<td>Global Pref</td>
+</tr>
+<tr>
+<td>Compact GUI</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Detect masters from path</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Generate rejection maps</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Preserve white balance</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Save groups on exit</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Smart naming override</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Registration Reference Image</td>
+<td>Mode <code>auto</code> <em>(mosaic uses <code>auto by PANEL</code>)</em></td>
+</tr>
+<tr>
+<td>Grouping Keywords</td>
+<td>☐ for single panel</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The <strong>PANEL</strong> keyword stays listed but greyed when Grouping Keywords is
+unticked — the definition persists between sessions. A mosaic run only needs
+the checkbox re-ticked, not the keyword re-entered.</p>
+</blockquote>
+<p>The Calibration tab confirms masterBias, masterDark (300 s) and three masterFlats
+(H 4.07 s, O 1.99 s, S 2.27 s) were built and applied, with all lights showing Dark
+and Flat ticked and Bias not used.</p>
+<h2 id="step-9-check-the-execution-monitor"><span class="stepno">9</span>Check the Execution Monitor</h2>
+<figure><img src="/static/images/tutorials/s12-execution-monitor.jpg" alt="Execution monitor" loading="lazy"></figure>
+<p>Every row should read <strong>success</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calibration + Integration (flats)</td>
+<td>20 frames per filter</td>
+</tr>
+<tr>
+<td>Calibration (lights)</td>
+<td>80 H / 84 O / 81 S</td>
+</tr>
+<tr>
+<td>Measurements</td>
+<td>245 measured</td>
+</tr>
+<tr>
+<td>Bad frames rejection</td>
+<td>0 rejected</td>
+</tr>
+<tr>
+<td>Reference frame selection</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Registration</td>
+<td>all registered</td>
+</tr>
+<tr>
+<td>LN reference generation</td>
+<td>per filter</td>
+</tr>
+<tr>
+<td>Local Normalization</td>
+<td>all completed</td>
+</tr>
+<tr>
+<td>Integration</td>
+<td>one master per filter</td>
+</tr>
+<tr>
+<td>Autocrop</td>
+<td>3 cropped</td>
+</tr>
+<tr>
+<td><strong>Astrometric solution</strong></td>
+<td><strong>2 solved per filter</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Astrometry runs automatically.</strong> "2 solved" per filter is the master and its
+autocrop variant. This is why ImageSolver is usually unnecessary later — including
+in the mosaic workflow.</p>
+</blockquote>
+<p><strong>If any row errors:</strong> identify the offending files from the console, delete them,
+and re-run rather than trying to salvage.</p>
+<h2 id="step-10-save-the-smart-report-then-exit"><span class="stepno">10</span>Save the Smart Report, then exit</h2>
+<figure><img src="/static/images/tutorials/s13-smart-report.jpg" alt="Smart report" loading="lazy"></figure>
+<p>Hit <strong>Save</strong> and put it in the log folder. Two uses:</p>
+<ul>
+<li><strong>Diagnosing bad frames</strong> — it names specific files, which the Execution Monitor
+  summary doesn't.</li>
+<li><strong>Confirming what was solved</strong> — the tail lists astrometric solutions by full
+  path.</li>
+</ul>
+<p>It also reports <code>Keywords : []</code> — empty for a single-panel run, <code>[PANEL]</code> for a
+mosaic. A way to verify the grouping keyword took effect.</p>
+<p>Then <strong>Exit</strong> WBPP. "Save groups on exit" being ticked preserves the group
+structure if you need to come back.</p>
+<hr />
+<h1 id="part-4-linear-processing">Part 4 — Linear processing</h1>
+<h2 id="step-11-open-the-masters"><span class="stepno">11</span>Open the masters</h2>
+<p><strong>File → Open</strong>, navigate to <code>master/</code>, select the three <code>_autocrop</code> files:</p>
+<figure><img src="/static/images/tutorials/s15-master-autocrop-files.jpg" alt="Master folder" loading="lazy"></figure>
+<pre><code>masterLight_BIN-1_6248x4176_EXPOSURE-300.00s_FILTER-H_mono_autocrop.xisf
+masterLight_BIN-1_6248x4176_EXPOSURE-300.00s_FILTER-O_mono_autocrop.xisf
+masterLight_BIN-1_6248x4176_EXPOSURE-300.00s_FILTER-S_mono_autocrop.xisf
+</code></pre>
+<p><strong>Use the <code>_autocrop</code> versions</strong> — ragged registration borders already trimmed.</p>
+<blockquote>
+<p><strong>Each file opens as two images</strong>, so three files give six windows. Apply STF
+AutoStretch to see which holds data and close the empty one. This is standard
+PixInsight behaviour with no known way to disable it.</p>
+</blockquote>
+<p>Rename the surviving views to <code>H</code>, <code>O</code>, <code>S</code> for clarity in later dropdowns.</p>
+<h2 id="step-12-build-the-imagecontainer"><span class="stepno">12</span>Build the ImageContainer</h2>
+<p>Right-click the workspace to create an ImageContainer (or <strong>Ctrl+Alt+I</strong>), then
+click <strong>Add Views</strong> — the icon with the green plus:</p>
+<figure><img src="/static/images/tutorials/s16-add-views-button.jpg" alt="Add Views button" loading="lazy"></figure>
+<figure><img src="/static/images/tutorials/s17-select-views.jpg" alt="Select Views" loading="lazy"></figure>
+<p><strong>Select All</strong>, leave <strong>Previews</strong> and <strong>Main Views</strong> ticked, <strong>OK</strong>.</p>
+<p>The container is the target for the next four processes — drag each process's
+<strong>triangle onto its dialog</strong> and all three channels get identical parameters in one
+action.</p>
+<h2 id="step-13-blurxterminator"><span class="stepno">13</span>BlurXTerminator</h2>
+<figure><img src="/static/images/tutorials/s18-bxt.jpg" alt="BlurXTerminator" loading="lazy"></figure>
+<p>v2.0.4, AI v4:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sharpen Stars</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>Adjust Star Halos</td>
+<td>−0.26</td>
+</tr>
+<tr>
+<td>Automatic PSF</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>PSF Diameter</td>
+<td>0.00 <em>(greyed)</em></td>
+</tr>
+<tr>
+<td>Sharpen Nonstellar</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>Correct Only / Correct First / Nonstellar then Stellar</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Luminance Only</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<p>BXT requires linear data.</p>
+<h2 id="step-14-gradientcorrection"><span class="stepno">14</span>GradientCorrection</h2>
+<figure><img src="/static/images/tutorials/s19-gradientcorrection.jpg" alt="GradientCorrection" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Low threshold</td>
+<td>0.20</td>
+</tr>
+<tr>
+<td>Low tolerance</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>High threshold</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td>High tolerance</td>
+<td>0.00</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>5.00</td>
+</tr>
+<tr>
+<td>Smoothness</td>
+<td>0.40</td>
+</tr>
+<tr>
+<td>Automatic convergence</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Generate gradient model</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Simplified Model</td>
+<td>☐ (degree 1)</td>
+</tr>
+<tr>
+<td>Structure Protection</td>
+<td>✓ threshold 0.10, amount 0.50</td>
+</tr>
+<tr>
+<td>Generate protection masks</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<h2 id="step-15-noisexterminator"><span class="stepno">15</span>NoiseXTerminator</h2>
+<figure><img src="/static/images/tutorials/s20-nxt.jpg" alt="NoiseXTerminator" loading="lazy"></figure>
+<p>v2.3.3, AI v3:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intensity/color separation</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Frequency separation</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Denoise</td>
+<td>0.90</td>
+</tr>
+<tr>
+<td>Iterations</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Linear stage order: BXT → GradientCorrection → NXT.</strong></p>
+<p><em>These three settings sets have been identical across every documented project —
+they're standing values, not per-image tuning.</em></p>
+<hr />
+<span data-state="linear"></span><h1 id="part-5-star-separation">Part 5 — Star separation</h1>
+<h2 id="step-16-starxterminator"><span class="stepno">16</span>StarXTerminator</h2>
+<figure><img src="/static/images/tutorials/s21-starxterminator.jpg" alt="StarXTerminator" loading="lazy"></figure>
+<p>v2.3.11, AI v11. Run via the <strong>ImageContainer</strong>, same as the previous three — not
+the built-in <strong>Process Batch</strong> button, which exists but isn't used here.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Generate Star Image</strong></td>
+<td><strong>✓</strong></td>
+</tr>
+<tr>
+<td><strong>Unscreen Stars</strong></td>
+<td><strong>✓</strong></td>
+</tr>
+<tr>
+<td>Large Overlap</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Generate Star Image</strong> produces the separate stars-only images — without it you'd
+have nothing to feed NB to RGB Stars at Step 20.</p>
+<p><strong>Unscreen Stars</strong> extracts stars via an unscreen operation rather than a straight
+subtraction, which is what makes them recombine cleanly with Screen mode at Step 21.
+The two settings are a matched pair.</p>
+<h3 id="result-six-images">Result: six images</h3>
+<figure><img src="/static/images/tutorials/s22-six-images.jpg" alt="Six images after StarX" loading="lazy"></figure>
+<pre><code>MasterLight_H          MasterLight_H_stars
+MasterLight_O          MasterLight_O_stars
+MasterLight_S          MasterLight_S_stars
+</code></pre>
+<p>Left column: the original views, now <strong>starless</strong> — StarXTerminator modified them
+in place. Right column: extracted stars, auto-named with <code>_stars</code>.</p>
+<p>Naming is unambiguous here, unlike most stages in this workflow. No renaming needed.</p>
+<p>The starless images keep the XISF badge because they're still backed by files; the
+star images are memory-only until saved.</p>
+<p><strong>Both sets are still linear.</strong></p>
+<hr />
+<span data-state="nonlinear"></span><h1 id="part-6-palette-and-stretch">Part 6 — Palette and stretch</h1>
+<h2 id="step-17-perfectpalettepicker"><span class="stepno">17</span>PerfectPalettePicker</h2>
+<p><strong>Script → SetiAstro → PerfectPalettePicker</strong>, or right-click the workspace and
+execute in the global context.</p>
+<figure><img src="/static/images/tutorials/s23-perfect-palette-picker.jpg" alt="Perfect Palette Picker" loading="lazy"></figure>
+<p>v1.3, Franklin Marek (setiastro.com).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ha</td>
+<td>MasterLight_H</td>
+</tr>
+<tr>
+<td>OIII</td>
+<td>MasterLight_O</td>
+</tr>
+<tr>
+<td>SII</td>
+<td>MasterLight_S</td>
+</tr>
+<tr>
+<td>OSC HaO3 Dual</td>
+<td>— None —</td>
+</tr>
+<tr>
+<td>OSC S2O3 Dual</td>
+<td>— None —</td>
+</tr>
+<tr>
+<td><strong>Linear Input Data</strong></td>
+<td><strong>✓</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Linear Input Data must be ticked.</strong> StarXTerminator ran on linear data and
+nothing has stretched these yet. This checkbox is the mechanism behind "PPP does
+the stretch" — it performs the linear-to-non-linear conversion as part of building
+the palette.</p>
+</blockquote>
+<p>Click <strong>Create Palettes</strong> to generate all sixteen previews, then click the one you
+want — <strong>SHO</strong> in these projects.</p>
+<p>Available: HOO, HOS, HSO, HSS, OHH, OHS, OSH, OSS, SHH, SHO, SOH, SOO, Realistic1,
+Realistic2, Foraxx, Dynamic Inverse.</p>
+<p>Zoom In / Zoom Out adjust the preview tiles; the UI resizes by dragging the lower
+corner.</p>
+<p><strong>Now non-linear.</strong></p>
+<h2 id="step-18-generalizedhyperbolicstretch"><span class="stepno">18</span>GeneralizedHyperbolicStretch</h2>
+<p>Open the <strong>real-time preview</strong> — the round circle button at the bottom — and work
+with it open so both passes can be judged visually.</p>
+<h3 id="pass-1-linear-black-point">Pass 1 — Linear (black point)</h3>
+<figure><img src="/static/images/tutorials/s24-ghs-linear.jpg" alt="GHS linear pass" loading="lazy"></figure>
+<p>Set transformation type to <strong>Linear</strong> and bring the black point up to the <strong>foot of
+the histogram</strong> — where the data begins, not into it. Then <strong>Apply</strong> (the square
+button).</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mode</td>
+<td>RGB</td>
+</tr>
+<tr>
+<td>Clip type / Colour blend</td>
+<td>RGBBlend / 1.000 <em>(greyed)</em></td>
+</tr>
+<tr>
+<td>Use RGB working space</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Transformation type</td>
+<td><strong>Linear</strong></td>
+</tr>
+<tr>
+<td>Invert</td>
+<td>☐</td>
+</tr>
+<tr>
+<td><strong>Blackpoint (BP)</strong></td>
+<td><strong>0.039200</strong></td>
+</tr>
+<tr>
+<td>Low clip (LCP)</td>
+<td>0.000175</td>
+</tr>
+<tr>
+<td>Whitepoint (WP)</td>
+<td>1.000000</td>
+</tr>
+<tr>
+<td>High clip (HCP)</td>
+<td>0.000000</td>
+</tr>
+<tr>
+<td>Adjust parameter</td>
+<td>BP</td>
+</tr>
+<tr>
+<td>Use highest sensitivity</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Watch Low clip.</strong> LCP of 0.000175 means a small fraction of pixels are being
+clipped. Normal and harmless at this level, but it's the number that tells you
+how much you're throwing away if BP goes too far.</p>
+</blockquote>
+<h3 id="pass-2-generalised-hyperbolic">Pass 2 — Generalised Hyperbolic</h3>
+<figure><img src="/static/images/tutorials/s25-ghs-hyperbolic.jpg" alt="GHS hyperbolic pass" loading="lazy"></figure>
+<p>Switch transformation type to <strong>Generalised Hyperbolic</strong>, move the symmetry point
+to the histogram peak, adjust the stretch, <strong>Apply</strong>, then close the preview.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transformation type</td>
+<td><strong>Generalised Hyperbolic</strong></td>
+</tr>
+<tr>
+<td>Invert</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Stretch factor (ln(D+1))</td>
+<td><strong>1.242</strong></td>
+</tr>
+<tr>
+<td>Local intensity (b)</td>
+<td><strong>0.970</strong></td>
+</tr>
+<tr>
+<td>Symmetry point (SP)</td>
+<td><strong>0.260000</strong></td>
+</tr>
+<tr>
+<td>Protect shadows (LP)</td>
+<td><strong>0.020000</strong></td>
+</tr>
+<tr>
+<td>Protect highlights (HP)</td>
+<td>1.000000</td>
+</tr>
+<tr>
+<td>Adjust parameter</td>
+<td>D</td>
+</tr>
+<tr>
+<td>Use highest sensitivity</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<p>The curve rises steeply from the origin and flattens toward the top — lifting
+shadows and midtones hard while compressing highlights.</p>
+<p><strong>Symmetry point</strong> marks where the stretch is centred. Placing it at the main
+histogram peak (0.26 after the linear pass) is what pulls that peak rightward into
+the midtones.</p>
+<p><strong>Protect shadows</strong> at 0.02 holds the darkest end down so the background doesn't
+lift with the nebulosity — this is what keeps the sky from going milky.</p>
+<p><em>The Readout button changes from "Send to BP" in pass 1 to "Send to SP" here — it
+targets whichever parameter suits the current transformation type, so you can click
+on the image to set the value directly.</em></p>
+<h2 id="step-19-narrowbandnormalization"><span class="stepno">19</span>NarrowbandNormalization</h2>
+<figure><img src="/static/images/tutorials/s26-narrowbandnormalization.jpg" alt="NarrowbandNormalization" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Setting</th>
+<th>RCW 33</th>
+<th>RCW 108</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Palette</td>
+<td>Palette</td>
+<td>SHO</td>
+<td>SHO</td>
+</tr>
+<tr>
+<td>Lightness</td>
+<td>Lightness</td>
+<td>Off</td>
+<td>Off</td>
+</tr>
+<tr>
+<td>Synthetic green blend</td>
+<td>Blend mode / amount</td>
+<td>Mode1 / 0.600 <em>(greyed)</em></td>
+<td>same</td>
+</tr>
+<tr>
+<td>Channel controls</td>
+<td><strong>SCNR</strong></td>
+<td><strong>0.102</strong></td>
+<td>0.163</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>OIII boost</strong></td>
+<td><strong>1.234</strong></td>
+<td>1.572</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>SII boost</strong></td>
+<td><strong>1.453</strong></td>
+<td>1.482</td>
+</tr>
+<tr>
+<td>Adjustments</td>
+<td>Shadow point</td>
+<td>0.970</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td></td>
+<td>Highlight reduction</td>
+<td>1.000</td>
+<td>1.026</td>
+</tr>
+<tr>
+<td></td>
+<td>Brightness</td>
+<td>1.000</td>
+<td>1.055</td>
+</tr>
+</tbody>
+</table>
+<p>Every value is per-image, but <strong>the pattern holds across both projects: SCNR stays
+low, SII boost carries the most weight.</strong></p>
+<blockquote class="gotcha">
+<h3 id="be-careful-with-scnr">⚠ Be careful with SCNR</h3>
+<p>SCNR <strong>removes</strong> green rather than rebalancing it, so it takes real signal with
+it and loses detail.</p>
+<p><strong>Push the SII boost first</strong> — raising the SII contribution suppresses green by
+changing the balance, discarding nothing. Then use SCNR only to clean up what
+remains. Both documented runs sit near the bottom of the SCNR slider.</p>
+</blockquote>
+<p><strong>Synthetic green blend</strong> is greyed out — it becomes available under different
+palette or lightness settings. Not used.</p>
+<hr />
+<h1 id="part-7-stars-and-recombination">Part 7 — Stars and recombination</h1>
+<h2 id="step-20-nb-to-rgb-stars"><span class="stepno">20</span>NB to RGB Stars</h2>
+<p>From the menu, or execute on the active view.</p>
+<figure><img src="/static/images/tutorials/s27-nb-to-rgb-stars.jpg" alt="NB to RGB Stars" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ha Stars Image</td>
+<td>MasterLight_H_stars</td>
+</tr>
+<tr>
+<td>OIII Stars Image</td>
+<td>MasterLight_O_stars</td>
+</tr>
+<tr>
+<td>SII Stars Image (optional)</td>
+<td>MasterLight_S_stars</td>
+</tr>
+<tr>
+<td>OSC (for dual band filter) Image</td>
+<td>— None —</td>
+</tr>
+<tr>
+<td>Green Channel Blend Ratio</td>
+<td>☐</td>
+</tr>
+<tr>
+<td><strong>Apply Star Stretch (Recommended)</strong></td>
+<td><strong>✓</strong></td>
+</tr>
+<tr>
+<td>Stretch Factor</td>
+<td>5.00</td>
+</tr>
+<tr>
+<td>Color Boost</td>
+<td>1.00</td>
+</tr>
+<tr>
+<td>Show Preview</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<p>Converts narrowband stars into natural-looking RGB. Narrowband stars are otherwise
+badly coloured — magenta or cyan depending on palette — because the filters don't
+sample the visual spectrum.</p>
+<blockquote class="gotcha">
+<h3 id="dont-forget-the-star-stretch">⚠ Don't forget the star stretch</h3>
+<p><strong>Apply Star Stretch must be ticked.</strong> The star images came out of
+StarXTerminator <strong>linear</strong> and nothing has touched them since —
+PerfectPalettePicker and GHS only worked on the starless side.</p>
+<p>This is where the stars cross to non-linear. Leave it unticked and they'll be
+nearly invisible against the stretched background at Step 21.</p>
+<p>Ticking the box is what reveals Stretch Factor and Color Boost.</p>
+</blockquote>
+<p>Use <strong>Refresh Preview</strong> to check, then <strong>Execute</strong>.</p>
+<h2 id="step-21-combine-images"><span class="stepno">21</span>Combine Images</h2>
+<p><strong>Scripts → Toolbox → Combine Images</strong> (v1.11, Jürgen Terpe)</p>
+<figure><img src="/static/images/tutorials/s28-combine-images.jpg" alt="Combine Images" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>RCW 33</th>
+<th>RCW 108</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Image #1</td>
+<td>Final_SHO1 <em>(starless)</em></td>
+<td>Final_SHO</td>
+</tr>
+<tr>
+<td>Image #2</td>
+<td>NBtoRGB_stars</td>
+<td>NBtoRGB_stars</td>
+</tr>
+<tr>
+<td>Combine Method</td>
+<td><strong>Screen</strong></td>
+<td>Screen</td>
+</tr>
+<tr>
+<td>Amount Image #1</td>
+<td>1.00000</td>
+<td>1.00000</td>
+</tr>
+<tr>
+<td><strong>Amount Image #2</strong></td>
+<td><strong>1.44882</strong></td>
+<td>1.61417</td>
+</tr>
+<tr>
+<td>Vibrance Image #1</td>
+<td>0.000</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td><strong>Vibrance Image #2</strong></td>
+<td><strong>0.442</strong></td>
+<td>0.562</td>
+</tr>
+<tr>
+<td>Intensity Mask</td>
+<td>☐</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Auto-STF preview</td>
+<td>☐</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>Replace image #1</td>
+<td>☐</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Order matters.</strong> Image #1 is the starless base, Image #2 the stars. Use <strong>Swap
+images</strong> if they load the wrong way round.</p>
+<p><strong>Screen</strong> is the right method for adding stars back — it adds light without
+clipping, so bright stars sit on top of the nebulosity rather than replacing it.
+It also pairs with <strong>Unscreen Stars</strong> at Step 16.</p>
+<h3 id="boosting-the-stars">Boosting the stars</h3>
+<p>This is where the stars get their final character, not just where they're pasted
+back:</p>
+<ul>
+<li><strong>Amount Image #2</strong> above 1.0 makes them brighter and more prominent. Both
+  documented runs sit around 1.4–1.6; left at 1.0 they look weak against a heavily
+  stretched background.</li>
+<li><strong>Vibrance Image #2</strong> saturates star colour. Both runs around 0.44–0.56.</li>
+</ul>
+<p><strong>Image #1 stays at 1.000 / 0.000 every time.</strong> The asymmetry <em>is</em> the technique —
+saturate the stars while leaving the palette exactly as tuned at Step 19.</p>
+<p>Judge against the live preview, then commit with the <strong>green tick</strong> at bottom left.
+Leave <strong>Replace image #1</strong> unticked to keep the starless version intact.</p>
+<hr />
+<h1 id="part-8-finishing">Part 8 — Finishing</h1>
+<h2 id="step-22-imagesolver"><span class="stepno">22</span>ImageSolver</h2>
+<p><strong>Script → Astrometry → ImageSolver</strong> (v6.4.2)</p>
+<figure><img src="/static/images/tutorials/s29-imagesolver.jpg" alt="ImageSolver" loading="lazy"></figure>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target Image</td>
+<td></td>
+<td>Active window</td>
+</tr>
+<tr>
+<td>Image Parameters</td>
+<td>Right Ascension</td>
+<td>e.g. 8h 49m 44.890s</td>
+</tr>
+<tr>
+<td></td>
+<td>Declination</td>
+<td>e.g. −42° 17′ 35.56″ (S ticked)</td>
+</tr>
+<tr>
+<td></td>
+<td>Date and time</td>
+<td>2000-01-01 12:00:00</td>
+</tr>
+<tr>
+<td></td>
+<td>Topocentric</td>
+<td>☐</td>
+</tr>
+<tr>
+<td></td>
+<td>Image scale</td>
+<td>Resolution <strong>0.671</strong> ″/px</td>
+</tr>
+<tr>
+<td></td>
+<td>Pixel size</td>
+<td><strong>3.76</strong> µm</td>
+</tr>
+<tr>
+<td>Model Parameters</td>
+<td>Reference system</td>
+<td>ICRS</td>
+</tr>
+<tr>
+<td></td>
+<td>Catalog</td>
+<td><strong>Local XPSD server — Gaia DR3 (XPSD)</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>Automatic limit magnitude</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Distortion Correction</td>
+<td></td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>Search</strong> button resolves a target name to coordinates — easier than typing
+RA/Dec by hand.</p>
+<blockquote class="gotcha">
+<h3 id="open-question-the-gaia-dr3-selection-doesnt-persist">⚠ Open question — the Gaia DR3 selection doesn't persist</h3>
+<p>ImageSolver doesn't remember the catalog choice between sessions. Some of its
+settings appear to be stored per-instance rather than globally, so what you get on
+opening depends on how the script was launched.</p>
+<p><strong>Likely workaround:</strong> configure it, drag the triangle to the workspace to make a
+process icon, and include it in the saved icon set from Step 1 — the same approach
+already used for every other tool. Worth confirming on the PixInsight forum for a
+definitive answer.</p>
+</blockquote>
+<hr />
+<h1 id="relationship-to-the-mosaic-workflow">Relationship to the mosaic workflow</h1>
+<p>Parts 1–4 are shared. The mosaic workflow inserts astrometry, reprojection,
+trimming and the photometric join between the linear stage and star separation:</p>
+<pre><code>STANDARD                          MOSAIC
+─────────────────────────────────────────────────────────────
+Process icon set (one-off)        Process icon set (one-off)
+Blink — cull bad frames           Blink — cull bad frames
+WBPP                              WBPP (+ PANEL grouping keyword)
+_autocrop masters                 _autocrop masters
+BXT → GC → NXT                    BXT → GC → NXT
+                                  ├─ ImageSolver         → _ast
+                                  ├─ MosaicByCoordinates → _ra
+                                  ├─ TrimMosaicTile      → _trim
+                                  ├─ PhotometricMosaic ×3
+                                  ├─ DynamicCrop ×3
+                                  └─ FastRotation + re-solve
+StarXTerminator (linear)          StarXTerminator (linear)
+PerfectPalettePicker (+ stretch)  PerfectPalettePicker (+ stretch)
+GeneralizedHyperbolicStretch      GeneralizedHyperbolicStretch
+NarrowbandNormalization           NarrowbandNormalization
+NB to RGB Stars                   NB to RGB Stars
+Combine Images                    Combine Images
+</code></pre>
+<p>Everything from StarXTerminator onward is identical — by that point a mosaic is
+just a larger image.</p>
+<hr />
+<h1 id="where-the-stretch-happens">Where the stretch happens</h1>
+<p>There is <strong>no single stretch step</strong>. The two halves of the image cross from linear
+to non-linear in different places:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Stretched by</th>
+<th>At step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Starless channels</td>
+<td>PerfectPalettePicker (<em>Linear Input Data</em> ✓)</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Star images</td>
+<td>NB to RGB Stars (<em>Apply Star Stretch</em> ✓)</td>
+<td>20</td>
+</tr>
+</tbody>
+</table>
+<p>Both halves must be non-linear before Step 21 combines them. Forgetting the star
+stretch is the easiest mistake in this workflow.</p>
+<hr />
+<h1 id="quick-reference">Quick reference</h1>
+<pre><code>1.  ONE-OFF SETUP — install processes/scripts, arrange icons in run order,
+      Process Icons → Save Process Icons…   (reload each session)
+2.  Blink — cull cloud, trails, tracking failures. Keep slightly soft frames.
+3.  WBPP: Reset → Clear file lists ✓ + Purge cache ✓, parameters ☐
+4.  Output directory = project root
+5.  + Directory  (only if the root is clean)
+6.  Diagnostics — found must equal added
+7.  Post-Calibration tab — verify filter and frame counts
+8.  Run
+9.  Execution Monitor — all rows success; astrometry runs automatically
+10. Save the Smart Report to the log folder, then Exit
+    ─── linear ───
+11. Open the three _autocrop masters; close the empty twin of each
+12. ImageContainer → Add Views → Select All
+13. BXT                  0.50 / −0.26 / auto PSF / 0.50
+14. GradientCorrection   0.20 0.50 0.05 0.00 / scale 5 / smooth 0.40
+15. NXT                  denoise 0.90, iterations 2
+16. StarXTerminator      Generate Star Image ✓  Unscreen Stars ✓  → 6 images
+    ─── PPP crosses to non-linear ───
+17. PerfectPalettePicker — LINEAR INPUT DATA ✓ → Create Palettes → SHO
+18. GHS  pass 1 Linear:   BP 0.0392  (foot of histogram)
+         pass 2 Gen.Hyp:  D 1.242  b 0.970  SP 0.260  LP 0.020
+19. NarrowbandNormalization — SHO; SII boost first, SCNR low (~0.10)
+20. NB to RGB Stars — APPLY STAR STRETCH ✓ (stars are still linear!)
+         factor 5.00, colour boost 1.00
+21. Combine Images — #1 starless, #2 stars, Screen
+         Amount #2 ~1.45   Vibrance #2 ~0.44   (#1 stays 1.000 / 0.000)
+22. ImageSolver — 0.671 ″/px, 3.76 µm, Gaia DR3, distortion ✓
+</code></pre>
+<hr />
+<h1 id="gotchas-index">Gotchas index</h1>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Gotcha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>_autocrop</code> files each open as <strong>two images</strong> — close the empty one. Standard behaviour, no known way to disable it.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Blink's per-image stretch button matters — a global stretch hides variation between frames</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Don't add the whole directory if the project root has previous output in it</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Diagnostics: <strong>found ≠ added</strong> means frames were silently rejected</td>
+</tr>
+<tr>
+<td>5</td>
+<td>WBPP solves the masters automatically — ImageSolver is usually unnecessary</td>
+</tr>
+<tr>
+<td>6</td>
+<td>The PANEL grouping keyword persists but greys out when unticked — re-tick, don't re-enter</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>PerfectPalettePicker performs the stretch</strong> — there is no HistogramTransformation step</td>
+</tr>
+<tr>
+<td>8</td>
+<td>GHS <em>Low clip</em> tells you how much you're clipping — watch it when moving BP</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>SCNR removes green and loses detail</strong> — boost SII first</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Apply Star Stretch must be ticked</strong> — star images are still linear at Step 20</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Combine Images: boost only Image #2; #1 stays at 1.000 / 0.000</td>
+</tr>
+<tr>
+<td>12</td>
+<td>ImageSolver doesn't remember the Gaia DR3 selection — save it as a process icon</td>
+</tr>
+</tbody>
+</table>
+  </div></main>
+</div>
+</div>
+{{end}}

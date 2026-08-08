@@ -37,6 +37,8 @@ var staticPages = []string{
 	"/thermalcamera",
 	"/currentsetup",
 	"/egypt",
+	"/tutorials/pixinsight-sho-workflow",
+	"/tutorials/pixinsight-mosaic-workflow",
 }
 
 func HandleSitemap(w http.ResponseWriter, r *http.Request) {

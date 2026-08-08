@@ -167,6 +167,12 @@ func main() {
 	mux.HandleFunc("/currentsetup", handlers.StaticPage("currentsetup.html", "/currentsetup",
 		"Current Setup", "Current astrophotography equipment setup: Paramount ME mount, ASI2600MM Duo camera, Baader filters, and 12 inch f/4 Newtonian telescope."))
 
+	// Tutorials
+	mux.HandleFunc("/tutorials/pixinsight-sho-workflow", handlers.StaticPage("tutorial-pixinsight-sho.html", "/tutorials/pixinsight-sho-workflow",
+		"PixInsight Standard SHO Workflow", "Step-by-step PixInsight SHO narrowband processing runbook: WBPP, BlurXTerminator, GradientCorrection, StarXTerminator, PerfectPalettePicker and NarrowbandNormalization."))
+	mux.HandleFunc("/tutorials/pixinsight-mosaic-workflow", handlers.StaticPage("tutorial-pixinsight-mosaic.html", "/tutorials/pixinsight-mosaic-workflow",
+		"PixInsight Mosaic Workflow", "Two-panel SHO mosaic in PixInsight using MosaicByCoordinates and PhotometricMosaic, including the astrometry and image scale gotchas."))
+
 	// Legacy .php redirects (301) — old site used .php extensions
 	phpPages := []string{
 		"index", "images", "show", "equipment", "observatory", "links",
