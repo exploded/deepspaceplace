@@ -114,7 +114,7 @@ func main() {
 
 	// Admin (login/logout are public, everything else requires auth)
 	mux.HandleFunc("/admin/login", handlers.HandleAdminLogin)
-	mux.HandleFunc("/admin/logout", handlers.HandleAdminLogout)
+	mux.HandleFunc("/admin/logout", handlers.AdminAuth(handlers.HandleAdminLogout))
 	mux.HandleFunc("/admin", handlers.AdminAuth(handlers.HandleAdmin))
 	mux.HandleFunc("/admin/edit", handlers.AdminAuth(handlers.HandleAdminEdit))
 	mux.HandleFunc("/admin/new", handlers.AdminAuth(handlers.HandleAdminNew))

@@ -146,6 +146,16 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	r.ParseForm()
+	if !validateCSRF(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	adminSessionMu.Lock()
 	adminSessionToken = ""
 	adminCSRFToken = ""

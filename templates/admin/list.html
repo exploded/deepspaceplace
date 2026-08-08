@@ -5,7 +5,10 @@
 <h1>Admin - Image Management</h1>
 <a href="/admin/new" class="btn btn-success mb-3">Add New Image</a>
 <a href="/admin/resize" class="btn btn-warning mb-3 ms-2">Resize Images</a>
-<a href="/admin/logout" class="btn btn-secondary mb-3 ms-2">Logout</a>
+<form method="post" action="/admin/logout" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <button type="submit" class="btn btn-secondary mb-3 ms-2">Logout</button>
+</form>
 
 <div class="card mb-3">
     <div class="card-body">
