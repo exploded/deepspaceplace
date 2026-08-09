@@ -87,6 +87,18 @@ func main() {
 	// Set up routes
 	mux := http.NewServeMux()
 
+	// Health check for the uptime monitor. Pings the DB so a live process
+	// sitting on a broken database reads as down rather than up.
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if err := db.PingContext(r.Context()); err != nil {
+			http.Error(w, "db unhealthy", http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Write([]byte("ok"))
+	})
+
 	// Home
 	mux.HandleFunc("/", handlers.HandleIndex)
 
