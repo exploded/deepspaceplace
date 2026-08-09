@@ -12,6 +12,10 @@ var bomClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
+// bomFrameAttempts is how many half-hourly frames back the proxy will look for
+// a published image before giving up.
+const bomFrameAttempts = 6
+
 func HandleWeather(w http.ResponseWriter, r *http.Request) {
 	Render(w, "weather.html", PageData{
 		CanonicalURL: "https://deepspaceplace.com/weather",
@@ -39,7 +43,15 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now().UTC()
 
-	for i := 0; i < 6; i++ {
+	// BOM publishes each frame several minutes after its nominal timestamp, so
+	// the newest half-hour slot is normally still missing and the one before it
+	// serves. Walking back until a frame exists is the expected path, not a
+	// fault: misses log at DEBUG, and only running out of frames is worth a
+	// warning.
+	var lastErr error
+	lastStatus := 0
+
+	for i := 0; i < bomFrameAttempts; i++ {
 		ts := now.Add(time.Duration(-i*30) * time.Minute)
 		minute := (ts.Minute() / 30) * 30
 		ts = time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), minute, 0, 0, time.UTC)
@@ -54,7 +66,8 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := bomClient.Do(req)
 		if err != nil {
-			slog.Warn("BOM fetch error", "url", url, "error", err)
+			lastErr = err
+			slog.Debug("BOM frame fetch failed, trying older frame", "url", url, "error", err)
 			continue
 		}
 
@@ -67,9 +80,15 @@ func HandleBOMProxy(w http.ResponseWriter, r *http.Request) {
 			resp.Body.Close()
 			return
 		}
-		slog.Warn("BOM returned non-200", "url", url, "status", resp.StatusCode)
+		lastStatus = resp.StatusCode
+		slog.Debug("BOM frame not published yet, trying older frame", "url", url, "status", resp.StatusCode)
 		resp.Body.Close()
 	}
 
+	// Every frame in the window was missing -- BOM is genuinely unreachable or
+	// has changed its URL scheme, and the weather page is showing broken images.
+	slog.Warn("BOM satellite unavailable, no published frame in window",
+		"type", imageType, "attempts", bomFrameAttempts,
+		"last_status", lastStatus, "last_error", lastErr)
 	http.Error(w, "Failed to fetch BOM satellite image", http.StatusBadGateway)
 }

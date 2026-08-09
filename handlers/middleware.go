@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -27,18 +28,49 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter
 }
 
+// levelFor picks the log level for a completed request.
+//
+// A public site is scanned around the clock, so a 404 for something that was
+// never here is ordinary access-log traffic, not a warning -- logging it at
+// WARN buries the handful of requests that do need attention. What still earns
+// a warning is a client being refused (401/403/429) and a 404 reached from one
+// of our own pages, which means a broken internal link.
+func levelFor(status int, r *http.Request) slog.Level {
+	switch {
+	case status >= 500:
+		return slog.LevelError
+	case status == http.StatusUnauthorized,
+		status == http.StatusForbidden,
+		status == http.StatusTooManyRequests:
+		return slog.LevelWarn
+	case status == http.StatusNotFound && isInternalReferer(r):
+		return slog.LevelWarn
+	default:
+		return slog.LevelInfo
+	}
+}
+
+// isInternalReferer reports whether the request was linked from one of our own
+// pages, as opposed to typed, crawled or probed.
+func isInternalReferer(r *http.Request) bool {
+	ref := r.Referer()
+	if ref == "" {
+		return false
+	}
+	u, err := url.Parse(ref)
+	if err != nil {
+		return false
+	}
+	return u.Host == r.Host || strings.TrimPrefix(u.Host, "www.") == "deepspaceplace.com"
+}
+
 func RequestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: 200}
 		next.ServeHTTP(rec, r)
-		level := slog.LevelInfo
-		if rec.status >= 500 {
-			level = slog.LevelError
-		} else if rec.status >= 400 {
-			level = slog.LevelWarn
-		}
-		slog.Log(r.Context(), level, r.Method+" "+r.RequestURI, "status", rec.status, "duration", time.Since(start))
+		slog.Log(r.Context(), levelFor(rec.status, r), r.Method+" "+r.RequestURI,
+			"status", rec.status, "duration", time.Since(start))
 	})
 }
 

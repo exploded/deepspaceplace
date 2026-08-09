@@ -10,8 +10,7 @@
   <aside class="rail">
     <div class="rail-mark">Runbook · SHO · single panel</div>
     <p class="rail-title">PixInsight Standard SHO Workflow</p>
-    <nav><a class="lvl2" href="#equipment">Equipment</a>
-<a class="lvl1" href="#part-1-preparation">Part 1 — Preparation</a>
+    <nav><a class="lvl1" href="#part-1-preparation">Part 1 — Preparation</a>
 <a class="lvl2" href="#step-1-set-up-the-process-icon-workspace">1 · Set up the process icon workspace</a>
 <a class="lvl1" href="#part-2-frame-culling">Part 2 — Frame culling</a>
 <a class="lvl2" href="#step-2-blink">2 · Blink</a>
@@ -56,42 +55,8 @@
   <main><div class="doc">
     <div class="eyebrow">Runbook · SHO · single panel</div>
     <h1 class="title">PixInsight Standard SHO Workflow</h1>
-    <p>Single-panel narrowband processing, from WBPP through to the finished image. Companion to the mosaic runbook.</p>
+    <p>This is my standard narrowband (SHO) workflow, from WBPP through to the finished image. Companion to the mosaic runbook.</p>
     <dl class="meta"><dt>Companion document</dt><dd><a href="/tutorials/pixinsight-mosaic-workflow">PixInsight Mosaic Workflow</a> for multi-panel targets</dd><dt>Documented against</dt><dd>RCW 33, March 2026 · RCW 108, August 2026</dd><dt>PixInsight version</dt><dd>1.9.4 · WBPP 3.0.1</dd></dl>
-<hr />
-<h2 id="equipment">Equipment</h2>
-<table class="noheadings">
-<thead>
-<tr>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Telescope</td>
-<td>AT12IN (300mm Newtonian), 1156.6 mm focal length</td>
-</tr>
-<tr>
-<td>Camera</td>
-<td>ZWO ASI2600MM Duo, 3.76 µm pixels, mono</td>
-</tr>
-<tr>
-<td>Mount</td>
-<td>Paramount ME</td>
-</tr>
-<tr>
-<td>Capture</td>
-<td>NINA</td>
-</tr>
-<tr>
-<td>Image scale</td>
-<td>0.671 ″/px</td>
-</tr>
-</tbody>
-</table>
-<p>Reference project size: RCW 33 was 245 lights at 300 s (80 H / 84 O / 81 S),
-20h 25m total, and took <strong>1h 08m</strong> through WBPP.</p>
 <hr />
 <h1 id="part-1-preparation">Part 1 — Preparation</h1>
 <h2 id="step-1-set-up-the-process-icon-workspace"><span class="stepno">1</span>Set up the process icon workspace</h2>
@@ -112,6 +77,11 @@ they're used</strong>, then save the set so it can be reloaded next session.</p>
 <td>Blink</td>
 <td>Blink</td>
 <td>before WBPP — frame culling</td>
+</tr>
+<tr>
+<td><em>WeightedBatchPreProcessing</em></td>
+<td>WeightedBatchPreProcessing</td>
+<td>linear</td>
 </tr>
 <tr>
 <td>BlurX</td>
@@ -153,6 +123,11 @@ they're used</strong>, then save the set so it can be reloaded next session.</p>
 <td>NB to RGB Stars</td>
 <td>non-linear</td>
 </tr>
+<tr>
+<td><em>CombineImages</em></td>
+<td>Combine Images</td>
+<td>non-linear</td>
+</tr>
 </tbody>
 </table>
 <p>Arranging them in execution order turns the workspace itself into the checklist —
@@ -160,44 +135,15 @@ you work down the column, and a skipped step is visible as an icon you never
 touched.</p>
 <p><em>(Italicised entries are scripts rather than processes, which is why they render
 differently.)</em></p>
-<p><strong>Not kept as icons:</strong> WBPP, Combine Images and ImageSolver, all launched from the
-Scripts menu. Worth considering adding ImageSolver — see the note at Step 22.</p>
+<p><strong>Not kept as an icon:</strong> ImageSolver, launched from the Scripts menu. Worth
+considering adding it — see the note at Step 22.</p>
 <h3 id="saving-the-set">Saving the set</h3>
 <p><strong>Workspace right-click → Process Icons → Save Process Icons…</strong></p>
 <figure><img src="/static/images/tutorials/s02-save-process-icons.jpg" alt="Saving process icons" loading="lazy"></figure>
 <p>This writes the whole set — including the parameter values baked into each
 instance — to a <code>.xpsm</code> file. <strong>Load Process Icons…</strong> brings them back in a new
-session, so tuned settings survive restarts.</p>
-<table>
-<thead>
-<tr>
-<th>Menu item</th>
-<th>Use</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Load Process Icons…</td>
-<td>Restore a saved set at the start of a session</td>
-</tr>
-<tr>
-<td>Merge Process Icons…</td>
-<td>Add a second set without replacing the current one</td>
-</tr>
-<tr>
-<td>Save Selected Process Icons…</td>
-<td>Export just a few icons, e.g. to share</td>
-</tr>
-<tr>
-<td>Remove Process Icons…</td>
-<td>Clear the workspace</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>Save the set again whenever you retune a parameter you want to keep — the file
-is a snapshot, not a live link.</p>
-</blockquote>
+session, so tuned settings survive restarts. You can also create a shortcut to the
+<code>.xpsm</code> file on your desktop for easy access.</p>
 <hr />
 <h1 id="part-2-frame-culling">Part 2 — Frame culling</h1>
 <h2 id="step-2-blink"><span class="stepno">2</span>Blink</h2>
@@ -256,7 +202,7 @@ bad-frame rejection, but culling by eye first is more reliable for obvious failu
 and keeps the measurement and weighting stages from working around junk.</p>
 <p>Filenames are readable in the list
 (<code>2026-03-05_21-59-42_H_-10.00_300.00s_0000</code>), so a run of consecutive bad frames
-shows up as a time block — usually cloud rather than a one-off.</p>
+shows up as a time block — for example, drift out of focus, cloud or tracking issues.</p>
 <hr />
 <h1 id="part-3-calibration-and-integration">Part 3 — Calibration and integration</h1>
 <h2 id="step-3-launch-and-reset-wbpp"><span class="stepno">3</span>Launch and reset WBPP</h2>
@@ -375,7 +321,7 @@ type_date_time_filter_temp_exposure_sequence
 </tr>
 </tbody>
 </table>
-<p><strong>This is the last cheap checkpoint.</strong> Confirm the filter count (three rows, not
+<p>Confirm the filter count (three rows, not
 more), that frame counts match the sessions, and that dimensions and exposure are
 consistent. For a mosaic you'd see six rows — one per filter × panel.</p>
 <h2 id="step-8-run"><span class="stepno">8</span>Run</h2>
