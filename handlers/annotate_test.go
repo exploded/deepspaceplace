@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -296,4 +297,97 @@ func TestAdminEditTemplateRenders(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestBuildOverlayNeedsMeasuredRotation guards against the NGC 346 failure: a
+// row whose field size is plausible but whose rotation was never measured used
+// to render annotations at whatever angle the placeholder implied. The shape
+// check cannot catch it, because the shape is right -- only the rotation is
+// wrong, and the result is a confident, well-drawn, completely misplaced
+// overlay.
+func TestBuildOverlayNeedsMeasuredRotation(t *testing.T) {
+	f := func(v float64) sql.NullFloat64 { return sql.NullFloat64{Float64: v, Valid: true} }
+
+	// NGC 346 as stored: a 1.5 aspect field over a 1.49 image, so the geometry
+	// check passes, but orientation is a placeholder and the true value is 269.8.
+	ngc346 := func() database.Image {
+		return database.Image{
+			ID: "ngc0346", Filename: "ic434.jpg", Solved: "y",
+			Ra: f(14.77), Dec: f(-72.17), Pixscale: f(1.6),
+			WidthArcsec: f(6120), HeightArcsec: f(4080),
+			Orientation: f(0),
+		}
+	}
+
+	t.Run("placeholder rotation is refused", func(t *testing.T) {
+		withFixtures(t, 1922, 1290)
+		if o := BuildOverlay(ngc346()); o != nil {
+			t.Errorf("expected no overlay for an unmeasured rotation, got %d objects", len(o.Objects))
+		}
+	})
+
+	t.Run("missing rotation is refused", func(t *testing.T) {
+		withFixtures(t, 1922, 1290)
+		img := ngc346()
+		img.Orientation = sql.NullFloat64{}
+		if o := BuildOverlay(img); o != nil {
+			t.Error("expected no overlay when orientation is NULL")
+		}
+	})
+
+	t.Run("a real solve at zero is still trusted", func(t *testing.T) {
+		// Parity present means the value came from the solver, not a blank.
+		withFixtures(t, 1922, 1290)
+		img := ngc346()
+		img.Parity = f(1)
+		if o := BuildOverlay(img); o == nil {
+			t.Error("a solved row should keep its overlay even at orientation 0")
+		}
+	})
+
+	t.Run("the real rotation places objects correctly", func(t *testing.T) {
+		withFixtures(t, 1922, 1290)
+		img := ngc346()
+		img.Orientation = f(269.8) // derived from astrometry.net's own annotation
+		o := BuildOverlay(img)
+		if o == nil {
+			t.Fatal("expected an overlay once the rotation is known")
+		}
+
+		// Compare geometry relative to NGC 346 rather than absolute pixels. The
+		// stored field centre is hand-entered and sits about 75px from the real
+		// one, which shifts everything bodily; that translation is a separate
+		// defect from the rotation under test here, and re-solving fixes both.
+		pos := map[string][2]float64{}
+		for _, obj := range o.Objects {
+			for _, name := range []string{obj.Label, obj.Sub} {
+				if name != "" {
+					pos[name] = [2]float64{obj.X, obj.Y}
+				}
+			}
+		}
+		anchor, ok := pos["NGC 346"]
+		if !ok {
+			t.Fatal("NGC 346 missing from its own field")
+		}
+
+		// Offsets from NGC 346 as astrometry.net drew them.
+		want := map[string][2]float64{
+			"NGC 371": {131, -380},
+			"NGC 330": {-328, 242},
+			"NGC 361": {639, -268},
+		}
+		for name, w := range want {
+			got, ok := pos[name]
+			if !ok {
+				t.Errorf("%s missing from the SMC field", name)
+				continue
+			}
+			dx, dy := got[0]-anchor[0], got[1]-anchor[1]
+			if math.Abs(dx-w[0]) > 25 || math.Abs(dy-w[1]) > 25 {
+				t.Errorf("%s offset from NGC 346 is (%.0f, %.0f), want about (%.0f, %.0f)",
+					name, dx, dy, w[0], w[1])
+			}
+		}
+	})
 }

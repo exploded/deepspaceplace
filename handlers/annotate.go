@@ -138,16 +138,30 @@ func BuildOverlay(img database.Image) *Overlay {
 	}
 	pixScale := widthArcsec / float64(w)
 
-	// Parity is NULL for every row solved before it was captured. Normal is
-	// the right default: every image checked while calibrating this was
-	// unmirrored.
+	// An orientation of exactly zero is not a measurement, it is a blank that
+	// was never filled in. A dozen rows here predate the automated solver and
+	// carry hand-typed field sizes with the rotation left at 0, and unlike a
+	// wrong field size a wrong rotation is invisible to the geometry check
+	// above: the annotations come out the right size, in the right style, and
+	// pointing at the wrong objects. NGC 346 was rotated a full 90 degrees this
+	// way, its labels landing on entirely different clusters.
+	//
+	// A genuine solve returns a fitted float that is never exactly zero, and
+	// also records parity, so requiring both to be absent identifies precisely
+	// the rows whose rotation is unknown. Re-solving one fills both in.
+	if !img.Orientation.Valid || (img.Orientation.Float64 == 0 && !img.Parity.Valid) {
+		slog.Info("Skipping annotation overlay: rotation was never measured",
+			"id", img.ID, "hint", "re-solve this image to record its orientation")
+		return nil
+	}
+	orientation := img.Orientation.Float64
+
+	// Parity is NULL for every row solved before it was captured. Normal is the
+	// right default: it was confirmed against NGC 346, whose nine catalogued
+	// neighbours fit an unmirrored frame to within a degree.
 	parity := 1.0
 	if img.Parity.Valid {
 		parity = img.Parity.Float64
-	}
-	orientation := 0.0
-	if img.Orientation.Valid {
-		orientation = img.Orientation.Float64
 	}
 
 	sky, ok := wcs.FromAstrometry(img.Ra.Float64, img.Dec.Float64, pixScale, orientation, parity, w, h)
