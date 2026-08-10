@@ -18,7 +18,6 @@ type ShowData struct {
 	Prev         string
 	Next         string
 	HasRA        bool
-	HasBlink     bool
 	RAStr        string
 	DecStr       string
 	CanonicalURL string
@@ -68,7 +67,6 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 		Prev:         prev,
 		Next:         next,
 		HasRA:        img.Ra.Valid && img.Dec.Valid,
-		HasBlink:     img.Blink != "na" && img.Blink != "",
 		CanonicalURL: "https://deepspaceplace.com/show?id=" + id,
 		Title:        img.Name,
 		Description:  img.Name + " - astrophotography with " + img.Camera + " and " + img.Scope,

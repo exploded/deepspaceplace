@@ -525,3 +525,54 @@ func TestAdminListTemplateRenders(t *testing.T) {
 		}
 	}
 }
+
+// TestShowTemplateRenders covers the show page's content block, which is
+// otherwise only parsed at server startup -- parseTemplates lives in package
+// main and nothing in the test suite reaches it.
+//
+// It also pins the retirement of the _annotated.jpg hover swap: the overlay is
+// now the only way astrometry is displayed, so any reappearance of the old
+// mechanism is a regression rather than a spare.
+func TestShowTemplateRenders(t *testing.T) {
+	tmpl, err := template.New("show.html").Funcs(TemplateFuncs).
+		ParseFiles(filepath.Join("..", "templates", "show.html"))
+	if err != nil {
+		t.Fatalf("parsing the show template: %v", err)
+	}
+
+	withFixtures(t, 3840, 2560)
+	img := solvedImage()
+	img.Blink = "ic434_annotated.jpg" // a row that still names an annotated file
+
+	overlay := BuildOverlay(img)
+	if overlay == nil {
+		t.Fatal("expected an overlay to render with")
+	}
+
+	var out strings.Builder
+	err = tmpl.ExecuteTemplate(&out, "content", ShowData{
+		Image:   img,
+		HasRA:   true,
+		RAStr:   "05h 41m 12s",
+		DecStr:  "-02° 13' 01\"",
+		Overlay: overlay,
+	})
+	if err != nil {
+		t.Fatalf("executing the show template: %v", err)
+	}
+	got := out.String()
+
+	for _, want := range []string{`class="annotate-layer"`, `ann-controls`, `ann-credit`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered show page is missing %q", want)
+		}
+	}
+	// The blink filename must not appear anywhere, in either the hover layer or
+	// the old Astrometry button.
+	if strings.Contains(got, img.Blink) {
+		t.Error("the annotated JPEG is still referenced; the old astrometry display was meant to be retired")
+	}
+	if strings.Contains(got, "hoverImg") {
+		t.Error("the hover-swap markup is back")
+	}
+}

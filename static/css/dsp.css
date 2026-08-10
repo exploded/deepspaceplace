@@ -475,12 +475,6 @@ figure.figure:hover { transform: translateY(-3px); }
 
 .img-container { position: relative; }
 .imageBox { position: relative; margin-top: 1rem; }
-.imageBox .hoverImg {
-  position: absolute;
-  left: 0; top: 0;
-  display: none;
-}
-.imageBox:hover .hoverImg { display: block; }
 
 /* An inline <a> around the photograph leaves a few pixels of line-box descender
    below it, which would make .imageBox taller than the image and shift the
@@ -598,9 +592,6 @@ figure.figure:hover { transform: translateY(-3px); }
 #ann-emission:not(:checked) ~ .imageBox .annotate-layer .ann-emission { display: none; }
 #ann-star:not(:checked) ~ .imageBox .annotate-layer .ann-star { display: none; }
 #ann-grid:not(:checked) ~ .imageBox .annotate-layer .ann-grid-layer { display: none; }
-
-/* The overlay competes with the astrometry hover image for the same space. */
-.imageBox:hover .hoverImg ~ .annotate-layer { opacity: 0.25; }
 
 .ann-credit {
   font-size: 0.72rem;

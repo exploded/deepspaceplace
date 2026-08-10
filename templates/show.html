@@ -47,9 +47,6 @@
         <a class="btn btn-outline-primary" href="/show?id={{.Prev}}">Previous</a>
       {{end}}
       <a class="btn btn-outline-primary" href="/images/{{.Image.Filename}}">Fullscreen</a>
-      {{if .HasBlink}}
-        <a class="btn btn-outline-primary" href="/images/{{.Image.Blink}}">Astrometry</a>
-      {{end}}
       {{if .Next}}
         <a class="btn btn-outline-primary" href="/show?id={{.Next}}">Next</a>
       {{end}}
@@ -74,11 +71,6 @@
         <div class="imageInn">
           <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Filename}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
         </div>
-        {{if .HasBlink}}
-        <div class="hoverImg">
-          <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Blink}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
-        </div>
-        {{end}}
         {{with .Overlay}}
         <svg class="annotate-layer" viewBox="0 0 {{.W}} {{.H}}" preserveAspectRatio="xMidYMid meet"
              aria-hidden="true" focusable="false">
