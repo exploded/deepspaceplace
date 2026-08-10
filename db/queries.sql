@@ -1,6 +1,17 @@
 -- name: GetImage :one
 SELECT * FROM images WHERE id = ? LIMIT 1;
 
+-- Legacy id recovery. The PHP site keyed images by their old catalog id, which
+-- the conversion re-keyed (zero-padded, and preferred the Messier designation
+-- where one exists). The filename column still carries the old id -- m047 is
+-- ngc2422.jpg, m042 is ngc1976.jpg -- so the filename stem maps a legacy URL
+-- back to its current row. Stems are unique across the table.
+-- name: GetImageIDByFilenameStem :one
+SELECT id FROM images
+WHERE lower(filename) IN (lower(?1) || '.jpg', lower(?1) || '.jpeg', lower(?1) || '.png')
+ORDER BY id
+LIMIT 1;
+
 -- Gallery queries: sort by ID (default)
 -- name: ListImagesByID :many
 SELECT * FROM images
@@ -152,13 +163,13 @@ INSERT INTO images (
     common_name, name, filename, thumbnail, type, camera, scope, mount,
     guiding, exposure, location, date, notes, blink, corrector,
     ra, dec, pixscale, radius, width_arcsec, height_arcsec,
-    fieldw, fieldh, orientation, solved
+    fieldw, fieldh, orientation, solved, parity
 ) VALUES (
     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
-    ?, ?, ?, ?
+    ?, ?, ?, ?, ?
 );
 
 -- Admin: update image
@@ -171,7 +182,7 @@ UPDATE images SET
     date = ?, notes = ?, blink = ?, corrector = ?,
     ra = ?, dec = ?, pixscale = ?, radius = ?,
     width_arcsec = ?, height_arcsec = ?,
-    fieldw = ?, fieldh = ?, orientation = ?, solved = ?
+    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?
 WHERE id = ?;
 
 -- Admin: update plate-solve results
@@ -179,8 +190,15 @@ WHERE id = ?;
 UPDATE images SET
     ra = ?, dec = ?, pixscale = ?, radius = ?,
     width_arcsec = ?, height_arcsec = ?,
-    fieldw = ?, fieldh = ?, orientation = ?, solved = ?
+    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?
 WHERE id = ?;
+
+-- Records a failed solve without touching the astrometry columns.
+-- UpdateImagePlateSolve assigns every one of them unconditionally, so reusing
+-- it to flag a failure would null out a previously good solution -- dropping
+-- the image off the skymap and killing its annotation overlay.
+-- name: MarkSolveFailed :exec
+UPDATE images SET solved = 'f' WHERE id = ?;
 
 -- Admin: delete image
 -- name: DeleteImage :exec

@@ -65,6 +65,14 @@ type PageData struct {
 
 // Render executes a named template with the "base" definition and the given data.
 func Render(w http.ResponseWriter, name string, data interface{}) {
+	RenderStatus(w, http.StatusOK, name, data)
+}
+
+// RenderStatus is Render with an explicit response status, for pages that are
+// also a refusal (the login lockout's 429). The template is executed into a
+// buffer before anything is written, so a template failure still becomes a
+// clean 500 rather than a partial body under the wrong status.
+func RenderStatus(w http.ResponseWriter, status int, name string, data interface{}) {
 	t, ok := Templates[name]
 	if !ok {
 		slog.Error("Template not found", "name", name)
@@ -78,6 +86,7 @@ func Render(w http.ResponseWriter, name string, data interface{}) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
 	buf.WriteTo(w)
 }
 

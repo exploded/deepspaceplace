@@ -3,7 +3,6 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -30,12 +29,35 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter {
 
 // levelFor picks the log level for a completed request.
 //
-// A public site is scanned around the clock, so a 404 for something that was
-// never here is ordinary access-log traffic, not a warning -- logging it at
-// WARN buries the handful of requests that do need attention. What still earns
-// a warning is a client being refused (401/403/429) and a 404 reached from one
-// of our own pages, which means a broken internal link.
-func levelFor(status int, r *http.Request) slog.Level {
+// logship is pinned at WARN, so this function decides what monitor ever sees.
+// It gets one question: can anyone act on this line?
+//
+//   - 5xx is ours to fix.                                          ERROR
+//   - 401/403/429 is a client actively refused -- a bad admin
+//     password, a CSRF-rejected post, the login limiter being hit. WARN
+//   - Everything else 4xx is the client's problem.                 INFO
+//
+// A 404 is never a warning. A public site is scanned around the clock and a
+// path that was never here is ordinary access-log traffic with nothing to fix.
+//
+// levelFor deliberately does not take the *http.Request, so the level cannot
+// depend on a caller-controlled header even by accident.
+//
+// Do not reintroduce a "404 from one of our own pages means a broken internal
+// link" rule keyed on Referer. It looks like good code and it is not: Referer
+// is set by the caller, and the SPA-fingerprinting scanners sweeping /graphql,
+// /.vite/manifest.json, /dist/manifest.json and /.well-known/jwks.json send
+// "Referer: https://deepspaceplace.com/" to look like in-page XHR. The rule
+// hands every scanner a switch labelled "promote my noise to a warning" -- it
+// is a client-controlled alerting channel, the exact opposite of the intent.
+// The same rule was tried on a-part and defeated in production within hours
+// (a-part 68fb4a2): two probes a second apart, same client, same 404, INFO
+// without the header and WARN with it. This repo logged 34,520 WARN to
+// monitor over the 90 days to 2026-08-09 under that rule.
+//
+// Find broken internal links with a link checker. The 404s are all still in
+// the access log on the box at INFO, still greppable by referer.
+func levelFor(status int) slog.Level {
 	switch {
 	case status >= 500:
 		return slog.LevelError
@@ -43,25 +65,9 @@ func levelFor(status int, r *http.Request) slog.Level {
 		status == http.StatusForbidden,
 		status == http.StatusTooManyRequests:
 		return slog.LevelWarn
-	case status == http.StatusNotFound && isInternalReferer(r):
-		return slog.LevelWarn
 	default:
 		return slog.LevelInfo
 	}
-}
-
-// isInternalReferer reports whether the request was linked from one of our own
-// pages, as opposed to typed, crawled or probed.
-func isInternalReferer(r *http.Request) bool {
-	ref := r.Referer()
-	if ref == "" {
-		return false
-	}
-	u, err := url.Parse(ref)
-	if err != nil {
-		return false
-	}
-	return u.Host == r.Host || strings.TrimPrefix(u.Host, "www.") == "deepspaceplace.com"
 }
 
 func RequestLogger(next http.Handler) http.Handler {
@@ -69,7 +75,7 @@ func RequestLogger(next http.Handler) http.Handler {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: 200}
 		next.ServeHTTP(rec, r)
-		slog.Log(r.Context(), levelFor(rec.status, r), r.Method+" "+r.RequestURI,
+		slog.Log(r.Context(), levelFor(rec.status), r.Method+" "+r.RequestURI,
 			"status", rec.status, "duration", time.Since(start))
 	})
 }

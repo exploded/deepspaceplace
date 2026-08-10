@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"deepspaceplace/internal/database"
 )
@@ -22,6 +23,7 @@ type ShowData struct {
 	CanonicalURL string
 	Title        string
 	Description  string
+	Overlay      *Overlay
 }
 
 func HandleShow(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +47,10 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	img, err := DB.GetImage(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			if canonical := resolveLegacyID(ctx, id); canonical != "" {
+				http.Redirect(w, r, "/show?id="+url.QueryEscape(canonical), http.StatusMovedPermanently)
+				return
+			}
 			http.NotFound(w, r)
 			return
 		}
@@ -70,9 +76,74 @@ func HandleShow(w http.ResponseWriter, r *http.Request) {
 	if data.HasRA {
 		data.RAStr = decimalToHMS(img.Ra.Float64)
 		data.DecStr = decimalToDMS(img.Dec.Float64)
+		data.Overlay = BuildOverlay(img)
 	}
 
 	Render(w, "show.html", data)
+}
+
+// resolveLegacyID maps an id from the old PHP site onto its current row,
+// returning "" when there is no match.
+//
+// The Go conversion re-keyed every image: catalog numbers were zero-padded
+// (ngc253b -> ngc0253b, rcw7 -> rcw007, ic434 -> ic0434) and objects with a
+// Messier designation were re-keyed to it (ngc2422 -> m047, ngc1976 -> m042).
+// 41 of 121 ids changed, so every bookmark, inbound link and search result
+// using the old scheme has been 404ing since the conversion.
+//
+// That went unnoticed for months because those 404s were logged at WARN
+// alongside 34,520 scanner hits -- see levelFor in middleware.go, and do not
+// try to detect this class from the Referer header again.
+//
+// Both steps verify the candidate against the primary key before redirecting,
+// so an id that resolves to nothing (sh2-280, n70) falls through to a 404
+// rather than guessing.
+func resolveLegacyID(ctx context.Context, id string) string {
+	if id == "" || len(id) > 64 {
+		return ""
+	}
+
+	// The filename column still carries the old id -- m047 is ngc2422.jpg --
+	// so the stem is an exact reverse mapping wherever an image was re-keyed.
+	canonical, err := DB.GetImageIDByFilenameStem(ctx, id)
+	if err != nil && err != sql.ErrNoRows {
+		slog.Error("Error resolving legacy image id by filename", "id", id, "error", err)
+		return ""
+	}
+	if err == nil && canonical != id {
+		return canonical
+	}
+
+	// Otherwise the only change was zero-padding. Widths come from the data
+	// rather than a per-prefix guess: widen until one candidate is a real id.
+	prefix, digits, suffix, ok := splitCatalogID(id)
+	if !ok {
+		return ""
+	}
+	for width := len(digits) + 1; width <= 5; width++ {
+		candidate := prefix + strings.Repeat("0", width-len(digits)) + digits + suffix
+		if _, err := DB.GetImage(ctx, candidate); err == nil {
+			return candidate
+		}
+	}
+	return ""
+}
+
+// splitCatalogID splits an id like "ngc253b" into "ngc", "253" and "b". It
+// reports false when the id is not prefix-digits-suffix shaped.
+func splitCatalogID(id string) (prefix, digits, suffix string, ok bool) {
+	i := 0
+	for i < len(id) && (id[i] < '0' || id[i] > '9') {
+		i++
+	}
+	j := i
+	for j < len(id) && id[j] >= '0' && id[j] <= '9' {
+		j++
+	}
+	if i == 0 || j == i {
+		return "", "", "", false
+	}
+	return id[:i], id[i:j], id[j:], true
 }
 
 func getFilteredPrevNext(ctx context.Context, id, sort, filter string) (prev, next string) {
@@ -129,4 +200,3 @@ func decimalToDMS(decimal float64) string {
 	sign, d, m, s := splitDMS(decimal)
 	return fmt.Sprintf("%s%02d° %02d' %02.0f\"", sign, d, m, s)
 }
-

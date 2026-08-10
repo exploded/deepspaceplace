@@ -72,6 +72,9 @@ func main() {
 	if _, err := db.Exec(string(schemaSQL)); err != nil {
 		log.Fatalf("Failed to create tables: %v", err)
 	}
+	if err := addMissingColumns(db); err != nil {
+		log.Fatalf("Failed to migrate schema: %v", err)
+	}
 
 	queries := database.New(db)
 	handlers.DB = queries
@@ -251,6 +254,55 @@ func main() {
 		ship.Shutdown()
 	}
 	slog.Info("Server exited")
+}
+
+// addMissingColumns brings an existing database up to the current schema.
+//
+// db/schema.sql only runs as CREATE TABLE IF NOT EXISTS, so it has no effect on
+// a database that already has the table -- columns added to it since the
+// database was created have to be applied by hand. SQLite has no
+// ADD COLUMN IF NOT EXISTS, hence the pragma check.
+//
+// New columns must be appended to the end of schema.sql to match where
+// ALTER TABLE puts them, or "SELECT *" would scan into the wrong fields on one
+// of the two paths.
+func addMissingColumns(db *sql.DB) error {
+	wanted := []struct{ name, definition string }{
+		{"parity", "REAL"},
+	}
+
+	existing := make(map[string]bool)
+	rows, err := db.Query("PRAGMA table_info(images)")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			cid           int
+			name, colType string
+			notNull, pk   int
+			defaultValue  sql.NullString
+		)
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &defaultValue, &pk); err != nil {
+			return err
+		}
+		existing[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for _, col := range wanted {
+		if existing[col.name] {
+			continue
+		}
+		if _, err := db.Exec(fmt.Sprintf("ALTER TABLE images ADD COLUMN %s %s", col.name, col.definition)); err != nil {
+			return fmt.Errorf("adding column %s: %w", col.name, err)
+		}
+		slog.Info("Added missing column", "table", "images", "column", col.name)
+	}
+	return nil
 }
 
 func loadEnvFile(path string) {

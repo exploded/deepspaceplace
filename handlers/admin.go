@@ -81,13 +81,20 @@ func HandleAdminLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		r.ParseForm()
 
-		// Rate limiting
+		// Rate limiting. The refusal is served as 429 rather than 200 so that
+		// RequestLogger's levelFor sees it -- that is the only thing that puts
+		// a hammered admin login in front of monitor, and it is what keeps the
+		// 429 branch of levelFor live.
 		loginMu.Lock()
 		if !loginLockedUntil.IsZero() && time.Now().Before(loginLockedUntil) {
 			remaining := time.Until(loginLockedUntil).Round(time.Second)
 			loginMu.Unlock()
-			slog.Warn("Login locked out", "remaining", remaining)
-			Render(w, "login.html", loginData{Error: "Too many failed attempts. Try again later."})
+			// RequestLogger already warns on the 429; keep the detail at INFO
+			// so a locked-out attacker cannot double up the WARN volume.
+			slog.Info("Login locked out", "remaining", remaining)
+			w.Header().Set("Retry-After", strconv.Itoa(int(remaining.Seconds())))
+			RenderStatus(w, http.StatusTooManyRequests, "login.html",
+				loginData{Error: "Too many failed attempts. Try again later."})
 			return
 		}
 		loginMu.Unlock()
@@ -221,6 +228,7 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 			Ra: f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
 			WidthArcsec: f.WidthArcsec, HeightArcsec: f.HeightArcsec,
 			Fieldw: f.Fieldw, Fieldh: f.Fieldh, Orientation: f.Orientation,
+			Parity: f.Parity,
 		}
 
 		if err := DB.UpdateImage(ctx, params); err != nil {
@@ -264,7 +272,7 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 
 		f := parseImageForm(r)
 		params := database.CreateImageParams{
-			ID: r.FormValue("id"),
+			ID:      r.FormValue("id"),
 			Archive: f.Archive, Messier: f.Messier, Ngc: f.Ngc, Ic: f.Ic,
 			Rcw: f.Rcw, Sh2: f.Sh2, Henize: f.Henize, Gum: f.Gum, Lbn: f.Lbn,
 			CommonName: f.CommonName, Name: f.Name, Filename: f.Filename,
@@ -273,9 +281,10 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 			Exposure: f.Exposure, Location: f.Location, Date: f.Date,
 			Notes: f.Notes, Blink: f.Blink, Corrector: f.Corrector,
 			Solved: f.Solved,
-			Ra: f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
+			Ra:     f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
 			WidthArcsec: f.WidthArcsec, HeightArcsec: f.HeightArcsec,
 			Fieldw: f.Fieldw, Fieldh: f.Fieldh, Orientation: f.Orientation,
+			Parity: f.Parity,
 		}
 
 		if err := DB.CreateImage(ctx, params); err != nil {
@@ -330,13 +339,13 @@ func HandleAdminDelete(w http.ResponseWriter, r *http.Request) {
 
 type imageFormFields struct {
 	Archive, Messier, Ngc, Ic, Rcw, Sh2, Henize, Gum, Lbn string
-	CommonName, Name, Filename, Thumbnail                  string
-	Type, Camera, Scope, Mount, Guiding                    string
-	Exposure, Location, Date, Notes                        string
-	Blink, Corrector, Solved                               string
-	Ra, Dec, Pixscale, Radius                              sql.NullFloat64
-	WidthArcsec, HeightArcsec                              sql.NullFloat64
-	Fieldw, Fieldh, Orientation                            sql.NullFloat64
+	CommonName, Name, Filename, Thumbnail                 string
+	Type, Camera, Scope, Mount, Guiding                   string
+	Exposure, Location, Date, Notes                       string
+	Blink, Corrector, Solved                              string
+	Ra, Dec, Pixscale, Radius                             sql.NullFloat64
+	WidthArcsec, HeightArcsec                             sql.NullFloat64
+	Fieldw, Fieldh, Orientation, Parity                   sql.NullFloat64
 }
 
 func parseImageForm(r *http.Request) imageFormFields {
@@ -375,6 +384,7 @@ func parseImageForm(r *http.Request) imageFormFields {
 		Fieldw:       parseOptionalFloat(r.FormValue("fieldw")),
 		Fieldh:       parseOptionalFloat(r.FormValue("fieldh")),
 		Orientation:  parseOptionalFloat(r.FormValue("orientation")),
+		Parity:       parseOptionalFloat(r.FormValue("parity")),
 	}
 }
 

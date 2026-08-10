@@ -31,6 +31,11 @@ type calibration struct {
 	FieldW      float64 `json:"fieldw"`
 	FieldH      float64 `json:"fieldh"`
 	Orientation float64 `json:"orientation"`
+	// Parity says whether the image is mirrored. Without it the annotation
+	// overlay has to guess, and a wrong guess flips every label across the
+	// frame. Astrometry.net has always returned it; this code just never
+	// asked for it, which is why rows solved before now have it as NULL.
+	Parity float64 `json:"parity"`
 }
 
 func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
@@ -142,6 +147,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 		Fieldw:       sql.NullFloat64{Float64: cal.FieldW, Valid: true},
 		Fieldh:       sql.NullFloat64{Float64: cal.FieldH, Valid: true},
 		Orientation:  sql.NullFloat64{Float64: cal.Orientation, Valid: true},
+		Parity:       sql.NullFloat64{Float64: cal.Parity, Valid: true},
 	})
 	if err != nil {
 		slog.Error("DB update failed", "id", id, "error", err)
@@ -153,13 +159,19 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC))
 }
 
+// markSolveFailed flags a failed solve, leaving any existing solution intact.
+//
+// It deliberately does not go through UpdateImagePlateSolve: that query assigns
+// every astrometry column, so calling it with only the id and status set --
+// which is what this used to do -- nulled out a good RA and Dec on any failed
+// RE-solve, quietly removing the image from the skymap and its annotation
+// overlay.
 func markSolveFailed(id string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	DB.UpdateImagePlateSolve(ctx, database.UpdateImagePlateSolveParams{
-		ID:     id,
-		Solved: "f",
-	})
+	if err := DB.MarkSolveFailed(ctx, id); err != nil {
+		slog.Error("Failed to record solve failure", "id", id, "error", err)
+	}
 }
 
 func writesolveResult(w http.ResponseWriter, id, badgeClass, msg string) {

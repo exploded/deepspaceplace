@@ -53,6 +53,23 @@
       {{if .Next}}
         <a class="btn btn-outline-primary" href="/show?id={{.Next}}">Next</a>
       {{end}}
+      {{if .Overlay}}
+      {{/* The layer toggles are checkboxes rather than script: they precede
+           .imageBox so CSS sibling selectors can show and hide each SVG group,
+           which keeps the whole overlay working with no JavaScript at all. */}}
+      <input type="checkbox" class="ann-toggle" id="ann-on" checked>
+      <input type="checkbox" class="ann-toggle" id="ann-dso" checked>
+      <input type="checkbox" class="ann-toggle" id="ann-emission" checked>
+      <input type="checkbox" class="ann-toggle" id="ann-star">
+      <input type="checkbox" class="ann-toggle" id="ann-grid" checked>
+      <div class="ann-controls" role="group" aria-label="Annotation layers">
+        <label for="ann-on" class="ann-label ann-label-main">Annotations</label>
+        <label for="ann-dso" class="ann-label">Deep sky</label>
+        <label for="ann-emission" class="ann-label">Emission</label>
+        <label for="ann-star" class="ann-label">Stars</label>
+        <label for="ann-grid" class="ann-label">Grid</label>
+      </div>
+      {{end}}
       <div class="imageBox">
         <div class="imageInn">
           <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Filename}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
@@ -62,7 +79,40 @@
           <a href="/images/{{.Image.Filename}}"><img src="/images/{{.Image.Blink}}" alt="{{.Image.Name}}" class="img-fluid" title="Click image to view full size version"></a>
         </div>
         {{end}}
+        {{with .Overlay}}
+        <svg class="annotate-layer" viewBox="0 0 {{.W}} {{.H}}" preserveAspectRatio="xMidYMid meet"
+             aria-hidden="true" focusable="false">
+          <g class="ann-grid-layer">
+            {{range .GridLines}}<polyline points="{{.Points}}"/>
+            {{end}}
+            {{range .GridLabels}}<text x="{{.X}}" y="{{.Y}}" font-size="{{$.Overlay.SmallFont}}">{{.Text}}</text>
+            {{end}}
+          </g>
+          {{range .Objects}}
+          <g class="ann-obj ann-{{.Class}}">
+            {{if .Point}}<circle cx="{{.X}}" cy="{{.Y}}" r="{{.PointR}}"/>
+            {{else}}<ellipse cx="{{.X}}" cy="{{.Y}}" rx="{{.RX}}" ry="{{.RY}}" transform="rotate({{.Angle}} {{.X}} {{.Y}})"/>
+            {{end}}
+            {{if .Label}}<text x="{{.LabelX}}" y="{{.LabelY}}" text-anchor="{{.LabelAnchor}}" font-size="{{$.Overlay.FontSize}}">{{.Label}}</text>
+            {{if .Sub}}<text x="{{.LabelX}}" y="{{.SubY}}" text-anchor="{{.LabelAnchor}}" font-size="{{$.Overlay.SmallFont}}" class="ann-sub">{{.Sub}}</text>
+            {{end}}{{end}}
+          </g>
+          {{end}}
+          <g class="ann-chrome">
+            {{with .ScaleBar}}
+            <path d="{{.Path}}"/>
+            <text x="{{.TextX}}" y="{{.TextY}}" font-size="{{$.Overlay.SmallFont}}">{{.Text}}</text>
+            {{end}}
+            {{with .Compass}}
+            <path d="{{.Path}}"/>
+            <text x="{{.NorthLabelX}}" y="{{.NorthLabelY}}" text-anchor="middle" dominant-baseline="middle" font-size="{{$.Overlay.SmallFont}}">N</text>
+            <text x="{{.EastLabelX}}" y="{{.EastLabelY}}" text-anchor="middle" dominant-baseline="middle" font-size="{{$.Overlay.SmallFont}}">E</text>
+            {{end}}
+          </g>
+        </svg>
+        {{end}}
       </div>
+      {{with .Overlay}}<p class="ann-credit">Annotations generated from the plate solve · {{.Credit}}</p>{{end}}
     </div>
 {{else}}
     <h2>Image not found</h2>

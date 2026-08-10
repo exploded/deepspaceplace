@@ -172,6 +172,20 @@
     </div>
     <div class="row mb-3">
         <div class="col-md-6">
+            <label class="form-label">Parity</label>
+            <select class="form-select" name="parity">
+                <option value="" {{if not .Parity.Valid}}selected{{end}}>Unknown (assume normal)</option>
+                <option value="1" {{if and .Parity.Valid (ge .Parity.Float64 0.0)}}selected{{end}}>Normal &mdash; north up, east left</option>
+                <option value="-1" {{if and .Parity.Valid (lt .Parity.Float64 0.0)}}selected{{end}}>Mirrored &mdash; north up, east right</option>
+            </select>
+            <div class="form-text">
+                Set by the plate solver. Change this only if the annotation overlay
+                comes out flipped left-to-right on the image page.
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
             <label class="form-label">Width (arcsec)</label>
             <input type="text" class="form-control" name="width_arcsec" value="{{if .WidthArcsec.Valid}}{{.WidthArcsec.Float64}}{{end}}">
         </div>

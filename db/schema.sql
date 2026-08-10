@@ -33,7 +33,14 @@ CREATE TABLE IF NOT EXISTS images (
     fieldw        REAL,
     fieldh        REAL,
     orientation   REAL,
-    solved        TEXT NOT NULL DEFAULT ''
+    solved        TEXT NOT NULL DEFAULT '',
+    -- Whether the image is mirrored relative to the sky, as reported by the
+    -- plate solver: positive for a normal image, negative for a flipped one.
+    -- NULL means the row predates parity capture, in which case the annotation
+    -- overlay assumes normal. Must stay last: existing databases gain this
+    -- column via ALTER TABLE ADD COLUMN, which appends, and "SELECT *" relies
+    -- on both orders matching.
+    parity        REAL
 );
 
 CREATE INDEX IF NOT EXISTS idx_images_archive ON images(archive);
