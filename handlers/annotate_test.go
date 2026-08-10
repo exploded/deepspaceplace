@@ -134,11 +134,8 @@ func TestBuildOverlayRejects(t *testing.T) {
 			mutate: func(i *database.Image) { i.WidthArcsec = sql.NullFloat64{} },
 			w:      3840, h: 2560,
 		},
-		{
-			name:   "solve recorded as failed",
-			mutate: func(i *database.Image) { i.Solved = "f" },
-			w:      3840, h: 2560,
-		},
+		// A solved value of "f" is deliberately absent here: a failed attempt no
+		// longer hides a still-valid solution. See TestOverlaySurvivesFailedResolve.
 		{
 			name:   "image file missing",
 			mutate: func(i *database.Image) { i.Filename = "nonexistent.jpg" },

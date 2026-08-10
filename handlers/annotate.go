@@ -112,9 +112,14 @@ func BuildOverlay(img database.Image) *Overlay {
 		!img.WidthArcsec.Valid || !img.HeightArcsec.Valid {
 		return nil
 	}
-	if img.Solved == "f" {
-		return nil
-	}
+
+	// Note that a solved value of "f" is deliberately not a reason to bail out.
+	// It records that the most recent attempt failed, not that the stored
+	// solution is bad -- and since failures now leave the astrometry columns
+	// alone, a nova outage would otherwise hide the overlay on an image whose
+	// coordinates are perfectly good. The geometry check below is the real
+	// guard: it tests the stored solution against the actual file rather than
+	// trusting a status flag.
 
 	// The stored pixel scale describes the image as it was solved, but the
 	// file on disk may since have been downscaled. Measuring the file and

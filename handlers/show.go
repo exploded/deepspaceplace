@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -174,6 +175,7 @@ func splitHMS(decimal float64) (h, m int, s float64) {
 	minDec := (decimal - float64(h)) * 60
 	m = int(minDec)
 	s = (minDec - float64(m)) * 60
+	h, m, s = carrySexagesimal(h, m, s, 24)
 	return
 }
 
@@ -188,7 +190,31 @@ func splitDMS(decimal float64) (sign string, d, m int, s float64) {
 	minDec := (decimal - float64(d)) * 60
 	m = int(minDec)
 	s = (minDec - float64(m)) * 60
+	d, m, s = carrySexagesimal(d, m, s, 0)
 	return
+}
+
+// carrySexagesimal propagates the carry that displaying seconds to the nearest
+// whole number creates. Both formatters below round seconds with %02.0f, so a
+// value like 59.7 becomes "60" and produces readings such as "03h 46m 60s"
+// instead of "03h 47m 00s".
+//
+// wrap is the value the leading unit rolls over at -- 24 for hours, or 0 to
+// leave degrees unbounded, since a declination can never carry past 90 anyway.
+func carrySexagesimal(big, min int, sec float64, wrap int) (int, int, float64) {
+	if math.Round(sec) < 60 {
+		return big, min, sec
+	}
+	sec = 0
+	min++
+	if min >= 60 {
+		min = 0
+		big++
+		if wrap > 0 && big >= wrap {
+			big -= wrap
+		}
+	}
+	return big, min, sec
 }
 
 func decimalToHMS(decimal float64) string {

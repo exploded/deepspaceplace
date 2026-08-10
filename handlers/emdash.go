@@ -31,18 +31,18 @@ type emdashLinePoint struct {
 }
 
 type EmdashData struct {
-	CanonicalURL  string
-	Title         string
-	Description   string
-	Points        []emdashPoint
-	LinePoints    []emdashLinePoint
-	LinePathLog   string
-	LinePathLin   string
-	YTicksLog     []emdashTick
-	YTicksLin     []emdashTick
-	YTicksLogR    []emdashTick
-	YTicksLinR    []emdashTick
-	XLabels       []emdashXLabel
+	CanonicalURL string
+	Title        string
+	Description  string
+	Points       []emdashPoint
+	LinePoints   []emdashLinePoint
+	LinePathLog  string
+	LinePathLin  string
+	YTicksLog    []emdashTick
+	YTicksLin    []emdashTick
+	YTicksLogR   []emdashTick
+	YTicksLinR   []emdashTick
+	XLabels      []emdashXLabel
 	ChartW       float64
 	ChartH       float64
 	PlotX        float64

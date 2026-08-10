@@ -83,13 +83,15 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 
 	// Submit
 	imageURL := imageBaseURL + img.Filename
-	subID, err := astrometrySubmit(session, imageURL, img.Camera, img.Scope)
+	bounds := scaleBounds(img)
+	subID, err := astrometrySubmit(session, imageURL, bounds)
 	if err != nil {
 		slog.Error("Astrometry submit failed", "id", id, "error", err)
 		writesolveResult(w, id, "danger", "Submit failed")
 		return
 	}
-	slog.Info("Plate solve submitted", "id", id, "sub", subID)
+	slog.Info("Plate solve submitted", "id", id, "sub", subID,
+		"scale_lower", bounds.Lower, "scale_upper", bounds.Upper, "scale_source", bounds.Source)
 
 	// Poll for job ID
 	var jobID int
@@ -205,7 +207,52 @@ func astrometryLogin(apiKey string) (string, error) {
 	return "", fmt.Errorf("login failed: %v", result)
 }
 
-func astrometrySubmit(session, imageURL, camera, scope string) (int, error) {
+// scaleRange is the band of pixel scales to tell Astrometry.net to search, in
+// arcseconds per pixel. A zero Lower means "no constraint, solve blind".
+type scaleRange struct {
+	Lower, Upper float64
+	Source       string // how it was derived, for the log
+}
+
+// scaleBounds works out what pixel scale the file we are about to submit
+// actually has.
+//
+// This is not the same as the scale of the camera at native resolution, and
+// conflating the two silently broke solving for any downscaled image. The admin
+// resizer rewrites files in place at up to 3840px, so a picture taken at 2.0
+// arcsec/pixel and since halved is really at 4.0 -- and a hint of 2.0 with the
+// old +/-30% window told the solver to search 1.4 to 2.6, a range the right
+// answer could not be in. m45 (true scale 4.2, hint 2.0) and NGC 1871 (2.5
+// against 1.6) both failed for exactly this reason.
+//
+// Preference order:
+//
+//  1. A previous solve's angular width divided by the file's measured width.
+//     This is by far the sharpest estimate, and it stays correct through both
+//     downscaling and cropping, because the stored width and the pixel width
+//     shrink together.
+//  2. The camera-and-scope lookup, treated as a LOWER bound only. Files are
+//     only ever downscaled, never enlarged, so the true scale can only be
+//     coarser than the native figure.
+//  3. Nothing, and let the solver work blind.
+func scaleBounds(img database.Image) scaleRange {
+	if w, _, ok := imageDims(img.Filename); ok && img.WidthArcsec.Valid && img.WidthArcsec.Float64 > 0 {
+		est := img.WidthArcsec.Float64 / float64(w)
+		// Generous either side: the stored width may itself be from a solve of
+		// a differently sized file.
+		return scaleRange{Lower: est * 0.5, Upper: est * 2, Source: "measured from the file and its recorded field width"}
+	}
+
+	if hint := getScaleHint(img.Camera, img.Scope); hint > 0 {
+		// Upper bound allows for roughly a six-fold downscale, which is more
+		// than the resizer can produce from any camera here.
+		return scaleRange{Lower: hint * 0.7, Upper: hint * 6, Source: "camera and scope, widened for downscaling"}
+	}
+
+	return scaleRange{Source: "none, solving blind"}
+}
+
+func astrometrySubmit(session, imageURL string, scale scaleRange) (int, error) {
 	submission := map[string]interface{}{
 		"session":              session,
 		"url":                  imageURL,
@@ -214,12 +261,11 @@ func astrometrySubmit(session, imageURL, camera, scope string) (int, error) {
 		"publicly_visible":     "n",
 	}
 
-	scaleHint := getScaleHint(camera, scope)
-	if scaleHint > 0 {
-		submission["scale_est"] = scaleHint
-		submission["scale_err"] = 30.0
+	if scale.Lower > 0 && scale.Upper > scale.Lower {
+		submission["scale_type"] = "ul"
 		submission["scale_units"] = "arcsecperpix"
-		submission["scale_type"] = "ev"
+		submission["scale_lower"] = scale.Lower
+		submission["scale_upper"] = scale.Upper
 	}
 
 	jsonBytes, _ := json.Marshal(submission)

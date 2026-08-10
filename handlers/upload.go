@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	maxUploadSize  = 50 << 20 // 50 MB
-	thumbWidth   = 200
-	thumbHeight  = 150
-	thumbQuality = 85
+	maxUploadSize = 50 << 20 // 50 MB
+	thumbWidth    = 200
+	thumbHeight   = 150
+	thumbQuality  = 85
 )
 
 func HandleAdminUpload(w http.ResponseWriter, r *http.Request) {

@@ -76,3 +76,43 @@ func repeatZero(n int) string {
 	}
 	return s
 }
+
+// TestSexagesimalCarry guards a display bug: both coordinate formatters round
+// seconds to a whole number with %02.0f, so a value just under the next minute
+// rendered as "60s". M45 showed "RA: 03h 46m 60s" on the live site.
+func TestSexagesimalCarry(t *testing.T) {
+	raCases := []struct {
+		name    string
+		degrees float64
+		want    string
+	}{
+		{"carries into the next minute", 56.75, "03h 47m 00s"},
+		{"ordinary value untouched", 85.300, "05h 41m 12s"},
+		{"carries into the next hour", 14.99999, "01h 00m 00s"},
+		{"wraps a whole turn back to zero", 359.99999, "00h 00m 00s"},
+	}
+	for _, tc := range raCases {
+		t.Run("RA "+tc.name, func(t *testing.T) {
+			if got := decimalToHMS(tc.degrees); got != tc.want {
+				t.Errorf("decimalToHMS(%g) = %q, want %q", tc.degrees, got, tc.want)
+			}
+		})
+	}
+
+	decCases := []struct {
+		name    string
+		degrees float64
+		want    string
+	}{
+		{"carries into the next arcminute", 24.11999, "+24° 07' 12\""},
+		{"carries into the next degree", -67.99999, "-68° 00' 00\""},
+		{"ordinary value untouched", -2.217, "-02° 13' 01\""},
+	}
+	for _, tc := range decCases {
+		t.Run("Dec "+tc.name, func(t *testing.T) {
+			if got := decimalToDMS(tc.degrees); got != tc.want {
+				t.Errorf("decimalToDMS(%g) = %q, want %q", tc.degrees, got, tc.want)
+			}
+		})
+	}
+}
