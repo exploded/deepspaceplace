@@ -575,4 +575,27 @@ func TestShowTemplateRenders(t *testing.T) {
 	if strings.Contains(got, "hoverImg") {
 		t.Error("the hover-swap markup is back")
 	}
+
+	// The photograph comes first, so the master switch starts off -- but every
+	// layer under it starts on, so enabling annotations gives the whole overlay
+	// rather than something partial the reader has to go hunting for.
+	for _, tc := range []struct {
+		id      string
+		checked bool
+	}{
+		{"ann-on", false},
+		{"ann-dso", true},
+		{"ann-emission", true},
+		{"ann-star", true},
+		{"ann-grid", true},
+	} {
+		input := `id="` + tc.id + `"`
+		if !strings.Contains(got, input) {
+			t.Errorf("no toggle rendered for %s", tc.id)
+			continue
+		}
+		if isChecked := strings.Contains(got, input+" checked"); isChecked != tc.checked {
+			t.Errorf("%s renders checked=%v, want %v", tc.id, isChecked, tc.checked)
+		}
+	}
 }

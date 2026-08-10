@@ -54,10 +54,13 @@
       {{/* The layer toggles are checkboxes rather than script: they precede
            .imageBox so CSS sibling selectors can show and hide each SVG group,
            which keeps the whole overlay working with no JavaScript at all. */}}
-      <input type="checkbox" class="ann-toggle" id="ann-on" checked>
+      {{/* Annotations start off so the photograph is what you see first; every
+           individual layer starts on, so one click on "Annotations" brings up
+           the complete overlay rather than a partial one. */}}
+      <input type="checkbox" class="ann-toggle" id="ann-on">
       <input type="checkbox" class="ann-toggle" id="ann-dso" checked>
       <input type="checkbox" class="ann-toggle" id="ann-emission" checked>
-      <input type="checkbox" class="ann-toggle" id="ann-star">
+      <input type="checkbox" class="ann-toggle" id="ann-star" checked>
       <input type="checkbox" class="ann-toggle" id="ann-grid" checked>
       <div class="ann-controls" role="group" aria-label="Annotation layers">
         <label for="ann-on" class="ann-label ann-label-main">Annotations</label>
