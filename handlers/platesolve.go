@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"math"
 	"net/http"
@@ -56,20 +57,20 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 
 	id := r.FormValue("id")
 	if id == "" {
-		writesolveResult(w, id, "danger", "No image ID")
+		writesolveResult(w, id, "danger", "No image ID", nil)
 		return
 	}
 
 	ctx := r.Context()
 	img, err := DB.GetImage(ctx, id)
 	if err != nil {
-		writesolveResult(w, id, "danger", "Image not found")
+		writesolveResult(w, id, "danger", "Image not found", nil)
 		return
 	}
 
 	apiKey := os.Getenv("ASTROMETRY_API_KEY")
 	if apiKey == "" {
-		writesolveResult(w, id, "danger", "API key not configured")
+		writesolveResult(w, id, "danger", "API key not configured", nil)
 		return
 	}
 
@@ -77,7 +78,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	session, err := astrometryLogin(apiKey)
 	if err != nil {
 		slog.Error("Astrometry login failed", "error", err)
-		writesolveResult(w, id, "danger", "Login failed")
+		writesolveResult(w, id, "danger", "Login failed", nil)
 		return
 	}
 
@@ -87,7 +88,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	subID, err := astrometrySubmit(session, imageURL, bounds)
 	if err != nil {
 		slog.Error("Astrometry submit failed", "id", id, "error", err)
-		writesolveResult(w, id, "danger", "Submit failed")
+		writesolveResult(w, id, "danger", "Submit failed", nil)
 		return
 	}
 	slog.Info("Plate solve submitted", "id", id, "sub", subID,
@@ -104,7 +105,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	}
 	if jobID == 0 {
 		markSolveFailed(id)
-		writesolveResult(w, id, "warning", "Timeout waiting for job")
+		writesolveResult(w, id, "warning", "Timeout waiting for job", nil)
 		return
 	}
 
@@ -120,7 +121,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 
 	if status != "success" {
 		markSolveFailed(id)
-		writesolveResult(w, id, "danger", "Solve failed")
+		writesolveResult(w, id, "danger", "Solve failed", nil)
 		return
 	}
 
@@ -129,7 +130,7 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("Calibration fetch failed", "id", id, "job", jobID, "error", err)
 		markSolveFailed(id)
-		writesolveResult(w, id, "danger", "Calibration error")
+		writesolveResult(w, id, "danger", "Calibration error", nil)
 		return
 	}
 
@@ -153,12 +154,24 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		slog.Error("DB update failed", "id", id, "error", err)
-		writesolveResult(w, id, "danger", "DB update failed")
+		writesolveResult(w, id, "danger", "DB update failed", nil)
 		return
 	}
 
-	slog.Info("Plate solve success", "id", id, "ra", cal.RA, "dec", cal.DEC)
-	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC))
+	// Re-read the row rather than checking cal directly, so the overlay badge
+	// reports on what is actually stored -- including the geometry check against
+	// the file on disk, which the calibration response knows nothing about.
+	var overlay *OverlayStatus
+	if updated, err := DB.GetImage(dbCtx, id); err != nil {
+		slog.Error("Could not re-read image to report overlay status", "id", id, "error", err)
+	} else {
+		st := CheckOverlay(updated)
+		overlay = &st
+	}
+
+	slog.Info("Plate solve success", "id", id, "ra", cal.RA, "dec", cal.DEC,
+		"overlay", overlay != nil && overlay.OK)
+	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC), overlay)
 }
 
 // markSolveFailed flags a failed solve, leaving any existing solution intact.
@@ -176,13 +189,42 @@ func markSolveFailed(id string) {
 	}
 }
 
-func writesolveResult(w http.ResponseWriter, id, badgeClass, msg string) {
+// solveResultTmpl renders the admin list's solve cell after an attempt.
+//
+// A button is always offered, including after a success: re-solving a green row
+// used to mean editing the record to set solved back to "n", and there are real
+// reasons to want one -- a row solved before parity was captured, or one whose
+// stored field no longer matches a since-downscaled file.
+//
+// When the solve changed the overlay status it is swapped out of band, because
+// a solve is precisely the thing that changes it and leaving a stale "rotation
+// never measured" beside a fresh green badge would be actively misleading. The
+// badge is a span rather than the cell itself so the fragment survives the
+// browser's table parsing.
+var solveResultTmpl = template.Must(template.New("solveresult").Parse(
+	`<span class="badge bg-{{.Class}}">{{.Msg}}</span>` +
+		`{{if .ID}} <button class="btn btn-sm btn-outline-info" hx-post="/admin/platesolve"` +
+		` hx-vals='{"id": "{{.ID}}"}' hx-target="#solve-{{.ID}}" hx-swap="innerHTML"` +
+		` hx-disabled-elt="this">{{.Button}}</button>{{end}}` +
+		`{{with .Overlay}}<span id="overlay-{{$.ID}}" hx-swap-oob="true"` +
+		` class="badge {{.BadgeClass}}">{{.BadgeText}}</span>{{end}}`))
+
+// writesolveResult reports the outcome of a solve. overlay may be nil, meaning
+// the overlay badge is left alone -- which is right for every failure path,
+// since a failed solve no longer touches the astrometry columns.
+func writesolveResult(w http.ResponseWriter, id, badgeClass, msg string, overlay *OverlayStatus) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var retry string
-	if badgeClass != "success" {
-		retry = fmt.Sprintf(` <button class="btn btn-sm btn-outline-info" hx-post="/admin/platesolve" hx-vals='{"id":"%s"}' hx-target="#solve-%s" hx-swap="innerHTML" hx-disabled-elt="this">Retry</button>`, id, id)
+	button := "Retry"
+	if badgeClass == "success" {
+		button = "Re-solve"
 	}
-	fmt.Fprintf(w, `<span class="badge bg-%s">%s</span>%s`, badgeClass, msg, retry)
+	err := solveResultTmpl.Execute(w, struct {
+		ID, Class, Msg, Button string
+		Overlay                *OverlayStatus
+	}{ID: id, Class: badgeClass, Msg: msg, Button: button, Overlay: overlay})
+	if err != nil {
+		slog.Error("Failed to render solve result", "id", id, "error", err)
+	}
 }
 
 // --- Astrometry.net API ---

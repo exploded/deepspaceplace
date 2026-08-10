@@ -38,6 +38,7 @@
             <th>Scope</th>
             <th>Date</th>
             <th>Solved</th>
+            <th title="Whether the show page can draw an annotation overlay. Not the same as Solved: a failed re-solve keeps a good overlay, and a row that never failed can still be unusable.">Overlay</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -55,21 +56,15 @@
                 <span class="badge bg-success">Solved</span>
                 {{else if eq .Solved "f"}}
                 <span class="badge bg-danger">Failed</span>
-                <button class="btn btn-sm btn-outline-info"
-                    hx-post="/admin/platesolve"
-                    hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
-                    hx-target="#solve-{{.ID}}"
-                    hx-swap="innerHTML"
-                    hx-disabled-elt="this">Retry</button>
-                {{else}}
-                <button class="btn btn-sm btn-info"
-                    hx-post="/admin/platesolve"
-                    hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
-                    hx-target="#solve-{{.ID}}"
-                    hx-swap="innerHTML"
-                    hx-disabled-elt="this">Solve</button>
                 {{end}}
+                <button class="btn btn-sm {{if .Ra.Valid}}btn-outline-info{{else}}btn-info{{end}}"
+                    hx-post="/admin/platesolve"
+                    hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
+                    hx-target="#solve-{{.ID}}"
+                    hx-swap="innerHTML"
+                    hx-disabled-elt="this">{{if .Ra.Valid}}Re-solve{{else}}Solve{{end}}</button>
             </td>
+            <td><span id="overlay-{{.ID}}" class="badge {{.Overlay.BadgeClass}}">{{.Overlay.BadgeText}}</span></td>
             <td>
                 <a href="/admin/edit?id={{.ID}}" class="btn btn-sm btn-primary">Edit</a>
                 <button class="btn btn-sm btn-danger"

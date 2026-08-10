@@ -105,18 +105,73 @@ const (
 // confidently wrong, which is worse than no overlay.
 const aspectTolerance = 0.03
 
-// BuildOverlay assembles the annotation layer for an image, or returns nil if
-// the image has no usable plate solve.
-func BuildOverlay(img database.Image) *Overlay {
+// OverlayStatus reports whether an image's stored plate solve can produce an
+// annotation overlay, and when it cannot, why.
+//
+// This is a different question from the images table's solved column, and the
+// two disagree in both directions. solved records how the last call to the
+// solver went; this records whether what is stored actually describes the file
+// on disk. A failed re-solve leaves a perfectly good overlay in place, and a
+// row that has never failed can still be unusable. The admin list shows both
+// side by side for exactly that reason.
+type OverlayStatus struct {
+	OK bool
+
+	// Reason is a short admin-facing phrase, empty when OK.
+	Reason string
+
+	// Resolvable is true when running the solver again would be expected to
+	// fix it. Everything except a missing or unreadable file qualifies.
+	Resolvable bool
+}
+
+// BadgeClass and BadgeText render the status as a Bootstrap badge. They live
+// here rather than in the templates because the admin table and the HTMX
+// response to a solve both draw this badge, and the two must never disagree.
+//
+// Amber rather than red for a resolvable one: it is a to-do, not a fault.
+func (s OverlayStatus) BadgeClass() string {
+	switch {
+	case s.OK:
+		return "bg-success"
+	case s.Resolvable:
+		return "bg-warning text-dark"
+	default:
+		return "bg-secondary"
+	}
+}
+
+func (s OverlayStatus) BadgeText() string {
+	if s.OK {
+		return "Yes"
+	}
+	return s.Reason
+}
+
+// CheckOverlay reports whether BuildOverlay would produce a layer for img,
+// without doing any catalogue work.
+//
+// It shares planOverlay with BuildOverlay so the admin page cannot drift from
+// what the show page actually draws — the failure modes here are silent by
+// nature, so a second, parallel copy of these rules would be a bug waiting to
+// happen.
+func CheckOverlay(img database.Image) OverlayStatus {
+	_, st := planOverlay(img)
+	return st
+}
+
+// planOverlay validates an image's stored solve against the file on disk and
+// returns the projection to draw with.
+func planOverlay(img database.Image) (wcs.WCS, OverlayStatus) {
 	if !img.Ra.Valid || !img.Dec.Valid || !img.Pixscale.Valid ||
 		!img.WidthArcsec.Valid || !img.HeightArcsec.Valid {
-		return nil
+		return wcs.WCS{}, OverlayStatus{Reason: "never solved", Resolvable: true}
 	}
 
-	// Note that a solved value of "f" is deliberately not a reason to bail out.
-	// It records that the most recent attempt failed, not that the stored
-	// solution is bad -- and since failures now leave the astrometry columns
-	// alone, a nova outage would otherwise hide the overlay on an image whose
+	// Note that a solved value of "f" is deliberately not tested here. It
+	// records that the most recent attempt failed, not that the stored solution
+	// is bad -- and since failures now leave the astrometry columns alone, a
+	// nova outage would otherwise hide the overlay on an image whose
 	// coordinates are perfectly good. The geometry check below is the real
 	// guard: it tests the stored solution against the actual file rather than
 	// trusting a status flag.
@@ -124,17 +179,15 @@ func BuildOverlay(img database.Image) *Overlay {
 	// The stored pixel scale describes the image as it was solved, but the
 	// file on disk may since have been downscaled. Measuring the file and
 	// deriving the scale from the angular width keeps the two in step.
-	w, h, ok := imageDims(img.Filename)
-	if !ok {
-		return nil
+	w, h, found := imageDims(img.Filename)
+	if !found {
+		return wcs.WCS{}, OverlayStatus{Reason: "image file unreadable"}
 	}
 	widthArcsec, heightArcsec := img.WidthArcsec.Float64, img.HeightArcsec.Float64
 	solvedAspect := widthArcsec / heightArcsec
 	actualAspect := float64(w) / float64(h)
 	if math.Abs(solvedAspect-actualAspect)/actualAspect > aspectTolerance {
-		slog.Info("Skipping annotation overlay: solved field does not match the image",
-			"id", img.ID, "solved_aspect", solvedAspect, "image_aspect", actualAspect)
-		return nil
+		return wcs.WCS{}, OverlayStatus{Reason: "field does not match the file", Resolvable: true}
 	}
 	pixScale := widthArcsec / float64(w)
 
@@ -150,9 +203,7 @@ func BuildOverlay(img database.Image) *Overlay {
 	// also records parity, so requiring both to be absent identifies precisely
 	// the rows whose rotation is unknown. Re-solving one fills both in.
 	if !img.Orientation.Valid || (img.Orientation.Float64 == 0 && !img.Parity.Valid) {
-		slog.Info("Skipping annotation overlay: rotation was never measured",
-			"id", img.ID, "hint", "re-solve this image to record its orientation")
-		return nil
+		return wcs.WCS{}, OverlayStatus{Reason: "rotation never measured", Resolvable: true}
 	}
 	orientation := img.Orientation.Float64
 
@@ -164,11 +215,26 @@ func BuildOverlay(img database.Image) *Overlay {
 		parity = img.Parity.Float64
 	}
 
-	sky, ok := wcs.FromAstrometry(img.Ra.Float64, img.Dec.Float64, pixScale, orientation, parity, w, h)
-	if !ok {
+	sky, built := wcs.FromAstrometry(img.Ra.Float64, img.Dec.Float64, pixScale, orientation, parity, w, h)
+	if !built {
+		return wcs.WCS{}, OverlayStatus{Reason: "solve values out of range", Resolvable: true}
+	}
+	return sky, OverlayStatus{OK: true}
+}
+
+// BuildOverlay assembles the annotation layer for an image, or returns nil if
+// the image has no usable plate solve.
+func BuildOverlay(img database.Image) *Overlay {
+	sky, st := planOverlay(img)
+	if !st.OK {
+		// Logged here rather than in planOverlay, which the admin list calls
+		// once per row on every page load.
+		slog.Info("Skipping annotation overlay", "id", img.ID, "reason", st.Reason,
+			"resolvable_by_solving", st.Resolvable)
 		return nil
 	}
 
+	w, h := sky.W, sky.H
 	diag := math.Hypot(float64(w), float64(h))
 	unit := diag / 1000
 

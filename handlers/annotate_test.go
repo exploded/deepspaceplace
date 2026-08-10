@@ -391,3 +391,137 @@ func TestBuildOverlayNeedsMeasuredRotation(t *testing.T) {
 		}
 	})
 }
+
+// TestCheckOverlayMatchesBuildOverlay is the guard that makes the admin list
+// trustworthy. The whole point of the Overlay column is to surface failures
+// that are otherwise silent, so a CheckOverlay that said "Yes" where
+// BuildOverlay returns nil would be worse than no column at all.
+func TestCheckOverlayMatchesBuildOverlay(t *testing.T) {
+	cases := []struct {
+		name       string
+		fileW      int
+		fileH      int
+		mutate     func(*database.Image)
+		wantOK     bool
+		wantReason string
+		wantResolv bool
+	}{
+		{
+			name: "a good solve", fileW: 3840, fileH: 2560,
+			mutate: func(*database.Image) {}, wantOK: true,
+		},
+		{
+			name: "never solved", fileW: 3840, fileH: 2560,
+			mutate:     func(i *database.Image) { i.Ra = sql.NullFloat64{} },
+			wantReason: "never solved", wantResolv: true,
+		},
+		{
+			name: "field does not match a re-cropped file", fileW: 1920, fileH: 1080,
+			mutate:     func(*database.Image) {},
+			wantReason: "field does not match the file", wantResolv: true,
+		},
+		{
+			// The NGC 346 case: orientation left at the zero it was created
+			// with, and no parity, so the rotation was never actually measured.
+			name: "rotation never measured", fileW: 3840, fileH: 2560,
+			mutate: func(i *database.Image) {
+				i.Orientation = sql.NullFloat64{Float64: 0, Valid: true}
+				i.Parity = sql.NullFloat64{}
+			},
+			wantReason: "rotation never measured", wantResolv: true,
+		},
+		{
+			name: "file missing from disk", fileW: 3840, fileH: 2560,
+			mutate:     func(i *database.Image) { i.Filename = "not-on-disk.jpg" },
+			wantReason: "image file unreadable", wantResolv: false,
+		},
+		{
+			// A failed re-solve must not change the answer: the stored solution
+			// is still good and the overlay is still drawn.
+			name: "last attempt failed but the solution stands", fileW: 3840, fileH: 2560,
+			mutate: func(i *database.Image) { i.Solved = "f" }, wantOK: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			withFixtures(t, tc.fileW, tc.fileH)
+			img := solvedImage()
+			tc.mutate(&img)
+
+			st := CheckOverlay(img)
+			drew := BuildOverlay(img) != nil
+
+			if st.OK != drew {
+				t.Errorf("CheckOverlay says OK=%v but BuildOverlay drew=%v — the admin list would lie", st.OK, drew)
+			}
+			if st.OK != tc.wantOK {
+				t.Errorf("OK = %v, want %v (reason %q)", st.OK, tc.wantOK, st.Reason)
+			}
+			if st.Reason != tc.wantReason {
+				t.Errorf("Reason = %q, want %q", st.Reason, tc.wantReason)
+			}
+			if st.Resolvable != tc.wantResolv {
+				t.Errorf("Resolvable = %v, want %v", st.Resolvable, tc.wantResolv)
+			}
+		})
+	}
+}
+
+// The badge must never come out blank: an empty cell in the Overlay column
+// reads as "nothing wrong" precisely when something is.
+func TestOverlayBadgeAlwaysSpeaks(t *testing.T) {
+	for _, st := range []OverlayStatus{
+		{OK: true},
+		{Reason: "never solved", Resolvable: true},
+		{Reason: "image file unreadable"},
+	} {
+		if st.BadgeText() == "" || st.BadgeClass() == "" {
+			t.Errorf("%+v renders as an empty badge", st)
+		}
+	}
+}
+
+// TestAdminListTemplateRenders covers the two things the Overlay column exists
+// to do: report a status that is not derivable from the Solved column, and
+// offer a solve on every row -- including green ones, which previously had to
+// be edited back to unsolved before they could be re-solved.
+func TestAdminListTemplateRenders(t *testing.T) {
+	tmpl, err := template.New("list.html").Funcs(TemplateFuncs).
+		ParseFiles(filepath.Join("..", "templates", "admin", "list.html"))
+	if err != nil {
+		t.Fatalf("parsing the admin list template: %v", err)
+	}
+
+	solved := solvedImage()
+	unsolved := database.Image{ID: "m045", Filename: "m45.jpg", Solved: ""}
+
+	data := struct {
+		PageData
+		Images    []adminImageRow
+		CSRFToken string
+	}{
+		Images: []adminImageRow{
+			{Image: solved, Overlay: OverlayStatus{OK: true}},
+			{Image: unsolved, Overlay: OverlayStatus{Reason: "never solved", Resolvable: true}},
+		},
+		CSRFToken: "test-token",
+	}
+
+	var out strings.Builder
+	if err := tmpl.ExecuteTemplate(&out, "content", data); err != nil {
+		t.Fatalf("executing the admin list template: %v", err)
+	}
+	got := out.String()
+
+	for _, want := range []string{
+		`>Re-solve</button>`, // offered on the solved row
+		`>Solve</button>`,    // and the plain one on the unsolved row
+		`id="overlay-ic0434" class="badge bg-success">Yes`, // status the Solved column cannot show
+		`id="overlay-m045" class="badge bg-warning text-dark">never solved`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered admin list is missing %q", want)
+		}
+	}
+}

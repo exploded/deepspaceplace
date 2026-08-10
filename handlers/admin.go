@@ -194,15 +194,28 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rows := make([]adminImageRow, len(images))
+	for i, img := range images {
+		rows[i] = adminImageRow{Image: img, Overlay: CheckOverlay(img)}
+	}
+
 	type adminListData struct {
 		PageData
-		Images    []database.Image
+		Images    []adminImageRow
 		CSRFToken string
 	}
 	Render(w, "list.html", adminListData{
-		Images:    images,
+		Images:    rows,
 		CSRFToken: getCSRFToken(),
 	})
+}
+
+// adminImageRow is one row of the admin table. Overlay is carried alongside the
+// record because it cannot be read off the row: it depends on the file on disk
+// as well as the stored solve.
+type adminImageRow struct {
+	database.Image
+	Overlay OverlayStatus
 }
 
 func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
