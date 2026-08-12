@@ -1,7 +1,7 @@
 {{template "base" .}}
 {{define "head"}}
-<link href="/static/css/tutorial.css" rel="stylesheet">
-<script src="/static/js/tutorial.js" defer></script>
+<link href="{{asset "/static/css/tutorial.css"}}" rel="stylesheet">
+<script src="{{asset "/static/js/tutorial.js"}}" defer></script>
 {{end}}
 {{define "content"}}
 <div class="tutorial">

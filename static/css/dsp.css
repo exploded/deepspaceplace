@@ -474,7 +474,20 @@ figure.figure:hover { transform: translateY(-3px); }
 }
 
 .img-container { position: relative; }
-.imageBox { position: relative; margin-top: 1rem; }
+
+/* fit-content, not the default block width: the annotation overlay is absolutely
+   positioned against this box, so the box has to BE the photograph.
+
+   img-fluid caps a large image at the container width but never scales a small
+   one up, so an image narrower than the container leaves a full-width .imageBox
+   with a narrow picture at its left. The overlay then centres itself in the box
+   -- preserveAspectRatio="xMidYMid" -- and lands to the right of the photograph
+   it is meant to be registered against. lovejoy2 is 792px wide in a 1152px
+   container and was drawn 180px out; rcw38 at 1080px was out by 36px, small
+   enough to look like an astrometry error rather than a layout one. Everything
+   else on the site is wider than the container and so was pixel-perfect, which
+   is what kept this hidden. */
+.imageBox { position: relative; margin-top: 1rem; width: fit-content; }
 
 /* An inline <a> around the photograph leaves a few pixels of line-box descender
    below it, which would make .imageBox taller than the image and shift the

@@ -9,9 +9,12 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
-    <link href="/static/css/bootstrap.css" rel="stylesheet">
-    <link href="/static/css/dsp.css" rel="stylesheet">
-    <script src="/static/js/htmx.min.js"></script>
+    {{/* asset stamps a content hash on the URL. /static/ is served immutable
+         for seven days, so without it an edited stylesheet does not reach a
+         returning visitor until the cache expires. */}}
+    <link href="{{asset "/static/css/bootstrap.css"}}" rel="stylesheet">
+    <link href="{{asset "/static/css/dsp.css"}}" rel="stylesheet">
+    <script src="{{asset "/static/js/htmx.min.js"}}"></script>
     <title>{{if .}}{{if .Title}}{{.Title}} - {{end}}{{end}}Deep Space Place</title>
     {{if .}}{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}{{end}}
     {{if .}}{{if .CanonicalURL}}<link rel="canonical" href="{{.CanonicalURL}}">{{end}}{{end}}
@@ -19,7 +22,7 @@
 </head>
 
 <body>
-    <script src="/static/js/bootstrap.bundle.js"></script>
+    <script src="{{asset "/static/js/bootstrap.bundle.js"}}"></script>
     <div class="container">
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">

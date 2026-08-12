@@ -2,19 +2,71 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+	"sync"
 
 	"deepspaceplace/internal/database"
 )
 
 var TemplateFuncs = template.FuncMap{
 	"queryParams": queryParams,
+	"asset":       assetURL,
 	"add":         func(a, b float64) float64 { return a + b },
 	"sub":         func(a, b float64) float64 { return a - b },
 	"div":         func(a, b float64) float64 { return a / b },
+}
+
+// StaticDir is where CacheStaticAssets serves /static/ from, relative to the
+// working directory. A variable so tests can point assetURL at a fixture.
+var StaticDir = "static"
+
+// assetVersions caches one content hash per asset path. The files cannot change
+// under a running process -- a deploy replaces the binary too -- so each is read
+// exactly once.
+var assetVersions sync.Map // url path -> query suffix, possibly ""
+
+// assetURL stamps a static asset's URL with a hash of its contents.
+//
+// CacheStaticAssets serves /static/ as "immutable" with a seven-day max-age.
+// That is the right header for bytes that never change under a given name, and
+// exactly the wrong one for a stylesheet edited in place: a returning visitor
+// keeps the old copy for a week, so a CSS fix ships green and changes nothing
+// anyone can see. Putting the hash in the URL makes the name change whenever
+// the bytes do, which is the promise "immutable" is actually making.
+func assetURL(p string) string {
+	if v, ok := assetVersions.Load(p); ok {
+		return p + v.(string)
+	}
+
+	suffix := ""
+	if rel, ok := strings.CutPrefix(p, "/static/"); ok {
+		// Reject traversal rather than hashing whatever it reaches. Callers are
+		// all template literals today, so this is a guard against a future one
+		// built from a request.
+		if clean := path.Clean(rel); clean == rel && !strings.HasPrefix(rel, "../") {
+			data, err := os.ReadFile(filepath.Join(StaticDir, filepath.FromSlash(rel)))
+			if err != nil {
+				// Serve the bare path: an unversioned asset is stale for a
+				// week, a missing one is a broken page.
+				slog.Error("Could not hash static asset for cache busting", "path", p, "error", err)
+			} else {
+				sum := sha256.Sum256(data)
+				suffix = "?v=" + hex.EncodeToString(sum[:])[:10]
+			}
+		}
+	}
+
+	assetVersions.Store(p, suffix)
+	return p + suffix
 }
 
 func queryParams(pairs ...string) template.URL {
