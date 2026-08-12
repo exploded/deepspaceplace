@@ -80,6 +80,11 @@ func main() {
 	handlers.DB = queries
 	handlers.Prod = prod
 
+	// Pick up any plate solve a restart interrupted. A solve outlives the
+	// request that starts it, so without this a deploy mid-solve would leave
+	// the row marked pending with nothing left watching for nova's answer.
+	handlers.ResumePendingSolves()
+
 	// Parse templates
 	templates, err := parseTemplates()
 	if err != nil {
@@ -137,6 +142,7 @@ func main() {
 	mux.HandleFunc("/admin/resize", handlers.AdminAuth(handlers.HandleAdminResize))
 	mux.HandleFunc("/admin/upload", handlers.AdminAuth(handlers.HandleAdminUpload))
 	mux.HandleFunc("/admin/platesolve", handlers.AdminAuth(handlers.HandleAdminPlateSolve))
+	mux.HandleFunc("/admin/solvestatus", handlers.AdminAuth(handlers.HandleAdminSolveStatus))
 
 	// Static content pages
 	mux.HandleFunc("/equipment", handlers.StaticPage("equipment.html", "/equipment",
@@ -263,12 +269,17 @@ func main() {
 // database was created have to be applied by hand. SQLite has no
 // ADD COLUMN IF NOT EXISTS, hence the pragma check.
 //
-// New columns must be appended to the end of schema.sql to match where
-// ALTER TABLE puts them, or "SELECT *" would scan into the wrong fields on one
-// of the two paths.
+// Every column in schema.sql must appear in the list below. sqlc expands the
+// "SELECT *" in db/queries.sql into an explicit column list when it generates,
+// so a column this function forgets is not a subtle misalignment -- it is
+// "no such column" on every query the moment the new binary starts.
+//
+// Where a column sits is not significant: the generated SQL names each one, so
+// it does not matter that ALTER TABLE appends while schema.sql may not.
 func addMissingColumns(db *sql.DB) error {
 	wanted := []struct{ name, definition string }{
 		{"parity", "REAL"},
+		{"solve_subid", "INTEGER"},
 	}
 
 	existing := make(map[string]bool)

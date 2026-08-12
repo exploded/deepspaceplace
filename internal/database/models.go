@@ -45,4 +45,5 @@ type Image struct {
 	Orientation  sql.NullFloat64 `json:"orientation"`
 	Solved       string          `json:"solved"`
 	Parity       sql.NullFloat64 `json:"parity"`
+	SolveSubid   sql.NullInt64   `json:"solve_subid"`
 }

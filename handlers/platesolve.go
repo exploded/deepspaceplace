@@ -12,15 +12,59 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"deepspaceplace/internal/database"
 )
 
+const imageBaseURL = "https://deepspaceplace.com/images/"
+
+// astrometryAPIBase is a variable so tests can point the polling loop at a
+// stub. Nothing else reassigns it.
+var astrometryAPIBase = "https://nova.astrometry.net/api"
+
+// astrometryClient talks to nova with a timeout, which http.DefaultClient does
+// not have. A hung connection on the default client blocks its poll iteration
+// for as long as the peer keeps the socket open -- which would sail straight
+// past the watcher's own deadline and pin the goroutine indefinitely.
+var astrometryClient = &http.Client{Timeout: 30 * time.Second}
+
+// solvePollInterval is how often a submission is asked about. Nova is under no
+// obligation to be quick and this runs for minutes, so it is deliberately
+// unhurried. A variable only so tests need not run in real time.
+var solvePollInterval = 5 * time.Second
+
 const (
-	astrometryAPIBase = "https://nova.astrometry.net/api"
-	imageBaseURL      = "https://deepspaceplace.com/images/"
+	// inlineSolveWait is how long the browser waits before the job is handed
+	// to a background watcher. The solves on 2026-08-10 came back in 18 to 47
+	// seconds, with one outlier at 1m38, so this is already generous -- while
+	// staying short enough not to sit near a reverse proxy's read timeout.
+	inlineSolveWait = 5 * time.Minute
+
+	// backgroundSolveWait is how much longer the watcher keeps going. Nova
+	// reaches a terminal state on any real field long before this; lovejoy1,
+	// the worst case on the site, took just under ten minutes end to end.
+	// The ceiling exists so a job that never resolves cannot leave a
+	// goroutine polling for the life of the process.
+	backgroundSolveWait = 30 * time.Minute
 )
+
+// solveStatus is the outcome of waiting on a submission.
+type solveStatus string
+
+const (
+	solveSuccess solveStatus = "success"
+	solveFailure solveStatus = "failure" // nova says the field did not solve
+	solvePending solveStatus = "pending" // still running when we stopped waiting
+	solveError   solveStatus = "error"   // our side broke; the row is untouched
+)
+
+// solveOutcome is what awaitSolve settled on. Cal is set only on success.
+type solveOutcome struct {
+	Status solveStatus
+	Cal    *calibration
+}
 
 type calibration struct {
 	RA          float64 `json:"ra"`
@@ -94,51 +138,141 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Plate solve submitted", "id", id, "sub", subID,
 		"scale_lower", bounds.Lower, "scale_upper", bounds.Upper, "scale_source", bounds.Source)
 
-	// Poll for job ID
+	// Record the submission before polling anything. Until the id is on the
+	// row it exists only in this stack frame, and everything that ends the
+	// request -- a timeout, a panic, a deploy -- throws away the only handle
+	// on a job nova is still working on.
+	markSolvePending(id, subID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), inlineSolveWait)
+	defer cancel()
+	out := awaitSolve(ctx, id, subID)
+
+	if out.Status == solvePending {
+		// Not a failure, and pointedly not recorded as one: the job is still
+		// running and the row stays 'p' with its submission id, so the watcher
+		// can finish the write whenever nova gets there.
+		slog.Info("Plate solve still running, handed to background watcher",
+			"id", id, "sub", subID, "waited", inlineSolveWait)
+		watchSolve(id, subID, backgroundSolveWait)
+		writeSolveCell(w, solveCell{ID: id, Class: "info", Msg: "Solving…", Polling: true})
+		return
+	}
+
+	writeSolveCell(w, solveCellFor(id, out))
+}
+
+// awaitSolve polls a submission through to a terminal state and records it.
+//
+// This is the only place a solve result is written, so the inline wait, the
+// background watcher and the boot-time resume cannot come to different
+// conclusions about what an outcome means. A solvePending return means the
+// context expired with the job still going; the caller decides whether to hand
+// off or give up, and either way the row is left alone.
+func awaitSolve(ctx context.Context, id string, subID int) solveOutcome {
 	var jobID int
-	for i := 0; i < 30; i++ {
-		time.Sleep(5 * time.Second)
-		jobID = astrometryCheckSubmission(subID)
-		if jobID > 0 {
-			break
+	for {
+		// Wait first: a submission accepted a moment ago has no job yet.
+		select {
+		case <-ctx.Done():
+			return solveOutcome{Status: solvePending}
+		case <-time.After(solvePollInterval):
+		}
+
+		if jobID == 0 {
+			jobID = astrometryCheckSubmission(subID)
+			continue
+		}
+
+		switch astrometryCheckJob(jobID) {
+		case "success":
+			cal, err := astrometryGetCalibration(jobID)
+			if err != nil {
+				slog.Error("Calibration fetch failed", "id", id, "job", jobID, "error", err)
+				markSolveFailed(id)
+				return solveOutcome{Status: solveFailure}
+			}
+			if err := recordSolve(id, cal); err != nil {
+				slog.Error("DB update failed", "id", id, "job", jobID, "error", err)
+				return solveOutcome{Status: solveError}
+			}
+			slog.Info("Plate solve success", "id", id, "sub", subID, "job", jobID,
+				"ra", cal.RA, "dec", cal.DEC)
+			return solveOutcome{Status: solveSuccess, Cal: cal}
+
+		case "failure":
+			slog.Info("Plate solve failed", "id", id, "sub", subID, "job", jobID)
+			markSolveFailed(id)
+			return solveOutcome{Status: solveFailure}
 		}
 	}
-	if jobID == 0 {
-		markSolveFailed(id)
-		writesolveResult(w, id, "warning", "Timeout waiting for job", nil)
+}
+
+// watching guards against two goroutines polling the same row -- a double
+// click on Solve, or a resume racing a fresh submission. The loser is dropped
+// rather than queued: both would be watching the same job for the same answer.
+var watching sync.Map // image id -> struct{}
+
+// watchSolve keeps polling a submission after the request that started it has
+// gone, and writes the result whenever it lands.
+func watchSolve(id string, subID int, wait time.Duration) {
+	if _, busy := watching.LoadOrStore(id, struct{}{}); busy {
+		slog.Info("Solve watcher already running, not starting another", "id", id, "sub", subID)
 		return
 	}
+	go func() {
+		defer watching.Delete(id)
 
-	// Poll for result
-	var status string
-	for i := 0; i < 60; i++ {
-		time.Sleep(5 * time.Second)
-		status = astrometryCheckJob(jobID)
-		if status == "success" || status == "failure" {
-			break
+		ctx, cancel := context.WithTimeout(context.Background(), wait)
+		defer cancel()
+
+		if awaitSolve(ctx, id, subID).Status != solvePending {
+			return
 		}
-	}
 
-	if status != "success" {
+		// Out of patience. Recording this as a failure is a compromise: the
+		// job may yet succeed, and saying otherwise is the very lie this
+		// change set out to remove. But 'p' is not a state anything clears on
+		// its own, and a row stuck there polls the admin page forever with
+		// nobody listening. So the state machine terminates here, loudly, with
+		// the submission id in the log -- the result stays recoverable from
+		// nova by hand, which is exactly what was impossible before.
+		slog.Warn("Gave up waiting on plate solve; job may still complete on nova",
+			"id", id, "sub", subID, "waited", wait,
+			"recover", fmt.Sprintf("%s/submissions/%d", astrometryAPIBase, subID))
 		markSolveFailed(id)
-		writesolveResult(w, id, "danger", "Solve failed", nil)
-		return
-	}
+	}()
+}
 
-	// Get calibration
-	cal, err := astrometryGetCalibration(jobID)
+// ResumePendingSolves picks up solves that a restart interrupted.
+//
+// Without this the durable submission id would buy nothing across a deploy:
+// the row would sit at 'p' with a perfectly good job running on nova and no
+// process left watching for its result.
+func ResumePendingSolves() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	pending, err := DB.ListPendingSolves(ctx)
 	if err != nil {
-		slog.Error("Calibration fetch failed", "id", id, "job", jobID, "error", err)
-		markSolveFailed(id)
-		writesolveResult(w, id, "danger", "Calibration error", nil)
+		slog.Error("Could not list pending solves to resume", "error", err)
 		return
 	}
+	for _, p := range pending {
+		slog.Info("Resuming plate solve interrupted by restart", "id", p.ID, "sub", p.SolveSubid.Int64)
+		watchSolve(p.ID, int(p.SolveSubid.Int64), backgroundSolveWait)
+	}
+}
 
-	// Update DB — use background context so the write succeeds even if the
-	// HTTP client disconnected during the long polling phase.
-	dbCtx, dbCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer dbCancel()
-	err = DB.UpdateImagePlateSolve(dbCtx, database.UpdateImagePlateSolveParams{
+// recordSolve writes a successful calibration.
+//
+// It uses a background context throughout: by the time a result arrives the
+// request that asked for it has usually gone, and on the watcher path there
+// was never a request to begin with.
+func recordSolve(id string, cal *calibration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return DB.UpdateImagePlateSolve(ctx, database.UpdateImagePlateSolveParams{
 		ID:           id,
 		Solved:       "y",
 		Ra:           sql.NullFloat64{Float64: cal.RA, Valid: true},
@@ -152,26 +286,21 @@ func HandleAdminPlateSolve(w http.ResponseWriter, r *http.Request) {
 		Orientation:  sql.NullFloat64{Float64: cal.Orientation, Valid: true},
 		Parity:       sql.NullFloat64{Float64: cal.Parity, Valid: true},
 	})
+}
+
+// markSolvePending records an in-flight submission against the row.
+func markSolvePending(id string, subID int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err := DB.MarkSolvePending(ctx, database.MarkSolvePendingParams{
+		ID:         id,
+		SolveSubid: sql.NullInt64{Int64: int64(subID), Valid: true},
+	})
 	if err != nil {
-		slog.Error("DB update failed", "id", id, "error", err)
-		writesolveResult(w, id, "danger", "DB update failed", nil)
-		return
+		// Not fatal -- the inline wait and the watcher both hold subID in
+		// memory and will still finish. Only a restart loses the job now.
+		slog.Error("Could not record pending solve", "id", id, "sub", subID, "error", err)
 	}
-
-	// Re-read the row rather than checking cal directly, so the overlay badge
-	// reports on what is actually stored -- including the geometry check against
-	// the file on disk, which the calibration response knows nothing about.
-	var overlay *OverlayStatus
-	if updated, err := DB.GetImage(dbCtx, id); err != nil {
-		slog.Error("Could not re-read image to report overlay status", "id", id, "error", err)
-	} else {
-		st := CheckOverlay(updated)
-		overlay = &st
-	}
-
-	slog.Info("Plate solve success", "id", id, "ra", cal.RA, "dec", cal.DEC,
-		"overlay", overlay != nil && overlay.OK)
-	writesolveResult(w, id, "success", fmt.Sprintf("RA %.1f Dec %.1f", cal.RA, cal.DEC), overlay)
 }
 
 // markSolveFailed flags a failed solve, leaving any existing solution intact.
@@ -189,49 +318,145 @@ func markSolveFailed(id string) {
 	}
 }
 
-// solveResultTmpl renders the admin list's solve cell after an attempt.
+// solveCell is one rendering of the admin list's solve cell.
+type solveCell struct {
+	ID      string
+	Class   string // Bootstrap contextual colour
+	Msg     string
+	Button  string // offered unless Polling
+	Polling bool   // job still running: poll instead of offering a button
+	Overlay *OverlayStatus
+}
+
+// solveCellTmpl renders that cell.
 //
-// A button is always offered, including after a success: re-solving a green row
-// used to mean editing the record to set solved back to "n", and there are real
-// reasons to want one -- a row solved before parity was captured, or one whose
-// stored field no longer matches a since-downscaled file.
+// A button is offered on every terminal state, including success: re-solving a
+// green row used to mean editing the record to set solved back to "n", and
+// there are real reasons to want one -- a row solved before parity was
+// captured, or one whose stored field no longer matches a since-downscaled
+// file.
 //
-// When the solve changed the overlay status it is swapped out of band, because
-// a solve is precisely the thing that changes it and leaving a stale "rotation
-// never measured" beside a fresh green badge would be actively misleading. The
-// badge is a span rather than the cell itself so the fragment survives the
-// browser's table parsing.
-var solveResultTmpl = template.Must(template.New("solveresult").Parse(
+// While a solve is running the button is replaced by a spinner that re-fetches
+// the cell, because the useful action there is waiting, and a live Solve button
+// would submit a second job for a field nova is already working on.
+//
+// The refresh is "load delay:15s" rather than an "every" trigger so it is
+// self-limiting: each fetch replaces the element, and the replacement only
+// carries another trigger while the answer is still pending. A terminal
+// fragment simply has no trigger, and the polling stops.
+//
+// When the outcome changed the overlay status it is swapped out of band,
+// because a solve is precisely the thing that changes it and leaving a stale
+// "rotation never measured" beside a fresh green badge would be actively
+// misleading. The badge is a span rather than the cell itself so the fragment
+// survives the browser's table parsing.
+var solveCellTmpl = template.Must(template.New("solvecell").Parse(
 	`<span class="badge bg-{{.Class}}">{{.Msg}}</span>` +
-		`{{if .ID}} <button class="btn btn-sm btn-outline-info" hx-post="/admin/platesolve"` +
+		`{{if .Polling}} <span class="spinner-border spinner-border-sm text-info" role="status"` +
+		` hx-get="/admin/solvestatus?id={{.ID}}" hx-trigger="load delay:15s"` +
+		` hx-target="#solve-{{.ID}}" hx-swap="innerHTML"></span>` +
+		`{{else if .ID}} <button class="btn btn-sm btn-outline-info" hx-post="/admin/platesolve"` +
 		` hx-vals='{"id": "{{.ID}}"}' hx-target="#solve-{{.ID}}" hx-swap="innerHTML"` +
 		` hx-disabled-elt="this">{{.Button}}</button>{{end}}` +
 		`{{with .Overlay}}<span id="overlay-{{$.ID}}" hx-swap-oob="true"` +
 		` class="badge {{.BadgeClass}}">{{.BadgeText}}</span>{{end}}`))
 
-// writesolveResult reports the outcome of a solve. overlay may be nil, meaning
-// the overlay badge is left alone -- which is right for every failure path,
-// since a failed solve no longer touches the astrometry columns.
-func writesolveResult(w http.ResponseWriter, id, badgeClass, msg string, overlay *OverlayStatus) {
+// solveCellFor turns a settled outcome into a cell, reading the stored row back
+// rather than trusting the calibration in hand, so the overlay badge reports on
+// what is actually in the database -- including the geometry check against the
+// file on disk, which the calibration response knows nothing about.
+func solveCellFor(id string, out solveOutcome) solveCell {
+	cell := solveCell{ID: id, Button: "Retry"}
+
+	switch out.Status {
+	case solveSuccess:
+		cell.Class, cell.Button = "success", "Re-solve"
+		cell.Msg = fmt.Sprintf("RA %.1f Dec %.1f", out.Cal.RA, out.Cal.DEC)
+	case solveFailure:
+		cell.Class, cell.Msg = "danger", "Solve failed"
+	case solvePending:
+		// The handler hands these to the watcher before getting here, so this
+		// is unreachable today. It is spelled out anyway because the wrong
+		// branch would report a running job as broken -- the original bug.
+		cell.Class, cell.Msg, cell.Polling = "info", "Solving…", true
+	default:
+		cell.Class, cell.Msg = "danger", "DB update failed"
+	}
+
+	// Only a success moves the astrometry columns, so only a success can move
+	// the overlay badge; leaving it alone elsewhere is deliberate.
+	if out.Status == solveSuccess {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if updated, err := DB.GetImage(ctx, id); err != nil {
+			slog.Error("Could not re-read image to report overlay status", "id", id, "error", err)
+		} else {
+			st := CheckOverlay(updated)
+			cell.Overlay = &st
+		}
+	}
+	return cell
+}
+
+func writeSolveCell(w http.ResponseWriter, cell solveCell) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	button := "Retry"
-	if badgeClass == "success" {
-		button = "Re-solve"
+	if err := solveCellTmpl.Execute(w, cell); err != nil {
+		slog.Error("Failed to render solve cell", "id", cell.ID, "error", err)
 	}
-	err := solveResultTmpl.Execute(w, struct {
-		ID, Class, Msg, Button string
-		Overlay                *OverlayStatus
-	}{ID: id, Class: badgeClass, Msg: msg, Button: button, Overlay: overlay})
+}
+
+// writesolveResult reports an outcome the solve never got far enough to have --
+// a missing id, a bad key, a submission nova refused.
+func writesolveResult(w http.ResponseWriter, id, badgeClass, msg string, overlay *OverlayStatus) {
+	writeSolveCell(w, solveCell{ID: id, Class: badgeClass, Msg: msg, Button: "Retry", Overlay: overlay})
+}
+
+// HandleAdminSolveStatus redraws the solve cell for a row.
+//
+// It only reads the database. The watcher goroutine is the single poller of any
+// given submission -- respawned at boot by ResumePendingSolves, so a row at 'p'
+// always has exactly one -- which keeps this endpoint free to be hit every 15
+// seconds by every open admin tab without multiplying traffic to nova.
+func HandleAdminSolveStatus(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "No image ID", http.StatusBadRequest)
+		return
+	}
+
+	img, err := DB.GetImage(r.Context(), id)
 	if err != nil {
-		slog.Error("Failed to render solve result", "id", id, "error", err)
+		writesolveResult(w, id, "danger", "Image not found", nil)
+		return
 	}
+
+	if img.Solved == "p" {
+		writeSolveCell(w, solveCell{ID: id, Class: "info", Msg: "Solving…", Polling: true})
+		return
+	}
+
+	// Settled while we were polling. Report the row as the admin list would
+	// have drawn it, including the overlay badge, which a completed solve is
+	// the most likely thing to have changed.
+	overlay := CheckOverlay(img)
+	cell := solveCell{ID: id, Button: "Retry", Overlay: &overlay}
+	switch img.Solved {
+	case "y":
+		cell.Class, cell.Button = "success", "Re-solve"
+		cell.Msg = fmt.Sprintf("RA %.1f Dec %.1f", img.Ra.Float64, img.Dec.Float64)
+	case "f":
+		cell.Class, cell.Msg = "danger", "Solve failed"
+	default:
+		cell.Class, cell.Msg, cell.Button = "secondary", "Not solved", "Solve"
+	}
+	writeSolveCell(w, cell)
 }
 
 // --- Astrometry.net API ---
 
 func astrometryLogin(apiKey string) (string, error) {
 	payload := fmt.Sprintf(`{"apikey": "%s"}`, apiKey)
-	resp, err := http.PostForm(astrometryAPIBase+"/login", url.Values{
+	resp, err := astrometryClient.PostForm(astrometryAPIBase+"/login", url.Values{
 		"request-json": {payload},
 	})
 	if err != nil {
@@ -311,7 +536,7 @@ func astrometrySubmit(session, imageURL string, scale scaleRange) (int, error) {
 	}
 
 	jsonBytes, _ := json.Marshal(submission)
-	resp, err := http.PostForm(astrometryAPIBase+"/url_upload", url.Values{
+	resp, err := astrometryClient.PostForm(astrometryAPIBase+"/url_upload", url.Values{
 		"request-json": {string(jsonBytes)},
 	})
 	if err != nil {
@@ -330,7 +555,7 @@ func astrometrySubmit(session, imageURL string, scale scaleRange) (int, error) {
 }
 
 func astrometryCheckSubmission(subID int) int {
-	resp, err := http.Get(fmt.Sprintf("%s/submissions/%d", astrometryAPIBase, subID))
+	resp, err := astrometryClient.Get(fmt.Sprintf("%s/submissions/%d", astrometryAPIBase, subID))
 	if err != nil {
 		return 0
 	}
@@ -350,7 +575,7 @@ func astrometryCheckSubmission(subID int) int {
 }
 
 func astrometryCheckJob(jobID int) string {
-	resp, err := http.Get(fmt.Sprintf("%s/jobs/%d", astrometryAPIBase, jobID))
+	resp, err := astrometryClient.Get(fmt.Sprintf("%s/jobs/%d", astrometryAPIBase, jobID))
 	if err != nil {
 		return "unknown"
 	}
@@ -366,7 +591,7 @@ func astrometryCheckJob(jobID int) string {
 }
 
 func astrometryGetCalibration(jobID int) (*calibration, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/jobs/%d/calibration/", astrometryAPIBase, jobID))
+	resp, err := astrometryClient.Get(fmt.Sprintf("%s/jobs/%d/calibration/", astrometryAPIBase, jobID))
 	if err != nil {
 		return nil, err
 	}

@@ -175,7 +175,7 @@ func (q *Queries) DeleteImage(ctx context.Context, id string) error {
 }
 
 const getImage = `-- name: GetImage :one
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images WHERE id = ? LIMIT 1
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetImage(ctx context.Context, id string) (Image, error) {
@@ -218,6 +218,7 @@ func (q *Queries) GetImage(ctx context.Context, id string) (Image, error) {
 		&i.Orientation,
 		&i.Solved,
 		&i.Parity,
+		&i.SolveSubid,
 	)
 	return i, err
 }
@@ -361,7 +362,7 @@ func (q *Queries) GetPrevByType(ctx context.Context, arg GetPrevByTypeParams) (s
 }
 
 const listAllImages = `-- name: ListAllImages :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images ORDER BY id
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images ORDER BY id
 `
 
 // Admin: list all images
@@ -411,6 +412,7 @@ func (q *Queries) ListAllImages(ctx context.Context) ([]Image, error) {
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -426,7 +428,7 @@ func (q *Queries) ListAllImages(ctx context.Context) ([]Image, error) {
 }
 
 const listImagesByDateDesc = `-- name: ListImagesByDateDesc :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y'
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -483,6 +485,7 @@ func (q *Queries) ListImagesByDateDesc(ctx context.Context, arg ListImagesByDate
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -498,7 +501,7 @@ func (q *Queries) ListImagesByDateDesc(ctx context.Context, arg ListImagesByDate
 }
 
 const listImagesByDateFilterCamera = `-- name: ListImagesByDateFilterCamera :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND camera = ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -556,6 +559,7 @@ func (q *Queries) ListImagesByDateFilterCamera(ctx context.Context, arg ListImag
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -571,7 +575,7 @@ func (q *Queries) ListImagesByDateFilterCamera(ctx context.Context, arg ListImag
 }
 
 const listImagesByDateFilterNew = `-- name: ListImagesByDateFilterNew :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND date >= ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -630,6 +634,7 @@ func (q *Queries) ListImagesByDateFilterNew(ctx context.Context, arg ListImagesB
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -645,7 +650,7 @@ func (q *Queries) ListImagesByDateFilterNew(ctx context.Context, arg ListImagesB
 }
 
 const listImagesByDateFilterScope = `-- name: ListImagesByDateFilterScope :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND scope = ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -703,6 +708,7 @@ func (q *Queries) ListImagesByDateFilterScope(ctx context.Context, arg ListImage
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -718,7 +724,7 @@ func (q *Queries) ListImagesByDateFilterScope(ctx context.Context, arg ListImage
 }
 
 const listImagesByDateFilterType = `-- name: ListImagesByDateFilterType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND type = ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -776,6 +782,7 @@ func (q *Queries) ListImagesByDateFilterType(ctx context.Context, arg ListImages
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -791,7 +798,7 @@ func (q *Queries) ListImagesByDateFilterType(ctx context.Context, arg ListImages
 }
 
 const listImagesByID = `-- name: ListImagesByID :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y'
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -849,6 +856,7 @@ func (q *Queries) ListImagesByID(ctx context.Context, arg ListImagesByIDParams) 
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -864,7 +872,7 @@ func (q *Queries) ListImagesByID(ctx context.Context, arg ListImagesByIDParams) 
 }
 
 const listImagesByIDFilterCamera = `-- name: ListImagesByIDFilterCamera :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND camera = ?
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -923,6 +931,7 @@ func (q *Queries) ListImagesByIDFilterCamera(ctx context.Context, arg ListImages
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -938,7 +947,7 @@ func (q *Queries) ListImagesByIDFilterCamera(ctx context.Context, arg ListImages
 }
 
 const listImagesByIDFilterScope = `-- name: ListImagesByIDFilterScope :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND scope = ?
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -997,6 +1006,7 @@ func (q *Queries) ListImagesByIDFilterScope(ctx context.Context, arg ListImagesB
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -1012,7 +1022,7 @@ func (q *Queries) ListImagesByIDFilterScope(ctx context.Context, arg ListImagesB
 }
 
 const listImagesByIDFilterType = `-- name: ListImagesByIDFilterType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND type = ?
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -1071,6 +1081,7 @@ func (q *Queries) ListImagesByIDFilterType(ctx context.Context, arg ListImagesBy
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -1086,7 +1097,7 @@ func (q *Queries) ListImagesByIDFilterType(ctx context.Context, arg ListImagesBy
 }
 
 const listImagesByType = `-- name: ListImagesByType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y'
 ORDER BY type, id
 LIMIT ? OFFSET ?
@@ -1143,6 +1154,7 @@ func (q *Queries) ListImagesByType(ctx context.Context, arg ListImagesByTypePara
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -1158,7 +1170,7 @@ func (q *Queries) ListImagesByType(ctx context.Context, arg ListImagesByTypePara
 }
 
 const listImagesByTypeFilterType = `-- name: ListImagesByTypeFilterType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
 WHERE archive <> 'Y' AND type = ?
 ORDER BY type, id
 LIMIT ? OFFSET ?
@@ -1216,6 +1228,7 @@ func (q *Queries) ListImagesByTypeFilterType(ctx context.Context, arg ListImages
 			&i.Orientation,
 			&i.Solved,
 			&i.Parity,
+			&i.SolveSubid,
 		); err != nil {
 			return nil, err
 		}
@@ -1280,8 +1293,44 @@ func (q *Queries) ListObservations(ctx context.Context) ([]ListObservationsRow, 
 	return items, nil
 }
 
+const listPendingSolves = `-- name: ListPendingSolves :many
+SELECT id, solve_subid FROM images
+WHERE solved = 'p' AND solve_subid IS NOT NULL
+ORDER BY id
+`
+
+type ListPendingSolvesRow struct {
+	ID         string        `json:"id"`
+	SolveSubid sql.NullInt64 `json:"solve_subid"`
+}
+
+// Solves left in flight by a restart. Every one of these needs a watcher
+// spawned at boot, or the row stays 'p' forever with nobody polling it.
+func (q *Queries) ListPendingSolves(ctx context.Context) ([]ListPendingSolvesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPendingSolves)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPendingSolvesRow{}
+	for rows.Next() {
+		var i ListPendingSolvesRow
+		if err := rows.Scan(&i.ID, &i.SolveSubid); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markSolveFailed = `-- name: MarkSolveFailed :exec
-UPDATE images SET solved = 'f' WHERE id = ?
+UPDATE images SET solved = 'f', solve_subid = NULL WHERE id = ?
 `
 
 // Records a failed solve without touching the astrometry columns.
@@ -1290,6 +1339,24 @@ UPDATE images SET solved = 'f' WHERE id = ?
 // the image off the skymap and killing its annotation overlay.
 func (q *Queries) MarkSolveFailed(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, markSolveFailed, id)
+	return err
+}
+
+const markSolvePending = `-- name: MarkSolvePending :exec
+UPDATE images SET solved = 'p', solve_subid = ? WHERE id = ?
+`
+
+type MarkSolvePendingParams struct {
+	SolveSubid sql.NullInt64 `json:"solve_subid"`
+	ID         string        `json:"id"`
+}
+
+// Records that a submission is in flight, before any polling happens, so the
+// job survives the request that started it. Deliberately leaves the astrometry
+// columns alone for the same reason MarkSolveFailed does: a re-solve that is
+// still running must not blank a solution that is still good.
+func (q *Queries) MarkSolvePending(ctx context.Context, arg MarkSolvePendingParams) error {
+	_, err := q.db.ExecContext(ctx, markSolvePending, arg.SolveSubid, arg.ID)
 	return err
 }
 
@@ -1392,7 +1459,8 @@ const updateImagePlateSolve = `-- name: UpdateImagePlateSolve :exec
 UPDATE images SET
     ra = ?, dec = ?, pixscale = ?, radius = ?,
     width_arcsec = ?, height_arcsec = ?,
-    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?
+    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?,
+    solve_subid = NULL
 WHERE id = ?
 `
 

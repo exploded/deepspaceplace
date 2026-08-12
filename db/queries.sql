@@ -190,7 +190,8 @@ WHERE id = ?;
 UPDATE images SET
     ra = ?, dec = ?, pixscale = ?, radius = ?,
     width_arcsec = ?, height_arcsec = ?,
-    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?
+    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?,
+    solve_subid = NULL
 WHERE id = ?;
 
 -- Records a failed solve without touching the astrometry columns.
@@ -198,7 +199,21 @@ WHERE id = ?;
 -- it to flag a failure would null out a previously good solution -- dropping
 -- the image off the skymap and killing its annotation overlay.
 -- name: MarkSolveFailed :exec
-UPDATE images SET solved = 'f' WHERE id = ?;
+UPDATE images SET solved = 'f', solve_subid = NULL WHERE id = ?;
+
+-- Records that a submission is in flight, before any polling happens, so the
+-- job survives the request that started it. Deliberately leaves the astrometry
+-- columns alone for the same reason MarkSolveFailed does: a re-solve that is
+-- still running must not blank a solution that is still good.
+-- name: MarkSolvePending :exec
+UPDATE images SET solved = 'p', solve_subid = ? WHERE id = ?;
+
+-- Solves left in flight by a restart. Every one of these needs a watcher
+-- spawned at boot, or the row stays 'p' forever with nobody polling it.
+-- name: ListPendingSolves :many
+SELECT id, solve_subid FROM images
+WHERE solved = 'p' AND solve_subid IS NOT NULL
+ORDER BY id;
 
 -- Admin: delete image
 -- name: DeleteImage :exec

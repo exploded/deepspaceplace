@@ -52,6 +52,17 @@
             <td>{{.Scope}}</td>
             <td>{{.Date}}</td>
             <td id="solve-{{.ID}}">
+                {{if eq .Solved "p"}}
+                {{/* A solve left running by an earlier page view or a restart.
+                     Offering a Solve button here would submit a second job for
+                     a field nova is already working on, so poll instead. */}}
+                <span class="badge bg-info">Solving…</span>
+                <span class="spinner-border spinner-border-sm text-info" role="status"
+                    hx-get="/admin/solvestatus?id={{.ID}}"
+                    hx-trigger="load delay:15s"
+                    hx-target="#solve-{{.ID}}"
+                    hx-swap="innerHTML"></span>
+                {{else}}
                 {{if eq .Solved "y"}}
                 <span class="badge bg-success">Solved</span>
                 {{else if eq .Solved "f"}}
@@ -63,6 +74,7 @@
                     hx-target="#solve-{{.ID}}"
                     hx-swap="innerHTML"
                     hx-disabled-elt="this">{{if .Ra.Valid}}Re-solve{{else}}Solve{{end}}</button>
+                {{end}}
             </td>
             <td><span id="overlay-{{.ID}}" class="badge {{.Overlay.BadgeClass}}">{{.Overlay.BadgeText}}</span></td>
             <td>
