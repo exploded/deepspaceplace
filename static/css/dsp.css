@@ -17,7 +17,11 @@
 
   --text-primary: #e0e0ea;
   --text-secondary: #8585a0;
-  --text-tertiary: #5a5a75;
+  /* Tertiary carries the smallest type on the site (figcaptions, the footer,
+     annotation credits) so it has to clear WCAG AA 4.5:1 on every surface it
+     lands on -- void, surface and elevated alike. #5a5a75 only managed 3.03:1
+     on the void background. */
+  --text-tertiary: #7c7c99;
   --text-bright: #f5f5fa;
 
   --accent-blue: #4a7fff;
@@ -115,6 +119,17 @@ a {
   transition: color var(--transition);
 }
 a:hover { color: var(--accent-gold); }
+
+/* A link sitting inside a run of prose is only 2.8:1 against the text around
+   it, so colour alone cannot carry it -- underline the ones that need it.
+   Buttons and the image links in the galleries are already distinguishable by
+   shape, so they stay clean. */
+p a:not(.btn), li a:not(.btn):not(.nav-link):not(.dropdown-item), td a:not(.btn), dd a:not(.btn) {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+p a:has(img), li a:has(img), td a:has(img) { text-decoration: none; }
 
 .fw-light { font-weight: 300; color: var(--text-secondary); }
 

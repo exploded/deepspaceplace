@@ -177,6 +177,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	Render(w, "index.html", PageData{
 		CanonicalURL: "https://deepspaceplace.com/",
+		Description:  "Astrophotography by James McHugh — deep space images of galaxies, nebulae and star clusters shot from Melbourne, Australia since 2009, plus an interactive sky map and observing tools.",
 	})
 }
 
