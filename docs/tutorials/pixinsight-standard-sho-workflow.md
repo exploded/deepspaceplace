@@ -325,9 +325,9 @@ click **Add Views** — the icon with the green plus:
 
 **Select All**, leave **Previews** and **Main Views** ticked, **OK**.
 
-The container is the target for the next four processes — drag each process's
-**triangle onto its dialog** and all three channels get identical parameters in one
-action.
+The container drives the next four processes — configure each process, then drag the
+**ImageContainer's triangle onto the bottom bar of the process dialog** and all
+three channels get identical parameters in one action.
 
 ## Step 13. BlurXTerminator
 
