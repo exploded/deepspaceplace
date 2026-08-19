@@ -1,25 +1,25 @@
 {{template "base" .}}
 {{define "content"}}
 <h1>Moon rise and set times</h1>
-<p>Moon rise and set times for Melbourne, Timezone 10</p>
+<form method="get" action="/moon"
+      hx-get="/moon" hx-target="#moon-table" hx-push-url="true" hx-trigger="change, submit"
+      class="row g-2 align-items-end mb-3">
+	<div class="col-auto">
+		<label for="moon-date" class="form-label">Start date</label>
+		<input type="date" id="moon-date" name="date" class="form-control" value="{{.Date}}" min="1900-01-01" max="2100-12-31">
+	</div>
+	<div class="col-auto">
+		<label for="moon-loc" class="form-label">Location</label>
+		<select id="moon-loc" name="loc" class="form-select">
+			{{range .Locations}}<option value="{{.Key}}"{{if eq .Key $.Location.Key}} selected{{end}}>{{.Name}}</option>
+			{{end}}
+		</select>
+	</div>
+	<div class="col-auto"><button type="submit" class="btn btn-primary">Show</button></div>
+</form>
 <p>Please note: times have not been verified, use as a guide only.</p>
 <p>Calculated server-side using the <a href="https://github.com/exploded/riseset" target="_blank">riseset</a> Go library.</p>
-<table class="table table-hover table-bordered table-striped table-condensed">
-	<thead>
-		<tr>
-			<th>Date</th>
-			<th>Moon Rise</th>
-			<th>Moon Set</th>
-		</tr>
-	</thead>
-	<tbody>
-		{{range .Days}}
-		<tr>
-			<td>{{.Weekday}} {{.Date}}</td>
-			<td class="numeric">{{.Rise}}</td>
-			<td class="numeric">{{.Set}}</td>
-		</tr>
-		{{end}}
-	</tbody>
-</table>
+<div id="moon-table">
+{{template "moon_table.html" .}}
+</div>
 {{end}}

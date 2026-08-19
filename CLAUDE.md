@@ -38,7 +38,7 @@ Pure Go HTTP server (no framework, standard `net/http`) in `cmd/server/main.go`.
 - **show.go** — `/show?id=X` individual image detail with prev/next navigation, RA/Dec coordinate display
 - **skymap.go** — `/skymap` interactive map + `/api/observations` JSON (plate-solved images only)
 - **converter.go** — `/converter` RA/Dec decimal ↔ HMS/DMS conversion (server-side math, HTMX response)
-- **moon.go** — `/moon` 60-day rise/set forecast for Melbourne using `github.com/exploded/riseset`
+- **moon.go** — `/moon` 30-day rise/set forecast with date + location selectors (IANA zones via `time/tzdata`, so DST is correct) using `github.com/exploded/riseset`. HTMX partial `moon_table.html`
 - **weather.go** — `/weather` + `/api/bom-satellite` proxy (fetches BoM satellite images server-side)
 - **admin.go** — Cookie-based auth, CRUD for images. Protected by `adminAuth` middleware, password from `.env`
 - **middleware.go** — RequestLogger, SecurityHeaders, CacheStaticAssets (7-day immutable for `/static/`)
@@ -50,7 +50,7 @@ Per-page template sets (`map[string]*template.Template`) — each page is parsed
 - `base.html` — layout with navbar, Bootstrap
 - `templates/pages/` — static content pages (equipment, observatory, etc.)
 - `templates/admin/` — login, list, edit forms
-- Partials: `gallery_grid.html`, `converter_result.html`
+- Partials: `gallery_grid.html`, `converter_result.html`, `moon_table.html`
 
 ### Database
 

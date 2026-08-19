@@ -362,7 +362,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 			}
 
 			// Also parse partials that pages might reference
-			partialPatterns := []string{"templates/gallery_grid.html", "templates/converter_result.html"}
+			partialPatterns := []string{"templates/gallery_grid.html", "templates/converter_result.html", "templates/moon_table.html"}
 			for _, p := range partialPatterns {
 				if _, statErr := os.Stat(p); statErr == nil {
 					_, err = t.ParseFiles(p)
