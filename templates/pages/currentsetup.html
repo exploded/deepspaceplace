@@ -20,10 +20,10 @@
             </div>
             <div class="card-body">
                 <h3><a href="https://www.bisque.com/product/paramount-me/" target="_blank" rel="noopener noreferrer">Software Bisque Paramount ME</a></h3>
-                <p>The Paramount ME is a research-grade German equatorial mount from <a href="https://www.bisque.com/" target="_blank" rel="noopener noreferrer">Software Bisque</a>. It uses a friction drive system with zero backlash, giving extremely precise tracking and pointing accuracy. The mount is rated for payloads up to 68 kg, which comfortably handles the 12" Newtonian and all accessories.</p>
+                <p>The Paramount ME is a research-grade German equatorial mount from <a href="https://www.bisque.com/" target="_blank" rel="noopener noreferrer">Software Bisque</a>. It uses precision-ground worms running on an 11.25" 576-tooth brass RA gear, with spring-loaded worm blocks that keep backlash to a minimum, giving extremely precise tracking and pointing accuracy. The mount is rated for payloads up to 68 kg, which comfortably handles the 12" Newtonian and all accessories.</p>
                 <p>Key features:</p>
                 <ul>
-                    <li>Zero-backlash friction drive on both axes</li>
+                    <li>Research-grade worm-gear drive with spring-loaded worm blocks for minimal backlash</li>
                     <li>Homing sensors for repeatable startup alignment</li>
                     <li>Controlled natively by <a href="https://www.bisque.com/product/thesky/" target="_blank" rel="noopener noreferrer">TheSky Professional</a> via USB</li>
                     <li>Periodic error correction (PEC) with sub-arcsecond tracking</li>
@@ -222,6 +222,66 @@
         </div>
     </section>
 
+    <!-- Observatory automation -->
+    <section class="mb-5">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Observatory Automation</h2>
+            </div>
+            <div class="card-body">
+                <p>Three home-built <a href="https://ascom-standards.org/Developer/Alpaca.htm" target="_blank" rel="noopener noreferrer">ASCOM Alpaca</a> devices let N.I.N.A. run the observatory itself, not just the telescope: a roof controller, a rain-sensing safety monitor, and a switch driver for mains power and security-camera lights. All three answer Alpaca UDP discovery on the local network, so N.I.N.A. finds them with <em>Scan for devices</em> and no IP addresses need typing in. The two ESP32 devices are built for unattended nights: a hardware task watchdog, a WiFi supervisor that re-associates and reboots if it can't recover, and a diagnostics log in RTC memory that survives a self-reboot so the morning status page still shows what happened.</p>
+
+                <div class="row mt-3">
+                    <div class="col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Roof Controller</strong></div>
+                            <div class="card-body">
+                                <p>An ESP32 DevKit-C running custom firmware that implements the Alpaca <strong>Dome</strong> interface, so N.I.N.A. can open, close and monitor the roll-off roof. The roof is pulled by a standard garage door opener, and the controller drives it the same way the wall button does: a relay wired across the button terminals gives a 250&nbsp;ms pulse that steps the opener through open, stop and close.</p>
+                                <ul class="mb-0">
+                                    <li>Two limit switches (OPEN and CLOSED) are the ground truth for roof position</li>
+                                    <li>Open/close commands check the limit switches first, so a stray pulse can't close an open roof</li>
+                                    <li>2-minute movement watchdog flags an error if a limit switch is never reached</li>
+                                    <li>0.91&Prime; OLED shows roof status and IP; a browser page gives manual control and diagnostics</li>
+                                    <li>Persistent HTTP connections on the Alpaca port, so N.I.N.A.'s constant polling doesn't exhaust the ESP32's sockets</li>
+                                </ul>
+                                <p class="mt-2 mb-0"><a href="https://github.com/exploded/ESP32-Rolloff" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Safety Monitor</strong></div>
+                            <div class="card-body">
+                                <p>A <a href="https://rainsensors.com/" target="_blank" rel="noopener noreferrer">Hydreon RG-11</a> optical rain sensor wired to an ESP32 that implements the Alpaca <strong>Safety Monitor</strong> interface. When the RG-11's relay closes on the first drops, the device reports <em>not safe</em> and N.I.N.A. can stop the sequence, park the mount and close the roof before anything gets wet.</p>
+                                <ul class="mb-0">
+                                    <li>5-sample majority-vote debouncing on the sensor input, so a single glitch never trips it</li>
+                                    <li>4.7&nbsp;k&Omega; pull-up gives the relay contacts enough wetting current to stay reliable after months idle</li>
+                                    <li>1.28&Prime; round colour display: green SAFE or red NOT SAFE ring, IP and link health</li>
+                                    <li>Status page logs every rain and dry transition with a timestamp, giving an overnight rain history</li>
+                                </ul>
+                                <p class="mt-2 mb-0"><a href="https://github.com/exploded/Alpaca-RG11-ESP32-SafetyMonitor" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header"><strong>Alpaca Switch Controller</strong></div>
+                            <div class="card-body">
+                                <p>A Go program running on the observatory NUC that exposes several pieces of hardware as a single Alpaca <strong>Switch</strong> device, so N.I.N.A. can turn things on and off as steps in a sequence.</p>
+                                <ul class="mb-0">
+                                    <li><strong>Xiaomi Mi smart plugs</strong> - the 240&nbsp;V switches in the Power Management section below, driven directly over the local network with the Xiaomi UDP protocol (AES-encrypted), with no cloud round trip</li>
+                                    <li><strong>Hikvision security cameras</strong> - switches the cameras' infrared illuminators off for the night via the ISAPI interface, so they don't throw stray light across the observatory</li>
+                                    <li>Each plug and camera appears as a named switch in N.I.N.A.; dew heaters, for example, can be turned on at the start of a sequence and off at the end</li>
+                                </ul>
+                                <p class="mt-2 mb-0"><a href="https://github.com/exploded/alpaca-switch" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Power -->
     <section class="mb-5">
         <div class="card border-dark">
@@ -230,7 +290,7 @@
             </div>
             <div class="card-body">
                 <h3>Xiaomi Mi Smart Plug Mini (240V)</h3>
-                <p>Multiple <a href="https://www.mi.com/global" target="_blank" rel="noopener noreferrer">Xiaomi / Mi</a> Smart Plug Mini switches are used to control 240V power to individual pieces of equipment. Each plug is controlled via the <strong>Mi Home</strong> app on a phone or tablet, allowing me to power on or off any component without going out to the observatory.</p>
+                <p>Multiple <a href="https://www.mi.com/global" target="_blank" rel="noopener noreferrer">Xiaomi / Mi</a> Smart Plug Mini switches are used to control 240V power to individual pieces of equipment. Each plug can be controlled via the <strong>Mi Home</strong> app on a phone or tablet, or by N.I.N.A. through the Alpaca Switch Controller above, allowing me to power on or off any component without going out to the observatory.</p>
                 <p>This is useful for:</p>
                 <ul>
                     <li>Power-cycling the mount or camera if they become unresponsive</li>
