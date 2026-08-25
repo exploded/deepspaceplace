@@ -29,12 +29,17 @@
 	<a class="btn btn-outline-primary" href="/images{{queryParams "sort" .Sort "filter" "ASI2600MM"}}" hx-get="/images/partial{{queryParams "sort" .Sort "filter" "ASI2600MM"}}" hx-target="#gallery-container" hx-push-url="/images{{queryParams "sort" .Sort "filter" "ASI2600MM"}}">ASI2600MM DUO</a>
 </div>
 <p>Click on the image to view a larger version with details.</p>
-{{range .Images}}
+{{/* width/height are required, not decorative: the thumbnails are all 200x150,
+     and without them each figure is zero-width until its image lands, so a
+     120-image grid reflows on every load. Cloudflare RUM measured CLS 1.112 on
+     #gallery-container>figure.figure before these were added. Keep them in step
+     with the thumbnails the admin upload produces. */}}
+{{range $i, $img := .Images}}
 <figure class="figure">
-	<a href="/show?id={{.ID}}">
-		<img src="/images/{{.Thumbnail}}" class="img-thumbnail" alt="{{.ID}}">
+	<a href="/show?id={{$img.ID}}">
+		<img src="/images/{{$img.Thumbnail}}" class="img-thumbnail" alt="{{$img.ID}}" width="200" height="150"{{if gt $i 11}} loading="lazy"{{end}} decoding="async">
 	</a>
-	<figcaption class="figure-caption">{{.Name}}</figcaption>
+	<figcaption class="figure-caption">{{$img.Name}}</figcaption>
 </figure>
 {{end}}
 {{if not .Images}}
