@@ -1,0 +1,44 @@
+<svg viewBox="0 0 880 560" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+<defs>
+<marker id="arR" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6a7885"/></marker>
+<marker id="arL" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#c24a3d"/></marker>
+</defs>
+<rect x="1" y="1" width="878" height="558" rx="16" fill="#ffffff" stroke="#dde4ea" stroke-width="1.5"/>
+<text x="40" y="56" font-size="25" font-weight="600" fill="#28323d">Why backlash shows up on the final move</text>
+<text x="40" y="83" font-size="14.5" fill="#6a7885">The curve is measured in one direction. Landing on focus reverses it.</text>
+<text x="40" y="130" font-size="15.5" font-weight="600" fill="#2ba39b">1</text>
+<text x="60" y="130" font-size="15.5" font-weight="600" fill="#28323d">Measuring the curve</text>
+<line x1="150" y1="158" x2="750" y2="158" stroke="#6a7885" stroke-width="1.6" marker-end="url(#arR)"/>
+<text x="450" y="148" font-size="12.5" fill="#6a7885" text-anchor="middle">focuser steps steadily in one direction</text>
+<line x1="135" y1="190" x2="765" y2="190" stroke="#c7d0d8" stroke-width="3"/>
+<circle cx="135.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="240.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="345.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="450.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="555.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="660.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="765.0" cy="190" r="6" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<text x="135" y="224" font-size="12" fill="#6a7885">far out</text>
+<text x="765" y="224" font-size="12" fill="#6a7885" text-anchor="end">far in</text>
+<text x="40" y="252" font-size="13" fill="#28323d">Every point is approached from the same direction, so backlash cannot distort the shape of the curve.</text>
+<line x1="40" y1="308" x2="840" y2="308" stroke="#e8edf1" stroke-width="1.2"/>
+<text x="40" y="348" font-size="15.5" font-weight="600" fill="#2ba39b">2</text>
+<text x="60" y="348" font-size="15.5" font-weight="600" fill="#28323d">Moving to focus</text>
+<line x1="135" y1="400" x2="765" y2="400" stroke="#c7d0d8" stroke-width="3"/>
+<line x1="739.8" y1="386" x2="472.3" y2="386" stroke="#c24a3d" stroke-width="1.8" marker-end="url(#arL)"/>
+<text x="638" y="376" font-size="12.5" fill="#c24a3d" text-anchor="middle">reverses direction</text>
+<rect x="387.0" y="391" width="69.3" height="18" fill="#f6ddd8" opacity="0.9"/>
+<circle cx="387.0" cy="400" r="7" fill="#2ba39b" stroke="#ffffff" stroke-width="1.6"/>
+<line x1="387.0" y1="412" x2="387.0" y2="430" stroke="#2ba39b" stroke-width="1"/>
+<text x="387.0" y="446" font-size="12.5" fill="#2ba39b" font-weight="600" text-anchor="middle">computed optimum</text>
+<circle cx="456.3" cy="400" r="7" fill="#ffffff" stroke="#c24a3d" stroke-width="2"/>
+<line x1="456.3" y1="412" x2="486.3" y2="430" stroke="#c24a3d" stroke-width="1"/>
+<text x="494.3" y="446" font-size="12.5" fill="#c24a3d" font-weight="600" text-anchor="start">where it lands (short)</text>
+<text x="422" y="360" font-size="11.5" fill="#c24a3d" text-anchor="middle">backlash gap</text>
+<line x1="387.0" y1="366" x2="456.3" y2="366" stroke="#c24a3d" stroke-width="0.9"/>
+<line x1="387.0" y1="363" x2="387.0" y2="369" stroke="#c24a3d" stroke-width="0.9"/>
+<line x1="456.3" y1="363" x2="456.3" y2="369" stroke="#c24a3d" stroke-width="0.9"/>
+<text x="40" y="482" font-size="13" fill="#28323d">The final move reverses direction. With real backlash the focuser lands short, so focus ends up slightly soft.</text>
+<rect x="40" y="492" width="800" height="34" rx="10" fill="#eaf6f4" stroke="#2ba39b" stroke-width="1"/>
+<text x="56" y="514" font-size="12.5" fill="#28323d"><tspan font-weight="600" fill="#2ba39b">Remedy  </tspan>Measure the backlash, enter it, and use the Overshoot method. If your focuser has none, leaving it at 0 is right.</text>
+</svg>

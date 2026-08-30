@@ -39,6 +39,7 @@ var staticPages = []string{
 	"/egypt",
 	"/tutorials/pixinsight-sho-workflow",
 	"/tutorials/pixinsight-mosaic-workflow",
+	"/tutorials/nina-autofocus",
 }
 
 func HandleSitemap(w http.ResponseWriter, r *http.Request) {

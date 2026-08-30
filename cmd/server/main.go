@@ -193,6 +193,8 @@ func main() {
 		"PixInsight Standard SHO Workflow", "Step-by-step PixInsight SHO narrowband processing runbook: WBPP, BlurXTerminator, GradientCorrection, StarXTerminator, PerfectPalettePicker and NarrowbandNormalization."))
 	mux.HandleFunc("/tutorials/pixinsight-mosaic-workflow", handlers.StaticPage("tutorial-pixinsight-mosaic.html", "/tutorials/pixinsight-mosaic-workflow",
 		"PixInsight Mosaic Workflow", "Two-panel SHO mosaic in PixInsight using MosaicByCoordinates and PhotometricMosaic, including the astrometry and image scale gotchas."))
+	mux.HandleFunc("/tutorials/nina-autofocus", handlers.StaticPage("tutorial-nina-autofocus.html", "/tutorials/nina-autofocus",
+		"Fine-Tuning Autofocus in NINA", "How to tune NINA autofocus from the data: reading R-squared and the curve shape, step size and exposure trade-offs, why curves are asymmetric, what backlash really affects, and the Hocus Focus uneven and weighted hyperbolic fits."))
 
 	// Legacy .php redirects (301) — old site used .php extensions
 	phpPages := []string{

@@ -1,0 +1,249 @@
+{{template "base" .}}
+{{define "head"}}
+<link href="{{asset "/static/css/tutorial.css"}}" rel="stylesheet">
+<script src="{{asset "/static/js/tutorial.js"}}" defer></script>
+{{end}}
+{{define "content"}}
+<div class="tutorial">
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-mark">Guide &middot; NINA &middot; autofocus</div>
+    <p class="rail-title">Fine-Tuning Autofocus in NINA</p>
+    <nav><a class="lvl1" href="#start-by-reading-the-curve">Start by reading the curve</a>
+<a class="lvl1" href="#the-settings-that-actually-move-the-needle">Settings that move the needle</a>
+<a class="lvl1" href="#when-one-side-of-the-curve-looks-steeper">When one side looks steeper</a>
+<a class="lvl1" href="#about-backlash">About backlash</a>
+<a class="lvl1" href="#let-the-plugin-do-the-hard-part">Let the plugin do the hard part</a>
+<a class="lvl1" href="#quality-versus-time">Quality versus time</a>
+<a class="lvl1" href="#that-worse-than-the-previous-warning">The &ldquo;worse than previous&rdquo; warning</a>
+<a class="lvl1" href="#how-often-to-refocus">How often to refocus</a>
+<a class="lvl1" href="#the-short-version">The short version</a></nav>
+    <div class="rail-related">
+      <div class="rail-mark">Related</div>
+      <a href="/bahtinovmask">Bahtinov Mask</a>
+      <a href="/tutorials/pixinsight-sho-workflow">PixInsight SHO Workflow</a>
+    </div>
+  </aside>
+  <main><div class="doc">
+    <div class="eyebrow">Guide &middot; NINA &middot; autofocus</div>
+    <h1 class="title">Fine-Tuning Autofocus in NINA</h1>
+    <p>Most people set up autofocus in NINA once, watch it find a focus point, and never think
+    about it again. That's fine right up until the night it isn't. A run takes forever, or a curve
+    comes out lopsided, or that yellow warning appears telling you the new focus is worse than the
+    old one. Then you start poking at settings, and it's easy to make things worse before you make
+    them better.</p>
+    <p>This is a guide to tuning autofocus deliberately rather than by trial and error. The goal
+    isn't a textbook-perfect curve. It's a curve you can trust, produced in a reasonable amount of
+    time, night after night.</p>
+    <dl class="meta">
+      <dt>Software</dt><dd>N.I.N.A. &mdash; Nighttime Imaging 'N' Astronomy</dd>
+      <dt>Plugin</dt><dd>Hocus Focus &mdash; Uneven and Weighted Hyperbolic Fit</dd>
+      <dt>Also on this site</dt><dd><a href="/bahtinovmask">Bahtinov Mask</a> for manual focus checks</dd>
+    </dl>
+<hr />
+
+<h2 id="start-by-reading-the-curve">Start by reading the curve</h2>
+<p>Before you touch a single setting, learn to read the result you're already getting. Every
+autofocus run in NINA gives you a plot and a set of numbers, and those tell you almost everything
+you need to know.</p>
+
+<figure>
+  <img src="{{asset "/static/images/tutorials/focus-curve-anatomy.svg"}}" alt="Annotated NINA autofocus curve labelling the minimum, the clustered points, the error bars and the R-squared fit quality" loading="lazy">
+  <figcaption>The parts of a healthy focus curve and what each one is telling you.</figcaption>
+</figure>
+
+<p>The number to anchor on is R&sup2;, the goodness-of-fit. This is how well the curve NINA drew
+matches the points it measured. Anything at 0.9 or above is a solid fit. Down around 0.85 and
+lower, the run is getting noisy and the reported focus position is less reliable. If you're
+consistently seeing high R&sup2; values, your focus is being found correctly, full stop. A lot of
+&ldquo;problems&rdquo; people chase are cosmetic: the curve looks a bit ugly, but the fit is fine
+and the focus is genuinely good.</p>
+
+<p>The second thing to look at is the shape. You want a clear V or U with a well-defined bottom,
+and ideally several measurement points clustered near the minimum rather than one lonely point at
+the bottom and everything else piled up the sides. A densely sampled minimum gives the curve-fit
+something to work with and produces a focus position you can rely on.</p>
+
+<p>The error bars matter too. Those vertical red lines show the measurement uncertainty at each
+point. Short, tight bars mean confident measurements. Long bars mean the run was fighting noise:
+poor seeing, thin cloud, low signal, or too few stars. If your bars are consistently large, that's
+your real problem, and no amount of curve-fitting trickery fixes it. You fix it at the source,
+which we'll come to.</p>
+
+<h2 id="the-settings-that-actually-move-the-needle">The settings that actually move the needle</h2>
+<p>NINA's autofocus page has a lot of fields, but only a handful genuinely change your results.
+Here's what each one does and when to reach for it.</p>
+
+<p><strong>Step size</strong> controls how far the focuser moves between measurements. Too small
+and every point sits near the bottom of the curve, so the fit has no leverage and the whole thing
+is mushy. Too large and you overshoot the useful range, with your outer points shooting up into
+huge, uninformative HFR values. You want a step size where the outermost points land at roughly
+two to three times the in-focus HFR. That gives a nicely proportioned curve without wasting time
+out in the weeds. If your outer points are up at four or five times the minimum, your step size
+(or your offset count) is too aggressive.</p>
+
+<p><strong>Initial offset steps</strong> sets how many points get measured on each side of the
+estimated focus. More points make for a more robust fit but cost time. Fewer points are faster
+and, if your fits are already landing at high R&sup2;, perfectly adequate. Three or four per side
+is the usual sweet spot. Dropping from four to three is one of the easiest ways to shave time off
+a run once you've confirmed your fits are healthy.</p>
+
+<p><strong>Exposures per point</strong> is where runs get expensive. Set this to two and every
+single position now costs two frames, two downloads, and two star-detection passes. Averaging
+multiple exposures does smooth out seeing and tighten those error bars, so it's a real quality
+lever, but it's also the most costly one you have. Treat it as something to spend deliberately,
+not a default.</p>
+
+<p><strong>Exposure time</strong> determines how much signal each measurement gets. Longer
+exposures mean brighter, more detectable stars and better measurements, especially through
+narrowband filters where stars are dim and sparse. The trade is obvious: longer exposures make
+longer runs.</p>
+
+<p>There's a useful interaction between those last two. One longer exposure often beats two
+shorter ones. A single frame at, say, six or seven seconds gathers similar signal to two frames at
+four, but with half the downloads and half the detection overhead. If you're running two exposures
+per point mostly to claw back signal-to-noise, try collapsing that into one longer exposure
+instead and compare the R&sup2; and the run-to-run consistency. You'll frequently get the same fit
+quality for less time.</p>
+
+<h2 id="when-one-side-of-the-curve-looks-steeper">When one side of the curve looks steeper</h2>
+<p>This one throws people constantly. You get a curve where one arm climbs steeply and the other
+rises gently, and it looks like something's broken. Usually nothing is.</p>
+
+<p>A truly symmetric focus curve only exists in an ideal optical system. In the real world,
+residual spherical aberration, a fast focal ratio or slightly imperfect collimation all make the
+star blur grow at different rates on either side of focus. That asymmetry is baked into your
+optics, not your focuser. It shows up as uneven arm slopes and it's completely normal.</p>
+
+<p>Noise makes it worse. Low signal-to-noise per point, the kind you get in narrowband or poor
+seeing, exaggerates whatever asymmetry is already there and varies it run to run. Heavily
+defocused stars behave strangely too: faint ones drop below detection, bright ones bloom into
+donuts if you've got a central obstruction, and the far ends of the curve stop behaving in a tidy,
+mirror-image way.</p>
+
+<p>The takeaway: mild-to-moderate asymmetry is expected and not something you fix by fiddling with
+mechanical settings. Very strong, persistent asymmetry can be a gentle hint to check your
+collimation, but it's a hint, not a diagnosis. Don't go chasing backlash or motor settings to make
+a curve symmetrical, because that's not what's causing it.</p>
+
+<h2 id="about-backlash">About backlash</h2>
+<p>Backlash deserves its own section because it's the most misunderstood setting in the whole
+autofocus workflow, and it's the wrong tool for most of the problems people point it at.</p>
+
+<figure>
+  <img src="{{asset "/static/images/tutorials/backlash-final-move.svg"}}" alt="Schematic showing the focuser stepping one direction through the autofocus points, then reversing to the computed optimum and landing short by the backlash gap" loading="lazy">
+  <figcaption>The curve is measured in one direction; the move to focus reverses it, which is where backlash bites.</figcaption>
+</figure>
+
+<blockquote>
+<h3>The key insight</h3>
+<p>When NINA measures the curve, it approaches every single point from the same direction. It racks
+out to the start and then steps steadily inward through all the positions. Because every
+measurement is approached the same way, <strong>backlash cannot distort the shape of the
+curve</strong>. It can't make one arm steeper than the other. So if your curve looks asymmetric,
+backlash is not the culprit, and adding backlash compensation won't straighten it out.</p>
+</blockquote>
+
+<p>What backlash <em>does</em> affect is the final move. After the curve is measured and the
+optimum position is computed, the focuser has to travel back to that mid-curve point, and that
+reversal runs in the opposite direction to all the measurement steps. If your focuser has real
+mechanical backlash, that reversal can land you slightly short of the true optimum, leaving you a
+touch out of focus. This is where compensation earns its keep: not in the curve, but in landing
+accurately on the computed position and in run-to-run repeatability.</p>
+
+<p>Many modern electronic focusers have very little backlash to begin with. If you measure yours
+and it comes out near zero, running with zero is entirely legitimate and you're not missing
+anything. If you do have measurable backlash, put the value in and use the Overshoot compensation
+method, which tolerates a generous overestimate far better than the Absolute method does. When
+Overshoot is selected but the value is left at zero, it simply does nothing, which is exactly the
+right behaviour for a low-backlash focuser.</p>
+
+<p>To measure it: rack the focuser well out, then step back in and note where the HFR actually
+starts changing. The lag between when you commanded movement and when focus started responding is
+your backlash. It's often smaller than people expect.</p>
+
+<h2 id="let-the-plugin-do-the-hard-part">Let the plugin do the hard part</h2>
+<p>If you're not already running the Hocus Focus plugin, it's worth installing purely for two
+settings that address the exact problems above.</p>
+
+<p><strong>Uneven Hyperbolic Fit</strong> is the direct answer to an asymmetric curve. A standard
+hyperbola is symmetric by definition, so it forces both arms to mirror each other and gets dragged
+off-centre when your real data is lopsided. The uneven variant lets each arm take its own
+curvature, so it models the actual shape instead of splitting the difference. The plotted curve
+will still look asymmetric, because your data genuinely is, but the computed minimum now reflects
+reality. This is a cleaner solution than switching NINA to a trend-based fitting strategy.</p>
+
+<p><strong>Weighted Hyperbolic Fit</strong> is the companion for noisy nights. It weights each
+measurement by its uncertainty, so the tight, confident points pull hard on the fit and the noisy
+ones with big error bars pull less. On a low-signal narrowband run this does real work, stopping
+one bad, uncertain point from yanking your focus position around.</p>
+
+<blockquote class="gotcha">
+<h3>Keep the fitting strategy consistent</h3>
+<p>These hyperbolic options only engage if NINA's own curve-fitting strategy is set to Hyperbolic.
+If you switch NINA to Parabolic or a trend fit, the uneven and weighted logic won't apply. Set them
+together and leave them.</p>
+</blockquote>
+
+<p>The rest of Hocus Focus is sensible out of the box. Validating HFR improvement with a reasonable
+tolerance is a good safety net against a bad run, and allowing a small number of outlier rejections
+lets the fit throw out the occasional point ruined by a satellite trail or a gust of bad seeing.</p>
+
+<h2 id="quality-versus-time">Quality versus time</h2>
+<p>Every quality lever costs time, and it's easy to over-tune to the point where autofocus eats a
+chunk of your imaging night. Keep some perspective here.</p>
+
+<p>A run at R&sup2; 0.98 and a run at R&sup2; 1.00 will land you at focus positions that differ by
+an amount well inside the noise. The perfect-looking curve isn't meaningfully better focus. It's
+just smoother and a little more reliable. That means you have room to trim. If a run got slow
+because you pushed exposures per point up and exposure time out, you can usually pull one of those
+back and lose almost nothing.</p>
+
+<p>The bigger lever, though, isn't per-run cost at all. It's how <em>often</em> you refocus. A
+three-minute autofocus once every degree or two of temperature change across a night is trivial
+overhead. The same run fired every twenty minutes on a timer is where autofocus actually starts
+hurting your session. Trigger refocus on a temperature delta or on measured HFR drift rather than
+a tight time interval, and the per-run cost mostly stops mattering.</p>
+
+<h2 id="that-worse-than-the-previous-warning">That &ldquo;worse than the previous&rdquo; warning</h2>
+<p>Sooner or later NINA will pop a warning that the new focus point's HFR is significantly worse
+than the previous one, and reject the run. Don't panic. Read it properly, because it's telling you
+something specific.</p>
+
+<p>The clue is in the comparison. If the curve fit itself was good (high R&sup2;), then the fit
+found the right position. The problem opened up <em>after</em> the curve was computed, on the
+validation frame taken at the final position. That narrows the cause to two suspects.</p>
+
+<p>The first is transient conditions. A validation frame is usually a single exposure, and one
+unlucky moment of bad seeing or a wisp of cloud reads high. This is random and won't repeat. The
+second is backlash on that final approach: the reversal we talked about earlier landing you
+slightly short of the computed optimum, so the validation frame genuinely is a little soft.</p>
+
+<p>You tell them apart by frequency. Run autofocus a few more times. If the warning fires most runs
+with a similar predicted-versus-measured gap, it's systematic, so look at backlash. If it's a
+one-off and subsequent runs validate cleanly, it was conditions, and you can forget it. Either way,
+if the curve fit was good, the run found the right place, and only the validation frame was in
+question.</p>
+
+<h2 id="how-often-to-refocus">How often to refocus</h2>
+<p>Set your refocus triggers and then leave autofocus alone for most of the night. The two triggers
+worth using are temperature change and HFR drift. As your gear cools through the evening the focus
+point moves, and a temperature trigger tracks that naturally. An HFR-drift trigger catches anything
+the temperature trigger misses, whether that's flexure, a filter change, or something else. Between
+them you refocus when you actually need to and not on an arbitrary clock. That's the setup that
+keeps sharp stars all night without autofocus dominating your imaging time.</p>
+
+<h2 id="the-short-version">The short version</h2>
+<p>Tune from the data, not from superstition. Read R&sup2; and the curve shape before you change
+anything. Spend your time budget on signal-to-noise, meaning exposure time and, when needed,
+exposures per point, because clean measurements fix more than any clever setting. Let the uneven
+and weighted hyperbolic fits handle curve asymmetry and noise. Treat backlash as a final-approach
+and repeatability tool rather than a curve-shape fix, and don't be afraid to run it at zero if your
+focuser is well-behaved. And refocus on temperature and drift, not on a timer.</p>
+
+<p>Get those right and autofocus becomes something you set once and stop thinking about, which is
+exactly where you want it.</p>
+  </div></main>
+</div>
+</div>
+{{end}}

@@ -1,0 +1,79 @@
+<svg viewBox="0 0 860 600" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+<rect x="1" y="1" width="858" height="598" rx="16" fill="#ffffff" stroke="#dde4ea" stroke-width="1.5"/>
+<text x="40" y="58" font-size="25" font-weight="600" fill="#28323d">Anatomy of a focus curve</text>
+<text x="40" y="84" font-size="14.5" fill="#6a7885">What a healthy autofocus run looks like, and what each part is telling you</text>
+<line x1="95" y1="395.0" x2="730" y2="395.0" stroke="#e8edf1" stroke-width="1"/>
+<text x="83" y="399.0" font-size="12" fill="#6a7885" text-anchor="end">2</text>
+<line x1="95" y1="322.5" x2="730" y2="322.5" stroke="#e8edf1" stroke-width="1"/>
+<text x="83" y="326.5" font-size="12" fill="#6a7885" text-anchor="end">4</text>
+<line x1="95" y1="250.0" x2="730" y2="250.0" stroke="#e8edf1" stroke-width="1"/>
+<text x="83" y="254.0" font-size="12" fill="#6a7885" text-anchor="end">6</text>
+<line x1="95" y1="177.5" x2="730" y2="177.5" stroke="#e8edf1" stroke-width="1"/>
+<text x="83" y="181.5" font-size="12" fill="#6a7885" text-anchor="end">8</text>
+<line x1="95" y1="105.0" x2="730" y2="105.0" stroke="#e8edf1" stroke-width="1"/>
+<text x="83" y="109.0" font-size="12" fill="#6a7885" text-anchor="end">10</text>
+<line x1="95.0" y1="105" x2="95.0" y2="395" stroke="#e8edf1" stroke-width="1"/>
+<text x="95.0" y="417" font-size="12" fill="#6a7885" text-anchor="middle">3800</text>
+<line x1="306.7" y1="105" x2="306.7" y2="395" stroke="#e8edf1" stroke-width="1"/>
+<text x="306.7" y="417" font-size="12" fill="#6a7885" text-anchor="middle">3900</text>
+<line x1="518.3" y1="105" x2="518.3" y2="395" stroke="#e8edf1" stroke-width="1"/>
+<text x="518.3" y="417" font-size="12" fill="#6a7885" text-anchor="middle">4000</text>
+<line x1="730.0" y1="105" x2="730.0" y2="395" stroke="#e8edf1" stroke-width="1"/>
+<text x="730.0" y="417" font-size="12" fill="#6a7885" text-anchor="middle">4100</text>
+<line x1="95" y1="105" x2="95" y2="395" stroke="#6a7885" stroke-width="1.4"/>
+<line x1="95" y1="395" x2="730" y2="395" stroke="#6a7885" stroke-width="1.4"/>
+<text x="412" y="441" font-size="13.5" fill="#28323d" text-anchor="middle">Focuser position (steps)</text>
+<text x="34" y="250" font-size="13.5" fill="#28323d" text-anchor="middle" transform="rotate(-90 34 250)">HFR (star size)</text>
+<polyline points="95.0,175.4 99.2,178.8 103.5,182.2 107.7,185.5 111.9,188.9 116.2,192.3 120.4,195.6 124.6,199.0 128.9,202.3 133.1,205.7 137.3,209.0 141.6,212.4 145.8,215.7 150.0,219.0 154.3,222.3 158.5,225.7 162.7,229.0 167.0,232.3 171.2,235.6 175.4,238.8 179.7,242.1 183.9,245.4 188.1,248.7 192.4,251.9 196.6,255.2 200.8,258.4 205.1,261.6 209.3,264.8 213.5,268.0 217.8,271.2 222.0,274.4 226.2,277.6 230.5,280.7 234.7,283.9 238.9,287.0 243.2,290.1 247.4,293.2 251.6,296.3 255.9,299.3 260.1,302.4 264.3,305.4 268.6,308.4 272.8,311.4 277.0,314.3 281.3,317.2 285.5,320.1 289.7,323.0 294.0,325.9 298.2,328.7 302.4,331.4 306.7,334.2 310.9,336.9 315.1,339.5 319.4,342.2 323.6,344.7 327.8,347.2 332.1,349.7 336.3,352.1 340.5,354.5 344.8,356.8 349.0,359.0 353.2,361.2 357.5,363.2 361.7,365.2 365.9,367.1 370.2,369.0 374.4,370.7 378.6,372.3 382.9,373.9 387.1,375.3 391.3,376.6 395.6,377.7 399.8,378.8 404.0,379.7 408.3,380.5 412.5,381.1 416.7,381.7 421.0,382.0 425.2,382.2 429.4,382.3 433.7,382.2 437.9,382.0 442.1,381.7 446.4,381.1 450.6,380.5 454.8,379.7 459.1,378.8 463.3,377.7 467.5,376.6 471.8,375.3 476.0,373.9 480.2,372.3 484.5,370.7 488.7,369.0 492.9,367.1 497.2,365.2 501.4,363.2 505.6,361.2 509.9,359.0 514.1,356.8 518.3,354.5 522.6,352.1 526.8,349.7 531.0,347.2 535.3,344.7 539.5,342.2 543.7,339.5 548.0,336.9 552.2,334.2 556.4,331.4 560.7,328.7 564.9,325.9 569.1,323.0 573.4,320.1 577.6,317.2 581.8,314.3 586.1,311.4 590.3,308.4 594.5,305.4 598.8,302.4 603.0,299.3 607.2,296.3 611.5,293.2 615.7,290.1 619.9,287.0 624.2,283.9 628.4,280.7 632.6,277.6 636.9,274.4 641.1,271.2 645.3,268.0 649.6,264.8 653.8,261.6 658.0,258.4 662.3,255.2 666.5,251.9 670.7,248.7 675.0,245.4 679.2,242.1 683.4,238.8 687.7,235.6 691.9,232.3 696.1,229.0 700.4,225.7 704.6,222.3 708.8,219.0 713.1,215.7 717.3,212.4 721.5,209.0 725.8,205.7 730.0,202.3" fill="none" stroke="#2ba39b" stroke-width="2.2" stroke-dasharray="1 5" stroke-linecap="round" opacity="0.9"/>
+<line x1="137.3" y1="106.8" x2="137.3" y2="172.1" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="133.3" y1="106.8" x2="141.3" y2="106.8" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="133.3" y1="172.1" x2="141.3" y2="172.1" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="211.4" y1="199.3" x2="211.4" y2="260.9" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="207.4" y1="199.3" x2="215.4" y2="199.3" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="207.4" y1="260.9" x2="215.4" y2="260.9" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="285.5" y1="282.6" x2="285.5" y2="337.0" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="281.5" y1="282.6" x2="289.5" y2="282.6" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="281.5" y1="337.0" x2="289.5" y2="337.0" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="359.6" y1="338.8" x2="359.6" y2="378.7" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="355.6" y1="338.8" x2="363.6" y2="338.8" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="355.6" y1="378.7" x2="363.6" y2="378.7" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="429.4" y1="363.5" x2="429.4" y2="396.1" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="425.4" y1="363.5" x2="433.4" y2="363.5" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="425.4" y1="396.1" x2="433.4" y2="396.1" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="501.4" y1="333.4" x2="501.4" y2="373.2" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="497.4" y1="333.4" x2="505.4" y2="333.4" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="497.4" y1="373.2" x2="505.4" y2="373.2" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="573.4" y1="262.7" x2="573.4" y2="320.7" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="569.4" y1="262.7" x2="577.4" y2="262.7" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="569.4" y1="320.7" x2="577.4" y2="320.7" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="645.3" y1="181.1" x2="645.3" y2="250.0" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="641.3" y1="181.1" x2="649.3" y2="181.1" stroke="#c24a3d" stroke-width="2.4"/>
+<line x1="641.3" y1="250.0" x2="649.3" y2="250.0" stroke="#c24a3d" stroke-width="2.4"/>
+<circle cx="137.3" cy="139.4" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="211.4" cy="230.1" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="285.5" cy="309.8" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="359.6" cy="358.8" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="429.4" cy="379.8" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="501.4" cy="353.3" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="573.4" cy="291.7" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="645.3" cy="215.6" r="5.5" fill="#eef2f5" stroke="#b7c2cc" stroke-width="1.4"/>
+<circle cx="429.4" cy="382.3" r="6.5" fill="#2ba39b" stroke="#ffffff" stroke-width="1.6"/>
+<rect x="572" y="115" width="148" height="30" rx="15" fill="#eaf6f4" stroke="#2ba39b" stroke-width="1"/>
+<text x="646" y="135" font-size="13.5" fill="#2ba39b" font-weight="600" text-anchor="middle">R² ≈ 0.99  ·  good fit</text>
+<line x1="560.0" y1="466.0" x2="429.4" y2="389.3" stroke="#6a7885" stroke-width="1" stroke-dasharray="2 3"/>
+<circle cx="429.4" cy="389.3" r="2.6" fill="#6a7885"/>
+<text x="560.0" y="470.0" font-size="12.5" fill="#28323d" font-weight="600" text-anchor="start">Clean, well-defined minimum</text>
+<text x="560.0" y="486.0" font-size="12.5" fill="#6a7885" font-weight="400" text-anchor="start">the position the fit reports as focus</text>
+<line x1="300.0" y1="466.0" x2="359.6" y2="366.8" stroke="#6a7885" stroke-width="1" stroke-dasharray="2 3"/>
+<circle cx="359.6" cy="366.8" r="2.6" fill="#6a7885"/>
+<text x="300.0" y="470.0" font-size="12.5" fill="#28323d" font-weight="600" text-anchor="start">Points clustered near the bottom</text>
+<text x="300.0" y="486.0" font-size="12.5" fill="#6a7885" font-weight="400" text-anchor="start">give the fit real leverage</text>
+<line x1="150.0" y1="146.0" x2="211.4" y2="199.3" stroke="#6a7885" stroke-width="1" stroke-dasharray="2 3"/>
+<circle cx="211.4" cy="199.3" r="2.6" fill="#6a7885"/>
+<text x="150.0" y="150.0" font-size="12.5" fill="#c24a3d" font-weight="600" text-anchor="start">Error bars = uncertainty</text>
+<text x="150.0" y="166.0" font-size="12.5" fill="#6a7885" font-weight="400" text-anchor="start">long bars mean a noisy night</text>
+<text x="372" y="202" font-size="12.5" fill="#28323d" font-weight="600">Outer points ~2–3× the</text>
+<text x="372" y="218" font-size="12.5" fill="#6a7885">in-focus HFR: well proportioned</text>
+<line x1="595" y1="210" x2="640.3" y2="211.6" stroke="#6a7885" stroke-width="1" stroke-dasharray="2 3"/>
+<circle cx="645.3" cy="215.6" r="2.6" fill="#6a7885"/>
+</svg>
