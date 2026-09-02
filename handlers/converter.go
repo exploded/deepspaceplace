@@ -62,8 +62,7 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// Check if HTMX request
-			if r.Header.Get("HX-Request") == "true" {
+			if wantsPartial(r) {
 				RenderPartial(w, "converter.html", "converter_result.html", data)
 				return
 			}
@@ -87,7 +86,7 @@ func HandleConverter(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			if r.Header.Get("HX-Request") == "true" {
+			if wantsPartial(r) {
 				RenderPartial(w, "converter.html", "converter_result.html", data)
 				return
 			}

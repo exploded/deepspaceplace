@@ -10,6 +10,9 @@
     <button type="submit" class="btn btn-secondary mb-3 ms-2">Logout</button>
 </form>
 
+{{/* :inherited sends the CSRF header with every htmx request below -- the
+     solve and delete buttons have no enclosing form to carry a token field. */}}
+<div hx-headers:inherited='{"X-CSRF-Token": "{{.CSRFToken}}"}'>
 <div class="card mb-3">
     <div class="card-body">
         <h5 class="card-title">Upload Image</h5>
@@ -21,13 +24,12 @@
                     <label for="image" class="form-label">Image file (.jpg, .png)</label>
                     <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png" required>
                 </div>
-                <button type="submit" class="btn btn-primary" hx-disabled-elt="this">Upload</button>
+                <button type="submit" class="btn btn-primary" hx-disable="this">Upload</button>
             </div>
         </form>
         <div id="upload-result"></div>
     </div>
 </div>
-<script>document.body.addEventListener('htmx:configRequest', function(e) { e.detail.headers['X-CSRF-Token'] = '{{.CSRFToken}}'; });</script>
 <table class="table table-striped table-hover">
     <thead>
         <tr>
@@ -73,7 +75,7 @@
                     hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
                     hx-target="#solve-{{.ID}}"
                     hx-swap="innerHTML"
-                    hx-disabled-elt="this">{{if .Ra.Valid}}Re-solve{{else}}Solve{{end}}</button>
+                    hx-disable="this">{{if .Ra.Valid}}Re-solve{{else}}Solve{{end}}</button>
                 {{end}}
             </td>
             <td><span id="overlay-{{.ID}}" class="badge {{.Overlay.BadgeClass}}">{{.Overlay.BadgeText}}</span></td>
@@ -83,11 +85,15 @@
                     hx-post="/admin/delete"
                     hx-vals="{&quot;id&quot;: &quot;{{.ID}}&quot;}"
                     hx-target="#row-{{.ID}}"
-                    hx-swap="outerHTML"
+                    {{/* swapEmpty: the handler answers with an empty 200 and
+                         the empty outerHTML swap is what removes the row.
+                         htmx 4 skips empty main swaps unless told not to. */}}
+                    hx-swap="outerHTML swapEmpty:true"
                     hx-confirm="Delete image {{.ID}}?">Delete</button>
             </td>
         </tr>
         {{end}}
     </tbody>
 </table>
+</div>
 {{end}}

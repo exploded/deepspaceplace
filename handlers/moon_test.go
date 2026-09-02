@@ -123,8 +123,24 @@ func TestMoonPartial(t *testing.T) {
 	if got := strings.Count(body, "<tr>"); got != moonDays {
 		t.Errorf("rows = %d, want %d", got, moonDays)
 	}
-	if w.Header().Get("Vary") != "HX-Request" {
-		t.Errorf("Vary = %q, want HX-Request", w.Header().Get("Vary"))
+	if w.Header().Get("Vary") != "HX-Request, HX-Request-Type" {
+		t.Errorf("Vary = %q, want HX-Request, HX-Request-Type", w.Header().Get("Vary"))
+	}
+}
+
+// TestMoonHistoryRestore: htmx 4 re-fetches the pushed URL on back/forward
+// navigation with HX-Request set but HX-Request-Type "full". That request
+// must get the whole page, not the bare table, or the restored page is empty
+// apart from the rows.
+func TestMoonHistoryRestore(t *testing.T) {
+	moonTestTemplates(t)
+	req := httptest.NewRequest("GET", "https://deepspaceplace.com/moon?loc=perth", nil)
+	req.Header.Set("HX-Request", "true")
+	req.Header.Set("HX-Request-Type", "full")
+	w := httptest.NewRecorder()
+	HandleMoon(w, req)
+	if !strings.Contains(w.Body.String(), "<form") {
+		t.Errorf("history-restore response missing page shell:\n%s", w.Body.String())
 	}
 }
 

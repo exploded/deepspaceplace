@@ -115,6 +115,15 @@ type PageData struct {
 	Description  string
 }
 
+// wantsPartial reports whether the request came from htmx targeting a fragment
+// of the page. HX-Request alone is not enough under htmx 4: back/forward
+// navigation re-fetches the pushed URL with HX-Request set but
+// HX-Request-Type "full", and answering that with a bare fragment would swap
+// a table into an otherwise empty page.
+func wantsPartial(r *http.Request) bool {
+	return r.Header.Get("HX-Request") == "true" && r.Header.Get("HX-Request-Type") != "full"
+}
+
 // Render executes a named template with the "base" definition and the given data.
 func Render(w http.ResponseWriter, name string, data interface{}) {
 	RenderStatus(w, http.StatusOK, name, data)

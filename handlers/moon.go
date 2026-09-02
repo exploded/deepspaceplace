@@ -79,7 +79,8 @@ type MoonData struct {
 
 // HandleMoon renders a 30-day moon rise/set table for the selected location
 // and start date. Bad input falls back to the defaults rather than erroring:
-// htmx won't swap a non-2xx response, so a 400 would look like a dead form.
+// htmx won't swap a non-2xx response (an htmx 2 default this app keeps via
+// the noSwap config in base.html), so a 400 would look like a dead form.
 func HandleMoon(w http.ResponseWriter, r *http.Request) {
 	location := moonLocationByKey["melbourne"]
 	if l, ok := moonLocationByKey[r.URL.Query().Get("loc")]; ok {
@@ -94,8 +95,8 @@ func HandleMoon(w http.ResponseWriter, r *http.Request) {
 
 	data := computeMoonData(location, start)
 
-	w.Header().Set("Vary", "HX-Request")
-	if r.Header.Get("HX-Request") == "true" {
+	w.Header().Set("Vary", "HX-Request, HX-Request-Type")
+	if wantsPartial(r) {
 		RenderPartial(w, "moon.html", "moon_table.html", data)
 		return
 	}

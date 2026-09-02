@@ -16,8 +16,9 @@ const maxPerPage = 120
 // "ID" is what the "Name" button sends -- the ids are the catalog designations
 // (m042, ngc0253b), so ordering by id is the name ordering. It is also the
 // default, but it has to be spelled out here: leaving it off made every click
-// on "Name" a 404, which htmx answers by not swapping at all, so the button
-// looked dead rather than broken.
+// on "Name" a 404, which htmx answers by not swapping at all (kept under
+// htmx 4 by the noSwap config in base.html), so the button looked dead
+// rather than broken.
 var validSorts = map[string]bool{
 	"":     true,
 	"ID":   true,

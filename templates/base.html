@@ -14,6 +14,11 @@
          returning visitor until the cache expires. */}}
     <link href="{{asset "/static/css/bootstrap.css"}}" rel="stylesheet">
     <link href="{{asset "/static/css/dsp.css"}}" rel="stylesheet">
+    {{/* htmx 4 swaps every response except 204/304 by default. The handlers
+         here deliberately answer bad input with a 200 fallback and reserve
+         non-2xx for "don't touch the page" (see HandleMoon, HandleGallery),
+         so opt 4xx/5xx out of swapping to keep that contract. */}}
+    <meta name="htmx-config" content='{"noSwap": [204, 304, "4xx", "5xx"]}'>
     <script src="{{asset "/static/js/htmx.min.js"}}"></script>
     <title>{{if .}}{{if .Title}}{{.Title}} - {{end}}{{end}}Deep Space Place</title>
     {{if .}}{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}{{end}}
