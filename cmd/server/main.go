@@ -226,6 +226,13 @@ func main() {
 	mux.Handle("/meteor/", http.StripPrefix("/meteor/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "meteor"))))))
 	mux.Handle("/data/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 
+	// Night sky transparency reports, published into reports/ by skyq (scp
+	// from the observatory). Deliberately NOT wrapped in CacheStaticAssets:
+	// index.html is regenerated every morning and a night's report can be
+	// re-published, so a 7-day immutable cache would pin stale pages.
+	mux.Handle("/reports/", http.StripPrefix("/reports/", http.FileServer(http.Dir(filepath.Join(path, "reports")))))
+	mux.Handle("/reports", http.RedirectHandler("/reports/", http.StatusMovedPermanently))
+
 	// Egypt field record (standalone page)
 	mux.HandleFunc("/egypt", handlers.HandleEgypt)
 	mux.Handle("/egypt/", http.StripPrefix("/egypt/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "egypt"))))))
