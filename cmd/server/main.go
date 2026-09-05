@@ -227,10 +227,11 @@ func main() {
 	mux.Handle("/data/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 
 	// Night sky transparency reports, published into reports/ by skyq (scp
-	// from the observatory). Deliberately NOT wrapped in CacheStaticAssets:
-	// index.html is regenerated every morning and a night's report can be
-	// re-published, so a 7-day immutable cache would pin stale pages.
-	mux.Handle("/reports/", http.StripPrefix("/reports/", http.FileServer(http.Dir(filepath.Join(path, "reports")))))
+	// from the observatory). handlers.Reports adds the site navigation to
+	// each page on the way out and sets its own cache headers: index.html is
+	// regenerated every morning and a night's report can be re-published, so
+	// the 7-day immutable cache would pin stale pages.
+	mux.Handle("/reports/", http.StripPrefix("/reports/", handlers.Reports(filepath.Join(path, "reports"))))
 	mux.Handle("/reports", http.RedirectHandler("/reports/", http.StatusMovedPermanently))
 
 	// Egypt field record (standalone page)

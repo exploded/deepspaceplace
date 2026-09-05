@@ -40,6 +40,7 @@ Pure Go HTTP server (no framework, standard `net/http`) in `cmd/server/main.go`.
 - **converter.go** — `/converter` RA/Dec decimal ↔ HMS/DMS conversion (server-side math, HTMX response)
 - **moon.go** — `/moon` 30-day rise/set forecast with date + location selectors (IANA zones via `time/tzdata`, so DST is correct) using `github.com/exploded/riseset`. HTMX partial `moon_table.html`
 - **weather.go** — `/weather` + `/api/bom-satellite` proxy (fetches BoM satellite images server-side)
+- **reports.go** — `/reports/` serves the skyq night reports (scp-published into `reports/`, gitignored) and injects the site header into each HTML page on the way out; `no-cache` + `Last-Modified`, never the 7-day immutable cache
 - **admin.go** — Cookie-based auth, CRUD for images. Protected by `adminAuth` middleware, password from `.env`
 - **middleware.go** — RequestLogger, SecurityHeaders, CacheStaticAssets (7-day immutable for `/static/`)
 
