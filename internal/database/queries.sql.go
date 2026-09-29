@@ -1366,53 +1366,42 @@ UPDATE images SET
     henize = ?, gum = ?, lbn = ?, common_name = ?,
     name = ?, filename = ?, thumbnail = ?, type = ?, camera = ?,
     scope = ?, mount = ?, guiding = ?, exposure = ?, location = ?,
-    date = ?, notes = ?, blink = ?, corrector = ?,
-    ra = ?, dec = ?, pixscale = ?, radius = ?,
-    width_arcsec = ?, height_arcsec = ?,
-    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?
+    date = ?, notes = ?, blink = ?, corrector = ?
 WHERE id = ?
 `
 
 type UpdateImageParams struct {
-	Archive      string          `json:"archive"`
-	Messier      string          `json:"messier"`
-	Ngc          string          `json:"ngc"`
-	Ic           string          `json:"ic"`
-	Rcw          string          `json:"rcw"`
-	Sh2          string          `json:"sh2"`
-	Henize       string          `json:"henize"`
-	Gum          string          `json:"gum"`
-	Lbn          string          `json:"lbn"`
-	CommonName   string          `json:"common_name"`
-	Name         string          `json:"name"`
-	Filename     string          `json:"filename"`
-	Thumbnail    string          `json:"thumbnail"`
-	Type         string          `json:"type"`
-	Camera       string          `json:"camera"`
-	Scope        string          `json:"scope"`
-	Mount        string          `json:"mount"`
-	Guiding      string          `json:"guiding"`
-	Exposure     string          `json:"exposure"`
-	Location     string          `json:"location"`
-	Date         string          `json:"date"`
-	Notes        string          `json:"notes"`
-	Blink        string          `json:"blink"`
-	Corrector    string          `json:"corrector"`
-	Ra           sql.NullFloat64 `json:"ra"`
-	Dec          sql.NullFloat64 `json:"dec"`
-	Pixscale     sql.NullFloat64 `json:"pixscale"`
-	Radius       sql.NullFloat64 `json:"radius"`
-	WidthArcsec  sql.NullFloat64 `json:"width_arcsec"`
-	HeightArcsec sql.NullFloat64 `json:"height_arcsec"`
-	Fieldw       sql.NullFloat64 `json:"fieldw"`
-	Fieldh       sql.NullFloat64 `json:"fieldh"`
-	Orientation  sql.NullFloat64 `json:"orientation"`
-	Solved       string          `json:"solved"`
-	Parity       sql.NullFloat64 `json:"parity"`
-	ID           string          `json:"id"`
+	Archive    string `json:"archive"`
+	Messier    string `json:"messier"`
+	Ngc        string `json:"ngc"`
+	Ic         string `json:"ic"`
+	Rcw        string `json:"rcw"`
+	Sh2        string `json:"sh2"`
+	Henize     string `json:"henize"`
+	Gum        string `json:"gum"`
+	Lbn        string `json:"lbn"`
+	CommonName string `json:"common_name"`
+	Name       string `json:"name"`
+	Filename   string `json:"filename"`
+	Thumbnail  string `json:"thumbnail"`
+	Type       string `json:"type"`
+	Camera     string `json:"camera"`
+	Scope      string `json:"scope"`
+	Mount      string `json:"mount"`
+	Guiding    string `json:"guiding"`
+	Exposure   string `json:"exposure"`
+	Location   string `json:"location"`
+	Date       string `json:"date"`
+	Notes      string `json:"notes"`
+	Blink      string `json:"blink"`
+	Corrector  string `json:"corrector"`
+	ID         string `json:"id"`
 }
 
 // Admin: update image
+// Leaves solved and the astrometry columns alone: the solver owns them, and an
+// edit form opened mid-solve would otherwise write its stale copy back over a
+// result that landed while it was open.
 func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) error {
 	_, err := q.db.ExecContext(ctx, updateImage,
 		arg.Archive,
@@ -1439,19 +1428,24 @@ func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) error 
 		arg.Notes,
 		arg.Blink,
 		arg.Corrector,
-		arg.Ra,
-		arg.Dec,
-		arg.Pixscale,
-		arg.Radius,
-		arg.WidthArcsec,
-		arg.HeightArcsec,
-		arg.Fieldw,
-		arg.Fieldh,
-		arg.Orientation,
-		arg.Solved,
-		arg.Parity,
 		arg.ID,
 	)
+	return err
+}
+
+const updateImageParity = `-- name: UpdateImageParity :exec
+UPDATE images SET parity = ? WHERE id = ?
+`
+
+type UpdateImageParityParams struct {
+	Parity sql.NullFloat64 `json:"parity"`
+	ID     string          `json:"id"`
+}
+
+// Parity is the one solver column meant to be corrected by hand (a flipped
+// overlay), so it gets its own write, issued only when the form changed it.
+func (q *Queries) UpdateImageParity(ctx context.Context, arg UpdateImageParityParams) error {
+	_, err := q.db.ExecContext(ctx, updateImageParity, arg.Parity, arg.ID)
 	return err
 }
 

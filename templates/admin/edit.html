@@ -134,45 +134,47 @@
         </div>
         <div class="col-md-4">
             <label class="form-label">Solved</label>
-            <input type="text" class="form-control" name="solved" value="{{.Solved}}">
+            <input type="text" class="form-control" name="solved" value="{{.Solved}}" {{if .ID}}disabled{{end}}>
         </div>
     </div>
     <h4>Plate-Solve Data</h4>
+    {{if .ID}}<p class="form-text">Set by the plate solver and not saved from this form. Use Solve on the admin list to change them.</p>{{end}}
     <div class="row mb-3">
         <div class="col-md-4">
             <label class="form-label">RA</label>
-            <input type="text" class="form-control" name="ra" value="{{if .Ra.Valid}}{{.Ra.Float64}}{{end}}">
+            <input type="text" class="form-control" name="ra" value="{{if .Ra.Valid}}{{.Ra.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
         <div class="col-md-4">
             <label class="form-label">DEC</label>
-            <input type="text" class="form-control" name="dec" value="{{if .Dec.Valid}}{{.Dec.Float64}}{{end}}">
+            <input type="text" class="form-control" name="dec" value="{{if .Dec.Valid}}{{.Dec.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
         <div class="col-md-4">
             <label class="form-label">Pixel Scale</label>
-            <input type="text" class="form-control" name="pixscale" value="{{if .Pixscale.Valid}}{{.Pixscale.Float64}}{{end}}">
+            <input type="text" class="form-control" name="pixscale" value="{{if .Pixscale.Valid}}{{.Pixscale.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
     </div>
     <div class="row mb-3">
         <div class="col-md-3">
             <label class="form-label">Field W</label>
-            <input type="text" class="form-control" name="fieldw" value="{{if .Fieldw.Valid}}{{.Fieldw.Float64}}{{end}}">
+            <input type="text" class="form-control" name="fieldw" value="{{if .Fieldw.Valid}}{{.Fieldw.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
         <div class="col-md-3">
             <label class="form-label">Field H</label>
-            <input type="text" class="form-control" name="fieldh" value="{{if .Fieldh.Valid}}{{.Fieldh.Float64}}{{end}}">
+            <input type="text" class="form-control" name="fieldh" value="{{if .Fieldh.Valid}}{{.Fieldh.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
         <div class="col-md-3">
             <label class="form-label">Orientation</label>
-            <input type="text" class="form-control" name="orientation" value="{{if .Orientation.Valid}}{{.Orientation.Float64}}{{end}}">
+            <input type="text" class="form-control" name="orientation" value="{{if .Orientation.Valid}}{{.Orientation.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
         <div class="col-md-3">
             <label class="form-label">Radius</label>
-            <input type="text" class="form-control" name="radius" value="{{if .Radius.Valid}}{{.Radius.Float64}}{{end}}">
+            <input type="text" class="form-control" name="radius" value="{{if .Radius.Valid}}{{.Radius.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
     </div>
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Parity</label>
+            <input type="hidden" name="parity_orig" value="{{if .Parity.Valid}}{{if lt .Parity.Float64 0.0}}-1{{else}}1{{end}}{{end}}">
             <select class="form-select" name="parity">
                 <option value="" {{if not .Parity.Valid}}selected{{end}}>Unknown (assume normal)</option>
                 <option value="1" {{if and .Parity.Valid (ge .Parity.Float64 0.0)}}selected{{end}}>Normal &mdash; north up, east left</option>
@@ -187,11 +189,11 @@
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Width (arcsec)</label>
-            <input type="text" class="form-control" name="width_arcsec" value="{{if .WidthArcsec.Valid}}{{.WidthArcsec.Float64}}{{end}}">
+            <input type="text" class="form-control" name="width_arcsec" value="{{if .WidthArcsec.Valid}}{{.WidthArcsec.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
         <div class="col-md-6">
             <label class="form-label">Height (arcsec)</label>
-            <input type="text" class="form-control" name="height_arcsec" value="{{if .HeightArcsec.Valid}}{{.HeightArcsec.Float64}}{{end}}">
+            <input type="text" class="form-control" name="height_arcsec" value="{{if .HeightArcsec.Valid}}{{.HeightArcsec.Float64}}{{end}}" {{if .ID}}disabled{{end}}>
         </div>
     </div>
     <button type="submit" class="btn btn-primary">Save</button>

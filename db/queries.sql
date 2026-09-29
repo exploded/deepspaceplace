@@ -173,17 +173,22 @@ INSERT INTO images (
 );
 
 -- Admin: update image
+-- Leaves solved and the astrometry columns alone: the solver owns them, and an
+-- edit form opened mid-solve would otherwise write its stale copy back over a
+-- result that landed while it was open.
 -- name: UpdateImage :exec
 UPDATE images SET
     archive = ?, messier = ?, ngc = ?, ic = ?, rcw = ?, sh2 = ?,
     henize = ?, gum = ?, lbn = ?, common_name = ?,
     name = ?, filename = ?, thumbnail = ?, type = ?, camera = ?,
     scope = ?, mount = ?, guiding = ?, exposure = ?, location = ?,
-    date = ?, notes = ?, blink = ?, corrector = ?,
-    ra = ?, dec = ?, pixscale = ?, radius = ?,
-    width_arcsec = ?, height_arcsec = ?,
-    fieldw = ?, fieldh = ?, orientation = ?, solved = ?, parity = ?
+    date = ?, notes = ?, blink = ?, corrector = ?
 WHERE id = ?;
+
+-- Parity is the one solver column meant to be corrected by hand (a flipped
+-- overlay), so it gets its own write, issued only when the form changed it.
+-- name: UpdateImageParity :exec
+UPDATE images SET parity = ? WHERE id = ?;
 
 -- Admin: update plate-solve results
 -- name: UpdateImagePlateSolve :exec

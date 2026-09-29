@@ -430,7 +430,9 @@ func HandleAdminSolveStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if img.Solved == "p" {
+	// A 'p' without a submission id is orphaned -- no watcher will ever
+	// settle it -- so draw it as unsolved and offer the button.
+	if img.Solved == "p" && img.SolveSubid.Valid {
 		writeSolveCell(w, solveCell{ID: id, Class: "info", Msg: "Solving…", Polling: true})
 		return
 	}

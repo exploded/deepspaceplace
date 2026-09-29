@@ -237,17 +237,25 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 			Scope: f.Scope, Mount: f.Mount, Guiding: f.Guiding,
 			Exposure: f.Exposure, Location: f.Location, Date: f.Date,
 			Notes: f.Notes, Blink: f.Blink, Corrector: f.Corrector,
-			Solved: f.Solved, ID: r.FormValue("id"),
-			Ra: f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
-			WidthArcsec: f.WidthArcsec, HeightArcsec: f.HeightArcsec,
-			Fieldw: f.Fieldw, Fieldh: f.Fieldh, Orientation: f.Orientation,
-			Parity: f.Parity,
+			ID: r.FormValue("id"),
 		}
 
 		if err := DB.UpdateImage(ctx, params); err != nil {
 			slog.Error("Error updating image", "error", err)
 			http.Error(w, "Error updating image", http.StatusInternalServerError)
 			return
+		}
+
+		// Compare against the value the form was drawn with, not the row: an
+		// untouched select must not clobber a parity the solver wrote since.
+		if r.FormValue("parity") != r.FormValue("parity_orig") {
+			if err := DB.UpdateImageParity(ctx, database.UpdateImageParityParams{
+				Parity: f.Parity, ID: r.FormValue("id"),
+			}); err != nil {
+				slog.Error("Error updating parity", "error", err)
+				http.Error(w, "Error updating image", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		if r.Header.Get("HX-Request") == "true" {

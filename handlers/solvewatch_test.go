@@ -266,7 +266,8 @@ func TestAdminListShowsPendingRowAsPolling(t *testing.T) {
 		CSRFToken string
 	}{
 		Images: []adminImageRow{{
-			Image:   database.Image{ID: "lovejoy1", Filename: "lovejoy1.jpg", Solved: "p"},
+			Image: database.Image{ID: "lovejoy1", Filename: "lovejoy1.jpg", Solved: "p",
+				SolveSubid: sql.NullInt64{Int64: 15814827, Valid: true}},
 			Overlay: OverlayStatus{Reason: "never solved", Resolvable: true},
 		}},
 	})
@@ -280,6 +281,76 @@ func TestAdminListShowsPendingRowAsPolling(t *testing.T) {
 	}
 	if strings.Contains(body, "/admin/platesolve") {
 		t.Errorf("pending row offers a solve, which would submit a second job\ngot: %s", body)
+	}
+}
+
+// TestAdminListOffersSolveForOrphanedPendingRow covers a row at 'p' with no
+// submission id. Nothing watches it, so a spinner would poll forever and the
+// row could never be solved again from the list.
+func TestAdminListOffersSolveForOrphanedPendingRow(t *testing.T) {
+	tmpl, err := template.New("list.html").Funcs(TemplateFuncs).
+		ParseFiles(filepath.Join("..", "templates", "admin", "list.html"))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.ExecuteTemplate(&buf, "content", struct {
+		Images    []adminImageRow
+		CSRFToken string
+	}{
+		Images: []adminImageRow{{
+			Image:   database.Image{ID: "lovejoy1", Filename: "lovejoy1.jpg", Solved: "p"},
+			Overlay: OverlayStatus{Reason: "never solved", Resolvable: true},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	body := buf.String()
+
+	if strings.Contains(body, "/admin/solvestatus") {
+		t.Errorf("orphaned row polls a solve nothing is watching\ngot: %s", body)
+	}
+	if !strings.Contains(body, "/admin/platesolve") {
+		t.Errorf("orphaned row offers no way to solve it\ngot: %s", body)
+	}
+}
+
+// TestEditSaveKeepsSolveThatLandedMeanwhile is the race that stranded m16b: the
+// edit form is opened mid-solve, the solve lands, then the form is saved. The
+// save must not write the form's stale solve state back over the result.
+func TestEditSaveKeepsSolveThatLandedMeanwhile(t *testing.T) {
+	id := withTestDB(t)
+
+	adminSessionMu.Lock()
+	prevToken := adminCSRFToken
+	adminCSRFToken = "test-token"
+	adminSessionMu.Unlock()
+	t.Cleanup(func() {
+		adminSessionMu.Lock()
+		adminCSRFToken = prevToken
+		adminSessionMu.Unlock()
+	})
+
+	if err := recordSolve(id, &calibration{RA: 274.699, DEC: -13.808, Parity: 1}); err != nil {
+		t.Fatalf("record solve: %v", err)
+	}
+
+	// What an edit form drawn while the row was still at 'p' sends back.
+	form := strings.NewReader("csrf_token=test-token&id=" + id +
+		"&name=M16&filename=lovejoy1.jpg&solved=p&ra=&dec=&parity=&parity_orig=")
+	req := httptest.NewRequest(http.MethodPost, "/admin/edit", form)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	HandleAdminEdit(httptest.NewRecorder(), req)
+
+	img := readRow(t, id)
+	if img.Name != "M16" {
+		t.Errorf("name = %q, want the edit applied", img.Name)
+	}
+	if img.Solved != "y" || img.Ra.Float64 != 274.699 || !img.Parity.Valid {
+		t.Errorf("solved=%q ra=%v parity=%v -- the save overwrote the solve",
+			img.Solved, img.Ra, img.Parity)
 	}
 }
 

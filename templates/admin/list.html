@@ -54,10 +54,12 @@
             <td>{{.Scope}}</td>
             <td>{{.Date}}</td>
             <td id="solve-{{.ID}}">
-                {{if eq .Solved "p"}}
+                {{if and (eq .Solved "p") .SolveSubid.Valid}}
                 {{/* A solve left running by an earlier page view or a restart.
                      Offering a Solve button here would submit a second job for
-                     a field nova is already working on, so poll instead. */}}
+                     a field nova is already working on, so poll instead.
+                     A 'p' with no submission id has nothing watching it, so it
+                     falls through to the button rather than spinning forever. */}}
                 <span class="badge bg-info">Solving…</span>
                 <span class="spinner-border spinner-border-sm text-info" role="status"
                     hx-get="/admin/solvestatus?id={{.ID}}"
