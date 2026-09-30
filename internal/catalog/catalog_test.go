@@ -41,6 +41,10 @@ func TestKnownObjects(t *testing.T) {
 		{id: "M 8", kind: DSO, ra: 270.9220, dec: -24.3802, common: "Lagoon Nebula", wantSize: true},
 		{id: "NGC 3372", kind: DSO, ra: 161.2855, dec: -59.8667, common: "Carina Nebula", wantSize: true},
 		{id: "NGC 253", kind: DSO, ra: 11.8880, dec: -25.2882, wantSize: true},
+		// OpenNGC has these two the other way round; catalogtool renames them
+		// to match SIMBAD. See renamed in cmd/catalogtool.
+		{id: "NGC 2030", kind: DSO, ra: 83.9194, dec: -66.0350, wantSize: true},
+		{id: "NGC 2029", kind: DSO, ra: 83.7489, dec: -67.5564, wantSize: true},
 		{id: "Sh2-155", kind: Emission, ra: 344.1826, dec: 62.6176, wantSize: true},
 		{id: "RCW 49", kind: Emission, ra: 155.9605, dec: -57.7038, wantSize: true},
 		{id: "LBN 1039", kind: Emission, ra: 106.3327, dec: -12.2602, wantSize: true},

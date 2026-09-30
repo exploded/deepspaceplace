@@ -141,6 +141,17 @@ func formatDesignation(name string) string {
 	return m[1] + " " + m[2] + m[3]
 }
 
+// renamed overrides OpenNGC designations where it departs from the names
+// SIMBAD, TheSkyX and NINA use. OpenNGC swaps NGC 2029 and NGC 2030 on the view
+// that Dreyer's positions for the two were transposed ("NGC coordinates
+// switched with NGC 2029"), so it names the cluster at 5h 35m 34s -66° 02′ as
+// NGC 2029. Everything else calls it NGC 2030, including the image of it on
+// this site, whose overlay labelled its own subject with the other number.
+var renamed = map[string]string{
+	"NGC 2029": "NGC 2030",
+	"NGC 2030": "NGC 2029",
+}
+
 func readOpenNGC(path string) ([]record, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -185,6 +196,9 @@ func readOpenNGC(path string) ([]record, error) {
 		}
 
 		name := formatDesignation(get("Name"))
+		if to, ok := renamed[name]; ok {
+			name = to
+		}
 		id := name
 		var aliases []string
 
