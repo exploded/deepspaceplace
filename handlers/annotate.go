@@ -560,15 +560,22 @@ func buildGrid(sky wcs.WCS, unit float64) ([]GridLine, []GridLabel) {
 		addLine(pts, formatDec(dec, decStep))
 	}
 
-	// Lines of constant right ascension.
-	for raOff := math.Ceil(minRAOff*3600/raStep) * raStep / 3600; raOff <= maxRAOff; raOff += raStep / 3600 {
+	// Lines of constant right ascension. Like declination, these are placed on
+	// absolute multiples of the step. Stepping from the field centre instead
+	// puts every line at RA0 plus a multiple of the step, and the label, which
+	// rounds to the step, then names a value the line is not on: NGC 2030's
+	// grid was 25 seconds of time out, about 230 pixels on the image.
+	// The range may run below zero or past 360 near 0h; every grid step
+	// divides a full turn, so the multiples line up across the wrap and
+	// formatRA normalises the label.
+	for ra := math.Ceil((sky.RA0+minRAOff)*3600/raStep) * raStep / 3600; ra <= sky.RA0+maxRAOff; ra += raStep / 3600 {
 		pts := make([]point, 0, samples+1)
 		for i := 0; i <= samples; i++ {
 			dec := minDec + (maxDec-minDec)*float64(i)/samples
-			x, y, ok := sky.Project(sky.RA0+raOff, dec)
+			x, y, ok := sky.Project(ra, dec)
 			pts = append(pts, point{x, y, ok})
 		}
-		addLine(pts, formatRA(sky.RA0+raOff, raStep))
+		addLine(pts, formatRA(ra, raStep))
 	}
 
 	return lines, labels

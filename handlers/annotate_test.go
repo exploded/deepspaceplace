@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"deepspaceplace/internal/database"
+	"deepspaceplace/internal/wcs"
 )
 
 // writeFixtureImage creates a JPEG of the given size so imageDims has something
@@ -249,6 +250,39 @@ func TestFormatRA(t *testing.T) {
 				t.Errorf("formatRA(%g, %g) = %q, want %q", tc.ra, tc.step, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestGridLabelsNameTheirLines checks that every grid line lies on the
+// coordinate its label names. The field is NGC 2030, centred at 5h 35m 35s:
+// right ascension lines used to be stepped from the centre, so they fell 25
+// seconds of time away from the round values their labels showed.
+func TestGridLabelsNameTheirLines(t *testing.T) {
+	sky, ok := wcs.FromAstrometry(83.896, -66.039, 0.671, 1.3, 1, 6216, 4157)
+	if !ok {
+		t.Fatal("test WCS rejected")
+	}
+	_, labels := buildGrid(sky, math.Hypot(6216, 4157)/1000)
+
+	var nRA, nDec int
+	for _, l := range labels {
+		// Labels sit on their line, so the sky under one is the line's value.
+		// Read at a finer step, it must show the label with zero seconds.
+		ra, dec := sky.Deproject(l.X, l.Y)
+		var got, want string
+		if strings.Contains(l.Text, "h") {
+			nRA++
+			got, want = formatRA(ra, 15), l.Text+" 00s"
+		} else {
+			nDec++
+			got, want = formatDec(dec, 1), l.Text+" 00″"
+		}
+		if got != want {
+			t.Errorf("line labelled %q is at %s", l.Text, got)
+		}
+	}
+	if nRA == 0 || nDec == 0 {
+		t.Fatalf("expected both kinds of grid label, got %d RA and %d Dec", nRA, nDec)
 	}
 }
 
