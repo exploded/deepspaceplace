@@ -185,6 +185,12 @@ UPDATE images SET
     date = ?, notes = ?, blink = ?, corrector = ?
 WHERE id = ?;
 
+-- Renames an image. Refused while a solve is in flight: the watcher writes its
+-- result back by id, so renaming under it would drop the solution on the floor.
+-- No other table references images.id, so this is the whole rename.
+-- name: RenameImage :execrows
+UPDATE images SET id = sqlc.arg(new_id) WHERE id = sqlc.arg(old_id) AND solved <> 'p';
+
 -- Parity is the one solver column meant to be corrected by hand (a flipped
 -- overlay), so it gets its own write, issued only when the form changed it.
 -- name: UpdateImageParity :exec

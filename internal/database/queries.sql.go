@@ -1360,6 +1360,26 @@ func (q *Queries) MarkSolvePending(ctx context.Context, arg MarkSolvePendingPara
 	return err
 }
 
+const renameImage = `-- name: RenameImage :execrows
+UPDATE images SET id = ?1 WHERE id = ?2 AND solved <> 'p'
+`
+
+type RenameImageParams struct {
+	NewID string `json:"new_id"`
+	OldID string `json:"old_id"`
+}
+
+// Renames an image. Refused while a solve is in flight: the watcher writes its
+// result back by id, so renaming under it would drop the solution on the floor.
+// No other table references images.id, so this is the whole rename.
+func (q *Queries) RenameImage(ctx context.Context, arg RenameImageParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, renameImage, arg.NewID, arg.OldID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const updateImage = `-- name: UpdateImage :exec
 UPDATE images SET
     archive = ?, messier = ?, ngc = ?, ic = ?, rcw = ?, sh2 = ?,

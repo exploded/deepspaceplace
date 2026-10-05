@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -228,6 +229,23 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// id_orig is the id the form was drawn with; id is what the user left
+		// in the box. A form without id_orig is not offering a rename.
+		id := strings.TrimSpace(r.FormValue("id"))
+		origID := r.FormValue("id_orig")
+		if origID == "" {
+			origID = id
+		}
+
+		// The rename goes first so that a refused one leaves the row exactly
+		// as it was, rather than half-saved under the old id.
+		if id != origID {
+			if status, msg := renameImage(r, origID, id); status != 0 {
+				renderEditError(w, r, origID, status, msg)
+				return
+			}
+		}
+
 		f := parseImageForm(r)
 		params := database.UpdateImageParams{
 			Archive: f.Archive, Messier: f.Messier, Ngc: f.Ngc, Ic: f.Ic,
@@ -237,7 +255,7 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 			Scope: f.Scope, Mount: f.Mount, Guiding: f.Guiding,
 			Exposure: f.Exposure, Location: f.Location, Date: f.Date,
 			Notes: f.Notes, Blink: f.Blink, Corrector: f.Corrector,
-			ID: r.FormValue("id"),
+			ID: id,
 		}
 
 		if err := DB.UpdateImage(ctx, params); err != nil {
@@ -250,7 +268,7 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 		// untouched select must not clobber a parity the solver wrote since.
 		if r.FormValue("parity") != r.FormValue("parity_orig") {
 			if err := DB.UpdateImageParity(ctx, database.UpdateImageParityParams{
-				Parity: f.Parity, ID: r.FormValue("id"),
+				Parity: f.Parity, ID: id,
 			}); err != nil {
 				slog.Error("Error updating parity", "error", err)
 				http.Error(w, "Error updating image", http.StatusInternalServerError)
@@ -273,12 +291,79 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type editData struct {
-		PageData
-		database.Image
-		CSRFToken string
-	}
 	Render(w, "edit.html", editData{Image: img, CSRFToken: getCSRFToken()})
+}
+
+// editData is the view model for edit.html, shared by the new and edit pages.
+type editData struct {
+	PageData
+	database.Image
+	CSRFToken string
+	Error     string
+}
+
+// renameImage moves the row at oldID to newID. It returns a zero status on
+// success, or the HTTP status and message to show the user when the rename is
+// refused. Nothing is written unless it succeeds.
+func renameImage(r *http.Request, oldID, newID string) (int, string) {
+	ctx := r.Context()
+
+	if !validImageID(newID) {
+		return http.StatusBadRequest, invalidImageIDMsg
+	}
+
+	if _, err := DB.GetImage(ctx, newID); err == nil {
+		return http.StatusConflict, "Another image already has the ID " + newID + "."
+	} else if err != sql.ErrNoRows {
+		slog.Error("Error checking image id", "id", newID, "error", err)
+		return http.StatusInternalServerError, "Error renaming image."
+	}
+
+	n, err := DB.RenameImage(ctx, database.RenameImageParams{NewID: newID, OldID: oldID})
+	if err != nil {
+		slog.Error("Error renaming image", "from", oldID, "to", newID, "error", err)
+		return http.StatusInternalServerError, "Error renaming image."
+	}
+	if n == 0 {
+		// RenameImage skips a row that is mid-solve; the row may also have
+		// been deleted since the form was drawn.
+		return http.StatusConflict,
+			"The ID can't be changed while a plate solve is running. Try again when it finishes."
+	}
+
+	slog.Info("Renamed image", "from", oldID, "to", newID)
+	return 0, ""
+}
+
+// renderEditError redraws the edit page for id from the stored row, with msg
+// shown above the form.
+func renderEditError(w http.ResponseWriter, r *http.Request, id string, status int, msg string) {
+	img, err := DB.GetImage(r.Context(), id)
+	if err != nil {
+		http.Error(w, msg, status)
+		return
+	}
+	RenderStatus(w, status, "edit.html", editData{Image: img, CSRFToken: getCSRFToken(), Error: msg})
+}
+
+const invalidImageIDMsg = "IDs use only letters, digits, dots, hyphens and underscores, up to 64 characters."
+
+// validImageID reports whether id is usable as an image id. It allows what
+// the existing ids use (ngc0253b, sh2-280, lovejoy1) and keeps them safe to
+// drop into a URL unescaped. The length cap matches resolveLegacyID's.
+func validImageID(id string) bool {
+	if id == "" || len(id) > 64 {
+		return false
+	}
+	for _, c := range id {
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9',
+			c == '.', c == '-', c == '_':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
@@ -291,9 +376,15 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		id := strings.TrimSpace(r.FormValue("id"))
+		if !validImageID(id) {
+			http.Error(w, invalidImageIDMsg, http.StatusBadRequest)
+			return
+		}
+
 		f := parseImageForm(r)
 		params := database.CreateImageParams{
-			ID:      r.FormValue("id"),
+			ID:      id,
 			Archive: f.Archive, Messier: f.Messier, Ngc: f.Ngc, Ic: f.Ic,
 			Rcw: f.Rcw, Sh2: f.Sh2, Henize: f.Henize, Gum: f.Gum, Lbn: f.Lbn,
 			CommonName: f.CommonName, Name: f.Name, Filename: f.Filename,
@@ -322,11 +413,6 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type editData struct {
-		PageData
-		database.Image
-		CSRFToken string
-	}
 	Render(w, "edit.html", editData{Image: database.Image{Blink: "na"}, CSRFToken: getCSRFToken()})
 }
 

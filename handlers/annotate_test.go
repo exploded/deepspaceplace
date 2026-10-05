@@ -313,12 +313,7 @@ func TestAdminEditTemplateRenders(t *testing.T) {
 			img := solvedImage()
 			img.Parity = tc.parity
 
-			// Mirrors the view model HandleAdminEdit renders with.
-			data := struct {
-				PageData
-				database.Image
-				CSRFToken string
-			}{Image: img, CSRFToken: "test-token"}
+			data := editData{Image: img, CSRFToken: "test-token"}
 
 			// The file is nothing but {{define}} blocks, so the form lives in
 			// "content" rather than at the template's top level.

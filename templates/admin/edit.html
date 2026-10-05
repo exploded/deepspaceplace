@@ -3,12 +3,19 @@
 {{end}}
 {{define "content"}}
 <h1>{{if .ID}}Edit Image: {{.ID}}{{else}}New Image{{end}}</h1>
+{{if .Error}}<div class="alert alert-danger" role="alert">{{.Error}}</div>{{end}}
 <form method="post" action="{{if .ID}}/admin/edit{{else}}/admin/new{{end}}">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    {{if .ID}}<input type="hidden" name="id_orig" value="{{.ID}}">{{end}}
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">ID</label>
-            <input type="text" class="form-control" name="id" value="{{.ID}}" {{if .ID}}readonly{{end}} required>
+            <input type="text" class="form-control" name="id" value="{{.ID}}" pattern="[A-Za-z0-9._\-]+" maxlength="64" {{if eq .Solved "p"}}readonly{{end}} required>
+            {{if eq .Solved "p"}}
+            <div class="form-text">A plate solve is running. You can change the ID once it finishes.</div>
+            {{else if .ID}}
+            <div class="form-text">Changing the ID changes the image's URL. Links to the old <code>/show?id=</code> address will stop working.</div>
+            {{end}}
         </div>
         <div class="col-md-6">
             <label class="form-label">Name</label>
