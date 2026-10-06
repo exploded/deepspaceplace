@@ -30,6 +30,7 @@ var staticPages = []string{
 	"/lightpollution",
 	"/gso8rcpointing",
 	"/gso8rccollimate",
+	"/newtcollimate",
 	"/abbreviations",
 	"/eq6",
 	"/bahtinovmask",

@@ -175,6 +175,8 @@ func main() {
 		"GSO 8\" RC Pointing Accuracy", "Pointing accuracy tests and results for the GSO 8\" Ritchey-Chretien telescope."))
 	mux.HandleFunc("/gso8rccollimate", handlers.StaticPage("gso8rccollimate.html", "/gso8rccollimate",
 		"GSO 8\" RC Collimation", "Step-by-step collimation guide for the GSO 8\" Ritchey-Chretien telescope."))
+	mux.HandleFunc("/newtcollimate", handlers.StaticPage("newtcollimate.html", "/newtcollimate",
+		"Newtonian Collimation", "Collimating a 12\" f/4 imaging Newtonian with Catseye tools in the daytime, then on defocused stars with the camera in place."))
 	mux.HandleFunc("/abbreviations", handlers.StaticPage("abbreviations.html", "/abbreviations",
 		"Astrophotography Terminology", "Glossary of astrophotography terms, abbreviations, and definitions."))
 	mux.HandleFunc("/eq6", handlers.StaticPage("eq6.html", "/eq6",

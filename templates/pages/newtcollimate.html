@@ -1,0 +1,60 @@
+{{template "base" .}}
+{{define "content"}}
+<h1>Collimating a Newtonian</h1>
+<p>My main scope is a <a href="/at12in">12" f/4 Newtonian</a> with an ASA Wynne corrector and an ASI2600MM.
+    At f/4 there isn't much room for error. If the collimation is a little bit out, the stars will be noticeably out of shape.</p>
+<p>I do the collimation in two stages. First I get it as close as I can in the daytime with the Catseye tools, then I finish it at night using the camera on defocused stars.</p>
+
+<h3>In the daytime</h3>
+<p>The primary has a <a href="https://www.catseyecollimation.com/" target="_blank" rel="noopener noreferrer">Catseye Hotspot</a> in the centre.
+    I start with the secondary, using a Catseye Teletube XLS sight tube to centre it under the focuser and point it at the hotspot.
+    Then I adjust the primary while looking through the <a href="http://www.catseyecollimation.com/autocol.html" target="_blank" rel="noopener noreferrer">Catseye Infinity XLK</a> autocollimator,
+    until the reflections of the centre spot stack up on top of each other.</p>
+<p>The primary cell has 3 spring-loaded pull screws and 3 locking push screws. I've fitted heavy-duty springs to the pull screws, which hold the mirror more firmly than the original ones when the locking screws are disengaged.
+    I back off the locking screws before I start adjusting, then tighten them up again when I'm finished.</p>
+<p>This gets it close, but the last bit has to be done on the stars.</p>
+
+<h3>On the stars</h3>
+<p>With a Wynne corrector, a tilted primary gives the same coma everywhere in the frame.
+    If the scope isn't properly collimated, defocused stars will look like a lopsided donut, with the central shadow off centre.
+    Working out which screw on the primary mirror to turn, which way and how far is the hard part.</p>
+<p>So I wrote an app to make it much easier. The code is on GitHub at <a href="https://github.com/exploded/collimation" target="_blank" rel="noopener noreferrer">exploded/collimation</a>.
+    It's a single executable that runs on the imaging PC alongside N.I.N.A. You use it from a browser, so I can stand at the back of the scope with my phone.</p>
+<p>A measurement takes about a minute. The app moves the focuser 500 steps inside and outside focus, takes three 5-second frames on each side,
+    and stacks the isolated stars. It fits a model of the donut to both stacks and works out where the primary's optical axis lands on the sensor, measured in millimetres.
+    The screen shows that as a dot on a target, along with the screw to turn and by how much.</p>
+<p><img src="/static/images/collimation/collimate.png" alt="The Collimate screen, showing the primary's axis 3.7 mm from the centre of the sensor" class="img-fluid"></p>
+<p>The app doesn't need to know where the screws are or which way the camera is rotated.
+    Put labels A, B and C on the three primary screws and the app asks you to turn each one in sequence.
+    It measures how far the stars move after each turn, and from that it learns what each screw does.
+    From then on it tells you which screws to turn and by how much, rounded to 1/16 of a turn, to get the scope collimated.</p>
+<p>There's also a live mode that loops exposures while you turn the screws, so you can watch the dot move.</p>
+
+<h3>First night</h3>
+<p>On 5 October 2026 it took the primary's axis from 3.7 mm off centre to 0.5 mm.
+    I'm aiming for under 1 mm with f/4 and a corrector over an APS-C sensor.</p>
+<table class="table table-sm w-auto">
+    <thead>
+        <tr><th></th><th>Before</th><th>After</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Axis from centre</td><td>3.7 mm</td><td>0.5 mm</td></tr>
+        <tr><td>Coma (x, y)</td><td>&minus;2.88, +2.30 px</td><td>+0.29, +0.43 px</td></tr>
+        <tr><td>Altitude</td><td>74&deg;</td><td>61&deg;</td></tr>
+    </tbody>
+</table>
+<h4>Before</h4>
+<p>The donuts are lopsided, and all nine regions of the frame show coma pointing the same way. That means the mirror is tilted.</p>
+<p><img src="/static/images/collimation/result-before.png" alt="Before: stacked defocused stars, the fitted model and the difference, with the axis 3.7 mm from centre" class="img-fluid"></p>
+<p><img src="/static/images/collimation/field-before.png" alt="Before: coma in nine regions of the frame, all pointing the same way" class="img-fluid"></p>
+<h4>After</h4>
+<p>The donuts are round. What's left is small and gets bigger towards the edges.
+    That's corrector spacing, not collimation, and the mirror screws can't fix it.</p>
+<p><img src="/static/images/collimation/result-after.png" alt="After: stacked defocused stars with the axis 0.5 mm from centre" class="img-fluid"></p>
+<p><img src="/static/images/collimation/field-after.png" alt="After: coma in nine regions of the frame, small and growing towards the edges" class="img-fluid"></p>
+
+<h3>Try it</h3>
+<p>You need N.I.N.A. with the Advanced API plugin, and the camera, focuser and mount connected in N.I.N.A.
+    I built it for my scope, but the settings aren't specific to it.
+    The <a href="https://github.com/exploded/collimation" target="_blank" rel="noopener noreferrer">README</a> has the build steps and more detail on how the measurement works.</p>
+{{end}}
