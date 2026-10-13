@@ -141,9 +141,11 @@ const layers = {
     constBounds: g.append('g').attr('class', 'layer-const-bounds'),
     ecliptic: g.append('g').attr('class', 'layer-ecliptic'),
     horizon: g.append('g').attr('class', 'layer-horizon'),
-    fov: g.append('g').attr('class', 'layer-fov'),
     dsos: g.append('g').attr('class', 'layer-dsos'),
-    stars: g.append('g').attr('class', 'layer-stars')
+    stars: g.append('g').attr('class', 'layer-stars'),
+    // Our images go on top: a field smaller than a DSO marker would
+    // otherwise sit under it and could not be clicked.
+    fov: g.append('g').attr('class', 'layer-fov')
 };
 
 // Helper: convert GeoJSON coordinates (lon, lat) to RA, Dec
@@ -454,8 +456,11 @@ function drawHorizon() {
 function drawFOV() {
     if (!observations || observations.length === 0) return;
 
+    // Largest fields first, so a small field drawn over a big one stays clickable.
+    const byAreaDesc = observations.slice().sort((a, b) => b.fieldw * b.fieldh - a.fieldw * a.fieldh);
+
     const fovGroup = layers.fov.selectAll('.fov-group')
-        .data(observations)
+        .data(byAreaDesc)
         .enter()
         .append('g')
         .attr('class', 'fov-group');
