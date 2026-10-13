@@ -143,6 +143,14 @@
             <label class="form-label">Solved</label>
             <input type="text" class="form-control" name="solved" value="{{.Solved}}" {{if .ID}}disabled{{end}}>
         </div>
+        <div class="col-md-4">
+            <label class="form-label">Sky map</label>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="skymap_hidden" name="skymap_hidden" value="1" {{if .SkymapHidden}}checked{{end}}>
+                <label class="form-check-label" for="skymap_hidden">Hide on sky map</label>
+            </div>
+            <div class="form-text">For wide fields that would cover other images and objects on the map.</div>
+        </div>
     </div>
     <h4>Plate-Solve Data</h4>
     {{if .ID}}<p class="form-text">Set by the plate solver and not saved from this form. Use Solve on the admin list to change them.</p>{{end}}

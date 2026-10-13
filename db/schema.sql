@@ -55,7 +55,11 @@ CREATE TABLE IF NOT EXISTS images (
     -- expands the "SELECT *" in db/queries.sql into an explicit column list at
     -- generate time, so a column that exists here and not in production makes
     -- every query fail with "no such column". Position is not significant.
-    solve_subid   INTEGER
+    solve_subid   INTEGER,
+    -- 1 keeps the image off /skymap even though it is plate-solved. For wide
+    -- fields (lovejoy1, Milky Way shots) that would otherwise blanket the map
+    -- and hide everything under them.
+    skymap_hidden INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_images_archive ON images(archive);

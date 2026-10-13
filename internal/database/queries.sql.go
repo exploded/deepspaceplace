@@ -72,13 +72,13 @@ INSERT INTO images (
     common_name, name, filename, thumbnail, type, camera, scope, mount,
     guiding, exposure, location, date, notes, blink, corrector,
     ra, dec, pixscale, radius, width_arcsec, height_arcsec,
-    fieldw, fieldh, orientation, solved, parity
+    fieldw, fieldh, orientation, solved, parity, skymap_hidden
 ) VALUES (
     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?
 )
 `
 
@@ -119,6 +119,7 @@ type CreateImageParams struct {
 	Orientation  sql.NullFloat64 `json:"orientation"`
 	Solved       string          `json:"solved"`
 	Parity       sql.NullFloat64 `json:"parity"`
+	SkymapHidden int64           `json:"skymap_hidden"`
 }
 
 // Admin: create image
@@ -160,6 +161,7 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) error 
 		arg.Orientation,
 		arg.Solved,
 		arg.Parity,
+		arg.SkymapHidden,
 	)
 	return err
 }
@@ -175,7 +177,7 @@ func (q *Queries) DeleteImage(ctx context.Context, id string) error {
 }
 
 const getImage = `-- name: GetImage :one
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images WHERE id = ? LIMIT 1
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetImage(ctx context.Context, id string) (Image, error) {
@@ -219,6 +221,7 @@ func (q *Queries) GetImage(ctx context.Context, id string) (Image, error) {
 		&i.Solved,
 		&i.Parity,
 		&i.SolveSubid,
+		&i.SkymapHidden,
 	)
 	return i, err
 }
@@ -362,7 +365,7 @@ func (q *Queries) GetPrevByType(ctx context.Context, arg GetPrevByTypeParams) (s
 }
 
 const listAllImages = `-- name: ListAllImages :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images ORDER BY id
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images ORDER BY id
 `
 
 // Admin: list all images
@@ -413,6 +416,7 @@ func (q *Queries) ListAllImages(ctx context.Context) ([]Image, error) {
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -428,7 +432,7 @@ func (q *Queries) ListAllImages(ctx context.Context) ([]Image, error) {
 }
 
 const listImagesByDateDesc = `-- name: ListImagesByDateDesc :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y'
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -486,6 +490,7 @@ func (q *Queries) ListImagesByDateDesc(ctx context.Context, arg ListImagesByDate
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -501,7 +506,7 @@ func (q *Queries) ListImagesByDateDesc(ctx context.Context, arg ListImagesByDate
 }
 
 const listImagesByDateFilterCamera = `-- name: ListImagesByDateFilterCamera :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND camera = ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -560,6 +565,7 @@ func (q *Queries) ListImagesByDateFilterCamera(ctx context.Context, arg ListImag
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -575,7 +581,7 @@ func (q *Queries) ListImagesByDateFilterCamera(ctx context.Context, arg ListImag
 }
 
 const listImagesByDateFilterNew = `-- name: ListImagesByDateFilterNew :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND date >= ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -635,6 +641,7 @@ func (q *Queries) ListImagesByDateFilterNew(ctx context.Context, arg ListImagesB
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -650,7 +657,7 @@ func (q *Queries) ListImagesByDateFilterNew(ctx context.Context, arg ListImagesB
 }
 
 const listImagesByDateFilterScope = `-- name: ListImagesByDateFilterScope :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND scope = ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -709,6 +716,7 @@ func (q *Queries) ListImagesByDateFilterScope(ctx context.Context, arg ListImage
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -724,7 +732,7 @@ func (q *Queries) ListImagesByDateFilterScope(ctx context.Context, arg ListImage
 }
 
 const listImagesByDateFilterType = `-- name: ListImagesByDateFilterType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND type = ?
 ORDER BY date DESC, id
 LIMIT ? OFFSET ?
@@ -783,6 +791,7 @@ func (q *Queries) ListImagesByDateFilterType(ctx context.Context, arg ListImages
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -798,7 +807,7 @@ func (q *Queries) ListImagesByDateFilterType(ctx context.Context, arg ListImages
 }
 
 const listImagesByID = `-- name: ListImagesByID :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y'
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -857,6 +866,7 @@ func (q *Queries) ListImagesByID(ctx context.Context, arg ListImagesByIDParams) 
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -872,7 +882,7 @@ func (q *Queries) ListImagesByID(ctx context.Context, arg ListImagesByIDParams) 
 }
 
 const listImagesByIDFilterCamera = `-- name: ListImagesByIDFilterCamera :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND camera = ?
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -932,6 +942,7 @@ func (q *Queries) ListImagesByIDFilterCamera(ctx context.Context, arg ListImages
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -947,7 +958,7 @@ func (q *Queries) ListImagesByIDFilterCamera(ctx context.Context, arg ListImages
 }
 
 const listImagesByIDFilterScope = `-- name: ListImagesByIDFilterScope :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND scope = ?
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -1007,6 +1018,7 @@ func (q *Queries) ListImagesByIDFilterScope(ctx context.Context, arg ListImagesB
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -1022,7 +1034,7 @@ func (q *Queries) ListImagesByIDFilterScope(ctx context.Context, arg ListImagesB
 }
 
 const listImagesByIDFilterType = `-- name: ListImagesByIDFilterType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND type = ?
 ORDER BY id
 LIMIT ? OFFSET ?
@@ -1082,6 +1094,7 @@ func (q *Queries) ListImagesByIDFilterType(ctx context.Context, arg ListImagesBy
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -1097,7 +1110,7 @@ func (q *Queries) ListImagesByIDFilterType(ctx context.Context, arg ListImagesBy
 }
 
 const listImagesByType = `-- name: ListImagesByType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y'
 ORDER BY type, id
 LIMIT ? OFFSET ?
@@ -1155,6 +1168,7 @@ func (q *Queries) ListImagesByType(ctx context.Context, arg ListImagesByTypePara
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -1170,7 +1184,7 @@ func (q *Queries) ListImagesByType(ctx context.Context, arg ListImagesByTypePara
 }
 
 const listImagesByTypeFilterType = `-- name: ListImagesByTypeFilterType :many
-SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid FROM images
+SELECT id, archive, messier, ngc, ic, rcw, sh2, henize, gum, lbn, common_name, name, filename, thumbnail, type, camera, scope, mount, guiding, exposure, location, date, notes, blink, corrector, ra, dec, pixscale, radius, width_arcsec, height_arcsec, fieldw, fieldh, orientation, solved, parity, solve_subid, skymap_hidden FROM images
 WHERE archive <> 'Y' AND type = ?
 ORDER BY type, id
 LIMIT ? OFFSET ?
@@ -1229,6 +1243,7 @@ func (q *Queries) ListImagesByTypeFilterType(ctx context.Context, arg ListImages
 			&i.Solved,
 			&i.Parity,
 			&i.SolveSubid,
+			&i.SkymapHidden,
 		); err != nil {
 			return nil, err
 		}
@@ -1246,7 +1261,7 @@ func (q *Queries) ListImagesByTypeFilterType(ctx context.Context, arg ListImages
 const listObservations = `-- name: ListObservations :many
 SELECT id, name, thumbnail, ra, dec, fieldw, fieldh, orientation
 FROM images
-WHERE ra IS NOT NULL AND dec IS NOT NULL
+WHERE ra IS NOT NULL AND dec IS NOT NULL AND skymap_hidden = 0
 `
 
 type ListObservationsRow struct {
@@ -1386,36 +1401,37 @@ UPDATE images SET
     henize = ?, gum = ?, lbn = ?, common_name = ?,
     name = ?, filename = ?, thumbnail = ?, type = ?, camera = ?,
     scope = ?, mount = ?, guiding = ?, exposure = ?, location = ?,
-    date = ?, notes = ?, blink = ?, corrector = ?
+    date = ?, notes = ?, blink = ?, corrector = ?, skymap_hidden = ?
 WHERE id = ?
 `
 
 type UpdateImageParams struct {
-	Archive    string `json:"archive"`
-	Messier    string `json:"messier"`
-	Ngc        string `json:"ngc"`
-	Ic         string `json:"ic"`
-	Rcw        string `json:"rcw"`
-	Sh2        string `json:"sh2"`
-	Henize     string `json:"henize"`
-	Gum        string `json:"gum"`
-	Lbn        string `json:"lbn"`
-	CommonName string `json:"common_name"`
-	Name       string `json:"name"`
-	Filename   string `json:"filename"`
-	Thumbnail  string `json:"thumbnail"`
-	Type       string `json:"type"`
-	Camera     string `json:"camera"`
-	Scope      string `json:"scope"`
-	Mount      string `json:"mount"`
-	Guiding    string `json:"guiding"`
-	Exposure   string `json:"exposure"`
-	Location   string `json:"location"`
-	Date       string `json:"date"`
-	Notes      string `json:"notes"`
-	Blink      string `json:"blink"`
-	Corrector  string `json:"corrector"`
-	ID         string `json:"id"`
+	Archive      string `json:"archive"`
+	Messier      string `json:"messier"`
+	Ngc          string `json:"ngc"`
+	Ic           string `json:"ic"`
+	Rcw          string `json:"rcw"`
+	Sh2          string `json:"sh2"`
+	Henize       string `json:"henize"`
+	Gum          string `json:"gum"`
+	Lbn          string `json:"lbn"`
+	CommonName   string `json:"common_name"`
+	Name         string `json:"name"`
+	Filename     string `json:"filename"`
+	Thumbnail    string `json:"thumbnail"`
+	Type         string `json:"type"`
+	Camera       string `json:"camera"`
+	Scope        string `json:"scope"`
+	Mount        string `json:"mount"`
+	Guiding      string `json:"guiding"`
+	Exposure     string `json:"exposure"`
+	Location     string `json:"location"`
+	Date         string `json:"date"`
+	Notes        string `json:"notes"`
+	Blink        string `json:"blink"`
+	Corrector    string `json:"corrector"`
+	SkymapHidden int64  `json:"skymap_hidden"`
+	ID           string `json:"id"`
 }
 
 // Admin: update image
@@ -1448,6 +1464,7 @@ func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) error 
 		arg.Notes,
 		arg.Blink,
 		arg.Corrector,
+		arg.SkymapHidden,
 		arg.ID,
 	)
 	return err

@@ -292,6 +292,7 @@ func addMissingColumns(db *sql.DB) error {
 	wanted := []struct{ name, definition string }{
 		{"parity", "REAL"},
 		{"solve_subid", "INTEGER"},
+		{"skymap_hidden", "INTEGER NOT NULL DEFAULT 0"},
 	}
 
 	existing := make(map[string]bool)

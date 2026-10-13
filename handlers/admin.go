@@ -255,7 +255,8 @@ func HandleAdminEdit(w http.ResponseWriter, r *http.Request) {
 			Scope: f.Scope, Mount: f.Mount, Guiding: f.Guiding,
 			Exposure: f.Exposure, Location: f.Location, Date: f.Date,
 			Notes: f.Notes, Blink: f.Blink, Corrector: f.Corrector,
-			ID: id,
+			SkymapHidden: f.SkymapHidden,
+			ID:           id,
 		}
 
 		if err := DB.UpdateImage(ctx, params); err != nil {
@@ -396,7 +397,8 @@ func HandleAdminNew(w http.ResponseWriter, r *http.Request) {
 			Ra:     f.Ra, Dec: f.Dec, Pixscale: f.Pixscale, Radius: f.Radius,
 			WidthArcsec: f.WidthArcsec, HeightArcsec: f.HeightArcsec,
 			Fieldw: f.Fieldw, Fieldh: f.Fieldh, Orientation: f.Orientation,
-			Parity: f.Parity,
+			Parity:       f.Parity,
+			SkymapHidden: f.SkymapHidden,
 		}
 
 		if err := DB.CreateImage(ctx, params); err != nil {
@@ -453,6 +455,7 @@ type imageFormFields struct {
 	Ra, Dec, Pixscale, Radius                             sql.NullFloat64
 	WidthArcsec, HeightArcsec                             sql.NullFloat64
 	Fieldw, Fieldh, Orientation, Parity                   sql.NullFloat64
+	SkymapHidden                                          int64
 }
 
 func parseImageForm(r *http.Request) imageFormFields {
@@ -492,7 +495,17 @@ func parseImageForm(r *http.Request) imageFormFields {
 		Fieldh:       parseOptionalFloat(r.FormValue("fieldh")),
 		Orientation:  parseOptionalFloat(r.FormValue("orientation")),
 		Parity:       parseOptionalFloat(r.FormValue("parity")),
+		SkymapHidden: parseCheckbox(r.FormValue("skymap_hidden")),
 	}
+}
+
+// parseCheckbox maps a checkbox to 0 or 1. Browsers send nothing at all for an
+// unticked box, so absence has to mean 0.
+func parseCheckbox(s string) int64 {
+	if s == "" {
+		return 0
+	}
+	return 1
 }
 
 func parseOptionalFloat(s string) sql.NullFloat64 {

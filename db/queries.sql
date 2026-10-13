@@ -150,7 +150,7 @@ LIMIT 1;
 -- name: ListObservations :many
 SELECT id, name, thumbnail, ra, dec, fieldw, fieldh, orientation
 FROM images
-WHERE ra IS NOT NULL AND dec IS NOT NULL;
+WHERE ra IS NOT NULL AND dec IS NOT NULL AND skymap_hidden = 0;
 
 -- Admin: list all images
 -- name: ListAllImages :many
@@ -163,13 +163,13 @@ INSERT INTO images (
     common_name, name, filename, thumbnail, type, camera, scope, mount,
     guiding, exposure, location, date, notes, blink, corrector,
     ra, dec, pixscale, radius, width_arcsec, height_arcsec,
-    fieldw, fieldh, orientation, solved, parity
+    fieldw, fieldh, orientation, solved, parity, skymap_hidden
 ) VALUES (
     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?, ?,
     ?, ?, ?, ?, ?, ?,
-    ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?
 );
 
 -- Admin: update image
@@ -182,7 +182,7 @@ UPDATE images SET
     henize = ?, gum = ?, lbn = ?, common_name = ?,
     name = ?, filename = ?, thumbnail = ?, type = ?, camera = ?,
     scope = ?, mount = ?, guiding = ?, exposure = ?, location = ?,
-    date = ?, notes = ?, blink = ?, corrector = ?
+    date = ?, notes = ?, blink = ?, corrector = ?, skymap_hidden = ?
 WHERE id = ?;
 
 -- Renames an image. Refused while a solve is in flight: the watcher writes its

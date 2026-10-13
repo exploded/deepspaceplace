@@ -46,4 +46,5 @@ type Image struct {
 	Solved       string          `json:"solved"`
 	Parity       sql.NullFloat64 `json:"parity"`
 	SolveSubid   sql.NullInt64   `json:"solve_subid"`
+	SkymapHidden int64           `json:"skymap_hidden"`
 }

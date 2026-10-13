@@ -119,6 +119,45 @@ func TestEditRenameRefused(t *testing.T) {
 	}
 }
 
+// Ticking "Hide on sky map" takes a solved image off /skymap, and saving the
+// form again with the box unticked -- which sends no field at all -- puts it
+// back.
+func TestEditSkymapHidden(t *testing.T) {
+	id := withTestDB(t)
+	withAdminEdit(t)
+	if _, err := sqlConn(t).Exec(`UPDATE images SET ra = 180, dec = -60`); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	onSkymap := func() bool {
+		t.Helper()
+		rows, err := DB.ListObservations(context.Background())
+		if err != nil {
+			t.Fatalf("list observations: %v", err)
+		}
+		for _, r := range rows {
+			if r.ID == id {
+				return true
+			}
+		}
+		return false
+	}
+
+	if !onSkymap() {
+		t.Fatal("solved image missing from the sky map before it was hidden")
+	}
+
+	postEdit(t, url.Values{"id": {id}, "skymap_hidden": {"1"}})
+	if onSkymap() {
+		t.Error("image still on the sky map after ticking Hide on sky map")
+	}
+
+	postEdit(t, url.Values{"id": {id}})
+	if !onSkymap() {
+		t.Error("image still hidden after unticking Hide on sky map")
+	}
+}
+
 // sqlConn opens a second handle on withTestDB's shared in-memory database, for
 // test setup the generated queries don't cover.
 func sqlConn(t *testing.T) *sql.DB {
