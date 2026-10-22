@@ -29,7 +29,7 @@ Requires `.env` file (copy `.env.example`). Variables: `PORT` (default 8485), `P
 
 ## Architecture
 
-Pure Go HTTP server (no framework, standard `net/http`) in `cmd/server/main.go`. Port 8485 locally, 8686 in production behind nginx.
+Pure Go HTTP server (no framework, standard `net/http`) in `cmd/server/main.go`. Port 8485 locally, 8686 in production behind Caddy.
 
 ### Routing & Handlers (`handlers/`)
 
