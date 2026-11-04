@@ -264,57 +264,21 @@ Same technique. NXT v2.3.3, AI v3:
 Linear-stage order is **BXT → GradientCorrection → NXT**, applied identically to
 all six via the container.
 
-## Step 11. Save, overwriting the `_autocrop` files
-
-Saved back over the original `_autocrop` filenames.
-
-> **Consequence:** after this step, `_autocrop` no longer means "WBPP's raw
-> autocrop output" — it means "processed". Easy to forget. Consider saving under
-> new names instead.
-
 ---
 
 # Part 3 — Astrometry
 
-## Step 12. Check whether the panels are already solved
+## Step 11. Batch ImageSolver
 
-WBPP may have plate-solved the masters already, in which case ImageSolver is
-unnecessary.
+Open **Script → Astrometry → ImageSolver**. The six processed files are added to
+the **List of files** automatically.
 
-> **Gotcha — the coordinate readout is not a reliable test.** Hovering the cursor
-> over a solved image *should* show RA/Dec in the status bar, but it did not in this
-> session even though the images were correctly solved. Considerable time was lost
-> chasing this.
->
-![XISF properties showing astrometric solution](images/12-xisf-properties.jpg)
+| Setting | Value |
+|---------|-------|
+| Output directory | `master/mosaic` |
+| Output file suffix | `_ast` |
 
-> **Check XISF properties instead.** Right-click the image → the properties viewer.
-> Look for the `PCL/AstrometricSolution` tree. If `Catalog`, `LinearTransformationMatrix`,
-> `ReferenceCelestialCoordinates` etc. are present, it's solved.
->
-> Other functional test: Script → Render → AnnotateImage. If it renders, the
-> solution is real.
->
-> The Celestial Coordinates readout menu (below) being correctly configured is
-> **not** sufficient — it was set to Equatorial here and still showed nothing.
-
-![Celestial coordinates readout menu](images/13-celestial-coordinates-menu.jpg)
-
-Useful XISF properties to know:
-
-```
-Instrument/Sensor/XPixelSize          3.76
-Instrument/Telescope/FocalLength      1.156598   ← METRES, not mm
-Instrument/Camera/XBinning            1
-Observation/Center/RA, /Dec
-PCL/AstrometricSolution/...
-```
-
-The astrometry survived WBPP autocrop *and* the BXT/GC/NXT chain intact.
-
-## Step 13. Batch ImageSolver
-
-Run over the six processed files. Output gets an `_ast` suffix.
+![ImageSolver dialog (screenshot from a different target)](images/29-imagesolver.jpg)
 
 Enable distortion correction. Solutions used Gaia DR3, DDM thin plate spline,
 Gnomonic projection, ICRS.
@@ -342,7 +306,7 @@ reports both. This run:
 
 # Part 4 — Reprojection onto a common grid
 
-## Step 14. MosaicByCoordinates
+## Step 12. MosaicByCoordinates
 
 **Script → Mosaic → MosaicByCoordinates** (v1.4.2).
 
@@ -422,7 +386,7 @@ step removes.
 
 # Part 5 — Trimming
 
-## Step 15. TrimMosaicTile
+## Step 13. TrimMosaicTile
 
 **Script → Mosaic → TrimMosaicTile** (v4.0.1).
 
@@ -477,14 +441,14 @@ because these get picked out of dropdowns next.
 
 # Part 6 — The join
 
-## Step 16. PhotometricMosaic
+## Step 14. PhotometricMosaic
 
 **Script → Mosaic → PhotometricMosaic** (v4.0.3). Also view-based.
 
 **Three separate runs, one per filter.** Reference and target must be the same
 filter — the scale factor is derived photometrically from stars in the overlap, and
 a cross-filter comparison would be meaningless. Cross-filter matching happens later
-at the palette stage. The three mosaics stay on the common grid from Step 14, which
+at the palette stage. The three mosaics stay on the common grid from Step 12, which
 is what lets them combine without further registration.
 
 **Use the same panel as reference across all three filters.**
@@ -507,7 +471,7 @@ is what lets them combine without further registration.
 The focal length field is **integer only** — 1156, not 1156.6. The rounding is
 immaterial (pixel scale still resolves to 0.67).
 
-See the Step 14 gotcha for why the offered values are wrong.
+See the Step 12 gotcha for why the offered values are wrong.
 
 ### Settings (defaults, unchanged)
 
@@ -566,7 +530,7 @@ The OIII run uses identical settings with the O views selected:
 **If the join isn't clean,** the first thing to change is Mosaic Join → Combination
 Mode: try Blend or Average instead of Overlay.
 
-## Step 17. Rename the mosaic views
+## Step 15. Rename the mosaic views
 
 PhotometricMosaic outputs generic identifiers in run order. Double-click the view
 identifier in the title bar (or Image → Set Image Identifier):
@@ -589,7 +553,7 @@ Leave **Update history** ticked.
 
 # Part 7 — Crop
 
-## Step 18. DynamicCrop, applied identically to all three
+## Step 16. DynamicCrop, applied identically to all three
 
 **All three mosaics must receive the exact same crop.** Different dimensions will
 break channel combination.
@@ -628,7 +592,7 @@ no need to cut it. What's being removed is the interpolated boundary.
 
 ---
 
-## Step 19. Rotate for composition
+## Step 17. Rotate for composition
 
 The mosaic comes out portrait (6015 × 7250) because the panels were stacked in
 declination. Rotate for aesthetics.
@@ -641,11 +605,11 @@ untouched. Rotation would resample and soften the image for no benefit.
 
 Result: 7250 × 6015 landscape.
 
-## Step 20. Re-solve
+## Step 18. Re-solve
 
 Run **ImageSolver** on the rotated mosaic.
 
-The astrometric solution was already lost at the DynamicCrop step (Step 18), so
+The astrometric solution was already lost at the DynamicCrop step (Step 16), so
 nothing is being discarded here — this re-establishes it on the finished image in
 its final orientation.
 
@@ -690,16 +654,14 @@ See `pixinsight-standard-sho-workflow.md` for settings.
 8.  Drag container triangle → BlurXTerminator
 9.  Drag container triangle → GradientCorrection
 10. Drag container triangle → NoiseXTerminator
-11. Save
-12. Confirm astrometric solution via XISF PROPERTIES (not cursor readout)
-13. Batch ImageSolver if needed → _ast
-14. MosaicByCoordinates — ALL SIX FILES IN ONE RUN → _ra
-15. TrimMosaicTile, 5 px, each view individually, save → _trim
-16. PhotometricMosaic ×3 (H+H, O+O, S+S) — FIX IMAGE SCALE TO 3.76 / 1156
-17. Rename views to H_Mosaic / O_Mosaic / S_Mosaic
-18. DynamicCrop via desktop icon, applied to all three
-19. FastRotation — 90° counter-clockwise (lossless)
-20. ImageSolver on the rotated mosaic
+11. Batch ImageSolver → _ast
+12. MosaicByCoordinates — ALL SIX FILES IN ONE RUN → _ra
+13. TrimMosaicTile, 5 px, each view individually, save → _trim
+14. PhotometricMosaic ×3 (H+H, O+O, S+S) — FIX IMAGE SCALE TO 3.76 / 1156
+15. Rename views to H_Mosaic / O_Mosaic / S_Mosaic
+16. DynamicCrop via desktop icon, applied to all three
+17. FastRotation — 90° counter-clockwise (lossless)
+18. ImageSolver on the rotated mosaic
 → continue with the standard workflow from StarXTerminator
 ```
 
@@ -710,16 +672,13 @@ See `pixinsight-standard-sho-workflow.md` for settings.
 | # | Gotcha |
 |---|--------|
 | 1 | View IDs lose the panel number; `_1` suffix means "opened second", not "panel 2" |
-| 2 | Overwriting `_autocrop` files makes the suffix misleading |
-| 3 | Cursor coordinate readout does **not** reliably indicate a solved image — check XISF properties |
-| 4 | `FocalLength` in XISF properties is in **metres** |
-| 5 | A solve reporting no surface residuals is unvalidated — treat with suspicion |
-| 6 | **Run MosaicByCoordinates on all filters at once** or the grids won't match |
-| 7 | MosaicByCoordinates regenerates FITS keywords wrongly (7.40 µm / 2277 mm) |
-| 8 | TrimMosaicTile is view-based; ImageContainer cannot batch-save it |
-| 9 | Trimmed edges are stepped, not straight — that's fine, hard is what matters |
-| 10 | PhotometricMosaic dialog is modal; Exit before inspecting |
-| 11 | PhotometricMosaic focal length field is integer only |
-| 12 | Crop deletes the join mask — safe, click Yes |
-| 13 | Cropping loses the astrometric solution — re-solve at the end, after rotating |
-| 14 | Use FastRotation (not Rotation) for 90/180° — lossless, no resampling |
+| 2 | A solve reporting no surface residuals is unvalidated — treat with suspicion |
+| 3 | **Run MosaicByCoordinates on all filters at once** or the grids won't match |
+| 4 | MosaicByCoordinates regenerates FITS keywords wrongly (7.40 µm / 2277 mm) |
+| 5 | TrimMosaicTile is view-based; ImageContainer cannot batch-save it |
+| 6 | Trimmed edges are stepped, not straight — that's fine, hard is what matters |
+| 7 | PhotometricMosaic dialog is modal; Exit before inspecting |
+| 8 | PhotometricMosaic focal length field is integer only |
+| 9 | Crop deletes the join mask — safe, click Yes |
+| 10 | Cropping loses the astrometric solution — re-solve at the end, after rotating |
+| 11 | Use FastRotation (not Rotation) for 90/180° — lossless, no resampling |

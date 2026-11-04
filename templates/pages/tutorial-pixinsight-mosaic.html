@@ -27,21 +27,19 @@
 <a class="lvl2" href="#step-8-blurxterminator">8 · BlurXTerminator</a>
 <a class="lvl2" href="#step-9-gradientcorrection">9 · GradientCorrection</a>
 <a class="lvl2" href="#step-10-noisexterminator">10 · NoiseXTerminator</a>
-<a class="lvl2" href="#step-11-save-overwriting-the-_autocrop-files">11 · Save, overwriting the _autocrop files</a>
 <a class="lvl1" href="#part-3-astrometry">Part 3 — Astrometry</a>
-<a class="lvl2" href="#step-12-check-whether-the-panels-are-already-solved">12 · Check whether the panels are already solved</a>
-<a class="lvl2" href="#step-13-batch-imagesolver">13 · Batch ImageSolver</a>
+<a class="lvl2" href="#step-11-batch-imagesolver">11 · Batch ImageSolver</a>
 <a class="lvl1" href="#part-4-reprojection-onto-a-common-grid">Part 4 — Reprojection onto a common grid</a>
-<a class="lvl2" href="#step-14-mosaicbycoordinates">14 · MosaicByCoordinates</a>
+<a class="lvl2" href="#step-12-mosaicbycoordinates">12 · MosaicByCoordinates</a>
 <a class="lvl1" href="#part-5-trimming">Part 5 — Trimming</a>
-<a class="lvl2" href="#step-15-trimmosaictile">15 · TrimMosaicTile</a>
+<a class="lvl2" href="#step-13-trimmosaictile">13 · TrimMosaicTile</a>
 <a class="lvl1" href="#part-6-the-join">Part 6 — The join</a>
-<a class="lvl2" href="#step-16-photometricmosaic">16 · PhotometricMosaic</a>
-<a class="lvl2" href="#step-17-rename-the-mosaic-views">17 · Rename the mosaic views</a>
+<a class="lvl2" href="#step-14-photometricmosaic">14 · PhotometricMosaic</a>
+<a class="lvl2" href="#step-15-rename-the-mosaic-views">15 · Rename the mosaic views</a>
 <a class="lvl1" href="#part-7-crop">Part 7 — Crop</a>
-<a class="lvl2" href="#step-18-dynamiccrop-applied-identically-to-all-three">18 · DynamicCrop, applied identically to all three</a>
-<a class="lvl2" href="#step-19-rotate-for-composition">19 · Rotate for composition</a>
-<a class="lvl2" href="#step-20-re-solve">20 · Re-solve</a>
+<a class="lvl2" href="#step-16-dynamiccrop-applied-identically-to-all-three">16 · DynamicCrop, applied identically to all three</a>
+<a class="lvl2" href="#step-17-rotate-for-composition">17 · Rotate for composition</a>
+<a class="lvl2" href="#step-18-re-solve">18 · Re-solve</a>
 <a class="lvl1" href="#from-here-back-to-the-standard-workflow">From here — back to the standard workflow</a>
 <a class="lvl1" href="#quick-reference-condensed-sequence">Quick reference — condensed sequence</a>
 <a class="lvl1" href="#gotchas-index">Gotchas index</a></nav>
@@ -57,71 +55,7 @@
     <div class="eyebrow">Runbook · SHO · 2 panels</div>
     <h1 class="title">PixInsight Mosaic Workflow</h1>
     <p>Two-panel SHO narrowband, using MosaicByCoordinates and PhotometricMosaic. Documented against RCW 108, August 2026.</p>
-    <dl class="meta"><dt>Reference project</dt><dd>RCW 108, 2 panels, SHO narrowband</dd><dt>Working directory</dt><dd><code>C:/PixInsight/2026-08-01_RCW 108/</code></dd><dt>Date documented</dt><dd>August 2026</dd><dt>PixInsight version</dt><dd>1.9.4</dd></dl>
 <hr />
-<h2 id="equipment-and-data">Equipment and data</h2>
-<table class="noheadings">
-<thead>
-<tr>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Telescope</td>
-<td>AT12IN (300mm Newtonian), 1156.6 mm focal length</td>
-</tr>
-<tr>
-<td>Camera</td>
-<td>ZWO ASI2600MM Duo, 3.76 µm pixels, mono</td>
-</tr>
-<tr>
-<td>Mount</td>
-<td>Paramount ME</td>
-</tr>
-<tr>
-<td>Capture</td>
-<td>NINA</td>
-</tr>
-<tr>
-<td>Image scale</td>
-<td>0.671 ″/px</td>
-</tr>
-<tr>
-<td>Sub exposure</td>
-<td>300 s, bin 1×1, 6248×4176</td>
-</tr>
-</tbody>
-</table>
-<p>Panel layout: stacked in <strong>declination</strong> (panel 1 north, panel 2 south), roughly 22% overlap (~10′ against a 46′ short axis).</p>
-<p>Frame counts:</p>
-<table>
-<thead>
-<tr>
-<th>Filter</th>
-<th>Panel 1</th>
-<th>Panel 2</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>H</td>
-<td>16</td>
-<td>20</td>
-</tr>
-<tr>
-<td>O</td>
-<td>11</td>
-<td>10</td>
-</tr>
-<tr>
-<td>S</td>
-<td>12</td>
-<td>18</td>
-</tr>
-</tbody>
-</table>
 <p>Panels were shot on consecutive nights (1 and 2 August) <strong>on opposite sides of the pier</strong> — panel 1 solved at 179.600° rotation, panel 2 at −0.696°. Reprojection handles this transparently.</p>
 <hr />
 <h2 id="approach">Approach</h2>
@@ -379,43 +313,30 @@ different directions.</p>
 <figure><img src="/static/images/tutorials/11-noisexterminator.jpg" alt="NoiseXTerminator settings" loading="lazy"></figure>
 <p>Linear-stage order is <strong>BXT → GradientCorrection → NXT</strong>, applied identically to
 all six via the container.</p>
-<h2 id="step-11-save-overwriting-the-_autocrop-files"><span class="stepno">11</span>Save, overwriting the <code>_autocrop</code> files</h2>
-<p>Saved back over the original <code>_autocrop</code> filenames.</p>
-<blockquote>
-<p><strong>Consequence:</strong> after this step, <code>_autocrop</code> no longer means "WBPP's raw
-autocrop output" — it means "processed". Easy to forget. Consider saving under
-new names instead.</p>
-</blockquote>
 <hr />
 <h1 id="part-3-astrometry">Part 3 — Astrometry</h1>
-<h2 id="step-12-check-whether-the-panels-are-already-solved"><span class="stepno">12</span>Check whether the panels are already solved</h2>
-<p>WBPP may have plate-solved the masters already, in which case ImageSolver is
-unnecessary.</p>
-<blockquote class="gotcha">
-<p><strong>Gotcha — the coordinate readout is not a reliable test.</strong> Hovering the cursor
-over a solved image <em>should</em> show RA/Dec in the status bar, but it did not in this
-session even though the images were correctly solved. Considerable time was lost
-chasing this.</p>
-<figure><img src="/static/images/tutorials/12-xisf-properties.jpg" alt="XISF properties showing astrometric solution" loading="lazy"></figure>
-<p><strong>Check XISF properties instead.</strong> Right-click the image → the properties viewer.
-Look for the <code>PCL/AstrometricSolution</code> tree. If <code>Catalog</code>, <code>LinearTransformationMatrix</code>,
-<code>ReferenceCelestialCoordinates</code> etc. are present, it's solved.</p>
-<p>Other functional test: Script → Render → AnnotateImage. If it renders, the
-solution is real.</p>
-<p>The Celestial Coordinates readout menu (below) being correctly configured is
-<strong>not</strong> sufficient — it was set to Equatorial here and still showed nothing.</p>
-</blockquote>
-<figure><img src="/static/images/tutorials/13-celestial-coordinates-menu.jpg" alt="Celestial coordinates readout menu" loading="lazy"></figure>
-<p>Useful XISF properties to know:</p>
-<pre><code>Instrument/Sensor/XPixelSize          3.76
-Instrument/Telescope/FocalLength      1.156598   ← METRES, not mm
-Instrument/Camera/XBinning            1
-Observation/Center/RA, /Dec
-PCL/AstrometricSolution/...
-</code></pre>
-<p>The astrometry survived WBPP autocrop <em>and</em> the BXT/GC/NXT chain intact.</p>
-<h2 id="step-13-batch-imagesolver"><span class="stepno">13</span>Batch ImageSolver</h2>
-<p>Run over the six processed files. Output gets an <code>_ast</code> suffix.</p>
+<h2 id="step-11-batch-imagesolver"><span class="stepno">11</span>Batch ImageSolver</h2>
+<p>Open <strong>Script → Astrometry → ImageSolver</strong>. The six processed files are added to
+the <strong>List of files</strong> automatically.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Output directory</td>
+<td><code>master/mosaic</code></td>
+</tr>
+<tr>
+<td>Output file suffix</td>
+<td><code>_ast</code></td>
+</tr>
+</tbody>
+</table>
+<figure><img src="/static/images/tutorials/29-imagesolver.jpg" alt="ImageSolver dialog (screenshot from a different target)" loading="lazy"><figcaption>Screenshot from a different target, so the file list and coordinates differ.</figcaption></figure>
 <p>Enable distortion correction. Solutions used Gaia DR3, DDM thin plate spline,
 Gnomonic projection, ICRS.</p>
 <p><strong>Check control point counts and residuals in the console.</strong> A healthy solve
@@ -471,7 +392,7 @@ sensitivity threshold — not blaming the merge tool.</p>
 </blockquote>
 <hr />
 <h1 id="part-4-reprojection-onto-a-common-grid">Part 4 — Reprojection onto a common grid</h1>
-<h2 id="step-14-mosaicbycoordinates"><span class="stepno">14</span>MosaicByCoordinates</h2>
+<h2 id="step-12-mosaicbycoordinates"><span class="stepno">12</span>MosaicByCoordinates</h2>
 <p><strong>Script → Mosaic → MosaicByCoordinates</strong> (v1.4.2).</p>
 <p><strong>Add all six <code>_ast</code> files in one run</strong>, not one filter at a time.</p>
 <blockquote>
@@ -580,7 +501,7 @@ apart.</p>
 step removes.</p>
 <hr />
 <h1 id="part-5-trimming">Part 5 — Trimming</h1>
-<h2 id="step-15-trimmosaictile"><span class="stepno">15</span>TrimMosaicTile</h2>
+<h2 id="step-13-trimmosaictile"><span class="stepno">13</span>TrimMosaicTile</h2>
 <p><strong>Script → Mosaic → TrimMosaicTile</strong> (v4.0.1).</p>
 <p>PhotometricMosaic requires <strong>hard edges</strong> — a clean transition from valid data to
 exact zero. Reprojection leaves interpolated partial-coverage pixels around the
@@ -635,12 +556,12 @@ doesn't — the container needs a process instance dragged onto it to do anythin
 because these get picked out of dropdowns next.</p>
 <hr />
 <h1 id="part-6-the-join">Part 6 — The join</h1>
-<h2 id="step-16-photometricmosaic"><span class="stepno">16</span>PhotometricMosaic</h2>
+<h2 id="step-14-photometricmosaic"><span class="stepno">14</span>PhotometricMosaic</h2>
 <p><strong>Script → Mosaic → PhotometricMosaic</strong> (v4.0.3). Also view-based.</p>
 <p><strong>Three separate runs, one per filter.</strong> Reference and target must be the same
 filter — the scale factor is derived photometrically from stars in the overlap, and
 a cross-filter comparison would be meaningless. Cross-filter matching happens later
-at the palette stage. The three mosaics stay on the common grid from Step 14, which
+at the palette stage. The three mosaics stay on the common grid from Step 12, which
 is what lets them combine without further registration.</p>
 <p><strong>Use the same panel as reference across all three filters.</strong></p>
 <h3 id="image-scale-must-be-corrected-every-run">Image scale — must be corrected every run</h3>
@@ -669,7 +590,7 @@ is what lets them combine without further registration.</p>
 <figure><img src="/static/images/tutorials/21-manual-entry-corrected.jpg" alt="Manual Entry dialog corrected" loading="lazy"><figcaption>Corrected. Note the focal length field takes integers only.</figcaption></figure>
 <p>The focal length field is <strong>integer only</strong> — 1156, not 1156.6. The rounding is
 immaterial (pixel scale still resolves to 0.67).</p>
-<p>See the Step 14 gotcha for why the offered values are wrong.</p>
+<p>See the Step 12 gotcha for why the offered values are wrong.</p>
 <h3 id="settings-defaults-unchanged">Settings (defaults, unchanged)</h3>
 <table>
 <thead>
@@ -784,7 +705,7 @@ seam artefact, nebulosity and stars running straight through.</figcaption></figu
 <figure><img src="/static/images/tutorials/25-oiii-console-output.jpg" alt="OIII console output" loading="lazy"></figure>
 <p><strong>If the join isn't clean,</strong> the first thing to change is Mosaic Join → Combination
 Mode: try Blend or Average instead of Overlay.</p>
-<h2 id="step-17-rename-the-mosaic-views"><span class="stepno">17</span>Rename the mosaic views</h2>
+<h2 id="step-15-rename-the-mosaic-views"><span class="stepno">15</span>Rename the mosaic views</h2>
 <p>PhotometricMosaic outputs generic identifiers in run order. Double-click the view
 identifier in the title bar (or Image → Set Image Identifier):</p>
 <table>
@@ -818,7 +739,7 @@ where you'll later pick from a dropdown.</p>
 </blockquote>
 <hr />
 <h1 id="part-7-crop">Part 7 — Crop</h1>
-<h2 id="step-18-dynamiccrop-applied-identically-to-all-three"><span class="stepno">18</span>DynamicCrop, applied identically to all three</h2>
+<h2 id="step-16-dynamiccrop-applied-identically-to-all-three"><span class="stepno">16</span>DynamicCrop, applied identically to all three</h2>
 <p><strong>All three mosaics must receive the exact same crop.</strong> Different dimensions will
 break channel combination.</p>
 <ol>
@@ -869,7 +790,7 @@ inspection-only, safe to discard. <strong>Click Yes.</strong> Expect the prompt 
 <p>Extreme top and bottom of the frame are single-panel regions. That's real data —
 no need to cut it. What's being removed is the interpolated boundary.</p>
 <hr />
-<h2 id="step-19-rotate-for-composition"><span class="stepno">19</span>Rotate for composition</h2>
+<h2 id="step-17-rotate-for-composition"><span class="stepno">17</span>Rotate for composition</h2>
 <p>The mosaic comes out portrait (6015 × 7250) because the panels were stacked in
 declination. Rotate for aesthetics.</p>
 <p><strong>Process → Geometry → FastRotation → Rotate 90° counter-clockwise</strong></p>
@@ -877,9 +798,9 @@ declination. Rotate for aesthetics.</p>
 pixel remapping with no interpolation and no resampling — the pixel values are
 untouched. Rotation would resample and soften the image for no benefit.</p>
 <p>Result: 7250 × 6015 landscape.</p>
-<h2 id="step-20-re-solve"><span class="stepno">20</span>Re-solve</h2>
+<h2 id="step-18-re-solve"><span class="stepno">18</span>Re-solve</h2>
 <p>Run <strong>ImageSolver</strong> on the rotated mosaic.</p>
-<p>The astrometric solution was already lost at the DynamicCrop step (Step 18), so
+<p>The astrometric solution was already lost at the DynamicCrop step (Step 16), so
 nothing is being discarded here — this re-establishes it on the finished image in
 its final orientation.</p>
 <p>Worth doing even if you don't plan to annotate: a solved final image can be
@@ -914,16 +835,14 @@ Scripts → Toolbox → Combine Images    → recombine stars with starless
 8.  Drag container triangle → BlurXTerminator
 9.  Drag container triangle → GradientCorrection
 10. Drag container triangle → NoiseXTerminator
-11. Save
-12. Confirm astrometric solution via XISF PROPERTIES (not cursor readout)
-13. Batch ImageSolver if needed → _ast
-14. MosaicByCoordinates — ALL SIX FILES IN ONE RUN → _ra
-15. TrimMosaicTile, 5 px, each view individually, save → _trim
-16. PhotometricMosaic ×3 (H+H, O+O, S+S) — FIX IMAGE SCALE TO 3.76 / 1156
-17. Rename views to H_Mosaic / O_Mosaic / S_Mosaic
-18. DynamicCrop via desktop icon, applied to all three
-19. FastRotation — 90° counter-clockwise (lossless)
-20. ImageSolver on the rotated mosaic
+11. Batch ImageSolver → _ast
+12. MosaicByCoordinates — ALL SIX FILES IN ONE RUN → _ra
+13. TrimMosaicTile, 5 px, each view individually, save → _trim
+14. PhotometricMosaic ×3 (H+H, O+O, S+S) — FIX IMAGE SCALE TO 3.76 / 1156
+15. Rename views to H_Mosaic / O_Mosaic / S_Mosaic
+16. DynamicCrop via desktop icon, applied to all three
+17. FastRotation — 90° counter-clockwise (lossless)
+18. ImageSolver on the rotated mosaic
 → continue with the standard workflow from StarXTerminator
 </code></pre>
 <hr />
@@ -942,54 +861,42 @@ Scripts → Toolbox → Combine Images    → recombine stars with starless
 </tr>
 <tr>
 <td>2</td>
-<td>Overwriting <code>_autocrop</code> files makes the suffix misleading</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Cursor coordinate readout does <strong>not</strong> reliably indicate a solved image — check XISF properties</td>
-</tr>
-<tr>
-<td>4</td>
-<td><code>FocalLength</code> in XISF properties is in <strong>metres</strong></td>
-</tr>
-<tr>
-<td>5</td>
 <td>A solve reporting no surface residuals is unvalidated — treat with suspicion</td>
 </tr>
 <tr>
-<td>6</td>
+<td>3</td>
 <td><strong>Run MosaicByCoordinates on all filters at once</strong> or the grids won't match</td>
 </tr>
 <tr>
-<td>7</td>
+<td>4</td>
 <td>MosaicByCoordinates regenerates FITS keywords wrongly (7.40 µm / 2277 mm)</td>
 </tr>
 <tr>
-<td>8</td>
+<td>5</td>
 <td>TrimMosaicTile is view-based; ImageContainer cannot batch-save it</td>
 </tr>
 <tr>
-<td>9</td>
+<td>6</td>
 <td>Trimmed edges are stepped, not straight — that's fine, hard is what matters</td>
 </tr>
 <tr>
-<td>10</td>
+<td>7</td>
 <td>PhotometricMosaic dialog is modal; Exit before inspecting</td>
 </tr>
 <tr>
-<td>11</td>
+<td>8</td>
 <td>PhotometricMosaic focal length field is integer only</td>
 </tr>
 <tr>
-<td>12</td>
+<td>9</td>
 <td>Crop deletes the join mask — safe, click Yes</td>
 </tr>
 <tr>
-<td>13</td>
+<td>10</td>
 <td>Cropping loses the astrometric solution — re-solve at the end, after rotating</td>
 </tr>
 <tr>
-<td>14</td>
+<td>11</td>
 <td>Use FastRotation (not Rotation) for 90/180° — lossless, no resampling</td>
 </tr>
 </tbody>
