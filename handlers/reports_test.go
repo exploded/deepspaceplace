@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -19,37 +18,10 @@ import (
 	"github.com/exploded/nightreport"
 )
 
-const reportPage = "<!doctype html>\n<html lang=\"en\">\n<head><title>Night</title></head>\n<body>\n<div class=\"wrap\"><h1>Sky transparency</h1>\n<p class=\"sub\">Cloud arrived at <b>02:15</b> &mdash; late.</p></div>\n</body>\n</html>\n"
-
 const (
 	testSkyqKey   = "skyq-test-key"
 	testSkycamKey = "skycam-test-key"
 )
-
-// reportsFixture lays out a reports directory the way the producers
-// published HTML before the API, plus one file outside it that must never be
-// reachable.
-func reportsFixture(t *testing.T) string {
-	t.Helper()
-	parent := t.TempDir()
-	dir := filepath.Join(parent, "reports")
-	if err := os.MkdirAll(filepath.Join(dir, "skycam"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	write := func(p, body string) {
-		t.Helper()
-		if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	write(filepath.Join(dir, "index.html"), strings.Replace(reportPage, "Sky transparency", "All nights", 1))
-	write(filepath.Join(dir, "2026-09-02.html"), reportPage)
-	write(filepath.Join(dir, "skycam", "2026-09-02.html"), reportPage)
-	write(filepath.Join(dir, "skycam", "2026-10-30.html"), strings.Replace(reportPage, "Cloud arrived", "Roof shut", 1))
-	write(filepath.Join(dir, "notes.txt"), "plain text\n")
-	write(filepath.Join(parent, "secret.html"), "<body>outside</body>")
-	return dir
-}
 
 // withReports swaps in a fresh database, the real report templates and the
 // test keys, and returns a handler that routes like main.go: the upload API
@@ -82,7 +54,7 @@ func withReports(t *testing.T) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("PUT /api/reports/{source}/{night}", HandleReportUpload)
-	mux.Handle("/reports/", http.StripPrefix("/reports/", Reports(reportsFixture(t))))
+	mux.Handle("/reports/", http.StripPrefix("/reports/", Reports()))
 	return mux
 }
 
@@ -305,26 +277,17 @@ func TestNightPageEscapesReportText(t *testing.T) {
 	}
 }
 
-func TestNightPageSkyOnlyLinksOldImagingReport(t *testing.T) {
+func TestNightPageSkyOnly(t *testing.T) {
 	h := withReports(t)
 	put(t, h, "/api/reports/skycam/2026-09-02", testSkycamKey, mustJSON(t, skycamReport("2026-09-02")))
 
-	body := get(t, h, "/reports/2026-09-02").Body.String()
+	rec := get(t, h, "/reports/2026-09-02")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d", rec.Code)
+	}
+	body := rec.Body.String()
 	if !strings.Contains(body, `<section id="sky">`) || strings.Contains(body, `<section id="imaging">`) {
 		t.Fatal("want the sky report alone")
-	}
-	if !strings.Contains(body, `href="/reports/2026-09-02.html"`) {
-		t.Error("the not-yet-republished imaging report is not linked")
-	}
-	// The old skyq URL still serves the old page, since skyq has not
-	// re-published this night.
-	if rec := get(t, h, "/reports/2026-09-02.html"); rec.Code != http.StatusOK {
-		t.Errorf("old imaging page = %d, want 200", rec.Code)
-	}
-	// The old skycam URL redirects: skycam has.
-	rec := get(t, h, "/reports/skycam/2026-09-02.html")
-	if rec.Code != http.StatusMovedPermanently || rec.Header().Get("Location") != "/reports/2026-09-02" {
-		t.Errorf("old skycam page = %d → %q, want 301 → /reports/2026-09-02", rec.Code, rec.Header().Get("Location"))
 	}
 }
 
@@ -333,9 +296,22 @@ func TestNightPageWithoutReports(t *testing.T) {
 	if rec := get(t, h, "/reports/2026-01-01"); rec.Code != http.StatusNotFound {
 		t.Errorf("night with nothing = %d, want 404", rec.Code)
 	}
-	rec := get(t, h, "/reports/2026-10-30")
-	if rec.Code != http.StatusFound || rec.Header().Get("Location") != "/reports/skycam/2026-10-30.html" {
-		t.Errorf("legacy-only night = %d → %q, want 302 to the old page", rec.Code, rec.Header().Get("Location"))
+}
+
+func TestNightPageConditionalGet(t *testing.T) {
+	h := withReports(t)
+	put(t, h, "/api/reports/skyq/2026-09-02", testSkyqKey, mustJSON(t, skyqReport("2026-09-02")))
+	first := get(t, h, "/reports/2026-09-02")
+	lm := first.Header().Get("Last-Modified")
+	if lm == "" {
+		t.Fatal("no Last-Modified on first response")
+	}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/reports/2026-09-02", nil)
+	req.Header.Set("If-Modified-Since", lm)
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotModified {
+		t.Errorf("revalidation status = %d, want 304", rec.Code)
 	}
 }
 
@@ -345,8 +321,9 @@ func TestReportIndexMergesSourcesNewestFirst(t *testing.T) {
 	h := withReports(t)
 	put(t, h, "/api/reports/skyq/2026-09-02", testSkyqKey, mustJSON(t, skyqReport("2026-09-02")))
 	put(t, h, "/api/reports/skycam/2026-11-04", testSkycamKey, mustJSON(t, skycamReport("2026-11-04")))
+	put(t, h, "/api/reports/skycam/2026-10-30", testSkycamKey, mustJSON(t, skycamReport("2026-10-30")))
 
-	for _, p := range []string{"/reports/", "/reports/index.html"} {
+	for _, p := range []string{"/reports/"} {
 		rec := get(t, h, p)
 		if rec.Code != http.StatusOK {
 			t.Fatalf("GET %s = %d", p, rec.Code)
@@ -358,10 +335,8 @@ func TestReportIndexMergesSourcesNewestFirst(t *testing.T) {
 		}
 		for _, want := range []string{
 			`href="/reports/2026-09-02#imaging"`, `<span class="pill">Index 104</span>`,
-			`href="/reports/skycam/2026-09-02.html"`, // sky for that night is still the old page
-			`href="/reports/skycam/2026-10-30.html"`, // legacy-only night links straight to its file
-			"Roof shut at 02:15 — late.",             // summary scraped from the old page, as text
-			`href="/reports/2026-11-04#sky"`,
+			`href="/reports/2026-11-04#sky"`, `href="/reports/2026-10-30#sky"`,
+			"3 nights so far",
 		} {
 			if !strings.Contains(body, want) {
 				t.Errorf("GET %s lacks %s", p, want)
@@ -370,98 +345,16 @@ func TestReportIndexMergesSourcesNewestFirst(t *testing.T) {
 	}
 }
 
-func TestReportsSkycamDirectoryRedirects(t *testing.T) {
+// The HTML reports from before the API are gone, and so are their URLs.
+func TestOldReportURLsAreGone(t *testing.T) {
 	h := withReports(t)
-	for _, p := range []string{"/reports/skycam/", "/reports/skycam/index.html"} {
-		rec := get(t, h, p)
-		if rec.Code != http.StatusMovedPermanently || rec.Header().Get("Location") != "/reports/" {
-			t.Errorf("GET %s = %d → %q", p, rec.Code, rec.Header().Get("Location"))
-		}
-	}
-}
-
-// ── legacy HTML ─────────────────────────────────────────────────────────
-
-func TestReportsInjectsSiteNavIntoHTML(t *testing.T) {
-	h := withReports(t)
-
-	rec := get(t, h, "/reports/2026-09-02.html")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
-	}
-	body := rec.Body.String()
-	if got := strings.Count(body, `class="dsp-site"`); got != 1 {
-		t.Fatalf("site nav appears %d times, want exactly once:\n%s", got, body)
-	}
-	navAt := strings.Index(body, `<header class="dsp-site">`)
-	bodyAt := strings.Index(body, "<body>")
-	wrapAt := strings.Index(body, `<div class="wrap">`)
-	if !(bodyAt < navAt && navAt < wrapAt) {
-		t.Errorf("site nav must sit between <body> and the report's own content (body=%d nav=%d wrap=%d)", bodyAt, navAt, wrapAt)
-	}
-	if !strings.HasSuffix(body, "</html>\n") {
-		t.Errorf("report content after the nav was not preserved")
-	}
-	if cc := rec.Header().Get("Cache-Control"); cc != "no-cache" {
-		t.Errorf("Cache-Control = %q, want no-cache (reports are re-published in place)", cc)
-	}
-	if rec.Header().Get("Last-Modified") == "" {
-		t.Errorf("no Last-Modified header, so browsers cannot revalidate")
-	}
-	if cl := rec.Header().Get("Content-Length"); cl != strconv.Itoa(len(body)) {
-		t.Errorf("Content-Length %q does not match the injected body length %d", cl, len(body))
-	}
-}
-
-func TestReportsNonHTMLIsUntouched(t *testing.T) {
-	h := withReports(t)
-	rec := get(t, h, "/reports/notes.txt")
-	if rec.Code != http.StatusOK || rec.Body.String() != "plain text\n" {
-		t.Fatalf("status = %d, body %q", rec.Code, rec.Body)
-	}
-}
-
-func TestReportsHidesWhatIsNotAReport(t *testing.T) {
-	h := withReports(t)
-	for name, p := range map[string]string{
-		"missing report":          "/reports/2026-01-01.html",
-		"not a night":             "/reports/secret.html",
-		"traversal outside dir":   "/reports/../secret.html",
-		"directory with no index": "/reports/nope/",
-		"directory listing":       "/reports/skycam/x/",
+	put(t, h, "/api/reports/skyq/2026-09-02", testSkyqKey, mustJSON(t, skyqReport("2026-09-02")))
+	for _, p := range []string{
+		"/reports/2026-09-02.html", "/reports/skycam/2026-09-02.html", "/reports/skycam/",
+		"/reports/index.html", "/reports/nope/",
 	} {
-		t.Run(name, func(t *testing.T) {
-			rec := get(t, h, p)
-			if rec.Code == http.StatusOK || strings.Contains(rec.Body.String(), "outside") {
-				t.Errorf("GET %s = %d, want it refused", p, rec.Code)
-			}
-		})
-	}
-}
-
-func TestReportsConditionalGet(t *testing.T) {
-	h := withReports(t)
-	first := get(t, h, "/reports/2026-09-02.html")
-	lm := first.Header().Get("Last-Modified")
-	if lm == "" {
-		t.Fatal("no Last-Modified on first response")
-	}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/reports/2026-09-02.html", nil)
-	req.Header.Set("If-Modified-Since", lm)
-	h.ServeHTTP(rec, req)
-	if rec.Code != http.StatusNotModified {
-		t.Errorf("revalidation status = %d, want 304", rec.Code)
-	}
-}
-
-func TestWithSiteNavLeavesPagesWithoutBodyAlone(t *testing.T) {
-	in := []byte("<p>fragment only</p>")
-	if got := withSiteNav(in); string(got) != string(in) {
-		t.Errorf("page without <body> was changed: %q", got)
-	}
-	got := string(withSiteNav([]byte("<BODY class=\"x\">\n<p>hi</p>")))
-	if !strings.HasPrefix(got, "<BODY class=\"x\">\n<header class=\"dsp-site\">") {
-		t.Errorf("nav not inserted after an attributed body tag:\n%s", got)
+		if rec := get(t, h, p); rec.Code != http.StatusNotFound {
+			t.Errorf("GET %s = %d, want 404", p, rec.Code)
+		}
 	}
 }

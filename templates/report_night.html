@@ -5,12 +5,8 @@
 {{template "nr-nav" .}}
 <h1>Night of {{.Label}}</h1>
 
-{{if .Imaging}}{{template "nr-report" .Imaging}}
-{{else if .LegacyImaging}}<p class="nr-old">This night's imaging report is <a href="{{.LegacyImaging}}">in the old format</a>.</p>
-{{end}}
-{{if .Sky}}{{template "nr-report" .Sky}}
-{{else if .LegacySky}}<p class="nr-old">This night's all&#8209;sky camera report is <a href="{{.LegacySky}}">in the old format</a>.</p>
-{{end}}
+{{with .Imaging}}{{template "nr-report" .}}{{end}}
+{{with .Sky}}{{template "nr-report" .}}{{end}}
 <div class="nr-nav bottom">{{template "nr-nav-links" .}}</div>
 </div>
 {{if or .Imaging .Sky}}<script>{{.Script}}</script>{{end}}
