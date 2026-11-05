@@ -39,7 +39,6 @@
 <a class="lvl1" href="#part-7-crop">Part 7 — Crop</a>
 <a class="lvl2" href="#step-16-dynamiccrop-applied-identically-to-all-three">16 · DynamicCrop, applied identically to all three</a>
 <a class="lvl2" href="#step-17-rotate-for-composition">17 · Rotate for composition</a>
-<a class="lvl2" href="#step-18-re-solve">18 · Re-solve</a>
 <a class="lvl1" href="#from-here-back-to-the-standard-workflow">From here — back to the standard workflow</a>
 <a class="lvl1" href="#quick-reference-condensed-sequence">Quick reference — condensed sequence</a>
 <a class="lvl1" href="#gotchas-index">Gotchas index</a></nav>
@@ -475,21 +474,6 @@ guarantees an identical grid.</p>
 loop — that's the frame everything downstream inherits.</p>
 <p>Six <code>_ra</code> files result, one per input:</p>
 <figure><img src="/static/images/tutorials/15-ra-output-files.jpg" alt="Reprojected output files" loading="lazy"></figure>
-<blockquote class="gotcha">
-<h3 id="gotcha-fits-keywords-are-regenerated-wrongly-here">Gotcha — FITS keywords are regenerated wrongly here</h3>
-<p>The console reports <strong>107 image properties in, 17 out</strong>. Reprojection discards most
-of the XISF property tree, including <code>Instrument/Sensor/XPixelSize</code> and
-<code>Instrument/Telescope/FocalLength</code>, and regenerates the FITS keywords from the
-astrometric solution.</p>
-<p>A plate solve constrains <strong>image scale only</strong> — focal length and pixel size are
-degenerate within it, only their ratio is determined. So the regenerated values
-come out as <strong>XPIXSZ 7.40 µm / FOCALLEN 2277 mm</strong>: both wrong by ~2×, but
-preserving the correct 0.671 ″/px.</p>
-<p>PhotometricMosaic reads these keywords and will offer them. <strong>Enter the real
-values manually: 3.76 µm / 1156 mm.</strong></p>
-<p>Capture-time metadata is correct — NINA and the camera driver are not at fault.
-The loss happens at reprojection.</p>
-</blockquote>
 <h3 id="what-the-output-should-look-like">What the output should look like</h3>
 <figure><img src="/static/images/tutorials/16-panels-on-common-grid.jpg" alt="Two panels on the common grid" loading="lazy"></figure>
 <p>Each panel sits in its own portion of the common frame with black filling the rest —
@@ -564,33 +548,6 @@ a cross-filter comparison would be meaningless. Cross-filter matching happens la
 at the palette stage. The three mosaics stay on the common grid from Step 12, which
 is what lets them combine without further registration.</p>
 <p><strong>Use the same panel as reference across all three filters.</strong></p>
-<h3 id="image-scale-must-be-corrected-every-run">Image scale — must be corrected every run</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Offered</th>
-<th>Enter</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pixel size (µm)</td>
-<td>7.40</td>
-<td><strong>3.76</strong></td>
-</tr>
-<tr>
-<td>Focal length (mm)</td>
-<td>2277</td>
-<td><strong>1156</strong></td>
-</tr>
-</tbody>
-</table>
-<figure><img src="/static/images/tutorials/20-photometricmosaic-wrong-scale.jpg" alt="PhotometricMosaic showing wrong image scale" loading="lazy"><figcaption>Wrong values as offered — focal length 2277, pixel size 7.40.</figcaption></figure>
-<figure><img src="/static/images/tutorials/21-manual-entry-corrected.jpg" alt="Manual Entry dialog corrected" loading="lazy"><figcaption>Corrected. Note the focal length field takes integers only.</figcaption></figure>
-<p>The focal length field is <strong>integer only</strong> — 1156, not 1156.6. The rounding is
-immaterial (pixel scale still resolves to 0.67).</p>
-<p>See the Step 12 gotcha for why the offered values are wrong.</p>
 <h3 id="settings-defaults-unchanged">Settings (defaults, unchanged)</h3>
 <table>
 <thead>
@@ -798,18 +755,6 @@ declination. Rotate for aesthetics.</p>
 pixel remapping with no interpolation and no resampling — the pixel values are
 untouched. Rotation would resample and soften the image for no benefit.</p>
 <p>Result: 7250 × 6015 landscape.</p>
-<h2 id="step-18-re-solve"><span class="stepno">18</span>Re-solve</h2>
-<p>Run <strong>ImageSolver</strong> on the rotated mosaic.</p>
-<p>The astrometric solution was already lost at the DynamicCrop step (Step 16), so
-nothing is being discarded here — this re-establishes it on the finished image in
-its final orientation.</p>
-<p>Worth doing even if you don't plan to annotate: a solved final image can be
-plate-matched against future data of the same target, and it embeds a permanent
-record of what was actually imaged.</p>
-<blockquote>
-<p>Do this <strong>after</strong> rotating, not before. Solving first would produce a solution
-describing an orientation that no longer exists.</p>
-</blockquote>
 <hr />
 <h1 id="from-here-back-to-the-standard-workflow">From here — back to the standard workflow</h1>
 <p>All three mosaics now share the same 6015 × 7250 grid, so nothing further is
@@ -838,11 +783,10 @@ Scripts → Toolbox → Combine Images    → recombine stars with starless
 11. Batch ImageSolver → _ast
 12. MosaicByCoordinates — ALL SIX FILES IN ONE RUN → _ra
 13. TrimMosaicTile, 5 px, each view individually, save → _trim
-14. PhotometricMosaic ×3 (H+H, O+O, S+S) — FIX IMAGE SCALE TO 3.76 / 1156
+14. PhotometricMosaic ×3 (H+H, O+O, S+S)
 15. Rename views to H_Mosaic / O_Mosaic / S_Mosaic
 16. DynamicCrop via desktop icon, applied to all three
 17. FastRotation — 90° counter-clockwise (lossless)
-18. ImageSolver on the rotated mosaic
 → continue with the standard workflow from StarXTerminator
 </code></pre>
 <hr />
@@ -869,34 +813,22 @@ Scripts → Toolbox → Combine Images    → recombine stars with starless
 </tr>
 <tr>
 <td>4</td>
-<td>MosaicByCoordinates regenerates FITS keywords wrongly (7.40 µm / 2277 mm)</td>
-</tr>
-<tr>
-<td>5</td>
 <td>TrimMosaicTile is view-based; ImageContainer cannot batch-save it</td>
 </tr>
 <tr>
-<td>6</td>
+<td>5</td>
 <td>Trimmed edges are stepped, not straight — that's fine, hard is what matters</td>
 </tr>
 <tr>
-<td>7</td>
+<td>6</td>
 <td>PhotometricMosaic dialog is modal; Exit before inspecting</td>
 </tr>
 <tr>
-<td>8</td>
-<td>PhotometricMosaic focal length field is integer only</td>
-</tr>
-<tr>
-<td>9</td>
+<td>7</td>
 <td>Crop deletes the join mask — safe, click Yes</td>
 </tr>
 <tr>
-<td>10</td>
-<td>Cropping loses the astrometric solution — re-solve at the end, after rotating</td>
-</tr>
-<tr>
-<td>11</td>
+<td>8</td>
 <td>Use FastRotation (not Rotation) for 90/180° — lossless, no resampling</td>
 </tr>
 </tbody>
