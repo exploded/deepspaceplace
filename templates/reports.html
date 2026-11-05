@@ -1,0 +1,22 @@
+{{template "base" .}}
+{{define "head"}}<style>{{.CSS}}</style>{{end}}
+{{define "content"}}
+<div class="nr nr-dark">
+<h1>Night reports</h1>
+<p class="sub">One page per night from the observatory, published each morning. <b>Imaging</b> is the
+session's sky transparency: how much of a normal night got through, and which failures were the sky's
+fault. <b>Sky</b> is the all&#8209;sky camera's night: cloud, roof, timelapse and keogram.
+{{.Count}} nights so far, newest first.</p>
+{{range .Months}}<h2>{{.Label}}</h2>
+<div class="nr-card">
+{{range .Nights}}  <div class="night">
+    <a href="{{.Href}}">{{.Label}}</a>
+    <div>
+{{with .Imaging}}      <div class="part"><a href="{{.Href}}">Imaging</a>{{.Summary}}{{if .Pills}}<span class="pills">{{range .Pills}}<span class="pill">{{.}}</span>{{end}}</span>{{end}}</div>
+{{end}}{{with .Sky}}      <div class="part"><a href="{{.Href}}">Sky</a>{{.Summary}}</div>
+{{end}}    </div>
+  </div>
+{{end}}</div>
+{{else}}<p>No nights yet.</p>
+{{end}}</div>
+{{end}}

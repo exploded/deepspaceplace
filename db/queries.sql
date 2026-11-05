@@ -229,3 +229,23 @@ ORDER BY id;
 -- Admin: delete image
 -- name: DeleteImage :exec
 DELETE FROM images WHERE id = ?;
+
+-- Night reports. summary and pills are copied out of the body at write time
+-- so the index never has to parse every report.
+-- name: UpsertNightReport :exec
+INSERT INTO night_reports (night, source, body, summary, pills, received_at)
+VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT (night, source) DO UPDATE SET
+    body = excluded.body,
+    summary = excluded.summary,
+    pills = excluded.pills,
+    received_at = excluded.received_at;
+
+-- name: GetNightReports :many
+SELECT night, source, body, received_at FROM night_reports
+WHERE night = ?
+ORDER BY source;
+
+-- name: ListNightReportSummaries :many
+SELECT night, source, summary, pills, received_at FROM night_reports
+ORDER BY night DESC, source;

@@ -68,3 +68,18 @@ CREATE INDEX IF NOT EXISTS idx_images_camera ON images(camera);
 CREATE INDEX IF NOT EXISTS idx_images_scope ON images(scope);
 CREATE INDEX IF NOT EXISTS idx_images_date ON images(date);
 CREATE INDEX IF NOT EXISTS idx_images_ra_dec ON images(ra, dec);
+
+-- Night reports PUT by the observatory's producers (skyq: imaging, skycam:
+-- the all-sky camera) through /api/reports/. body is the validated
+-- nightreport.Report JSON, re-encoded by the handler, so fields the site does
+-- not know are dropped rather than stored. One row per night per source; a
+-- re-published night replaces its row. night is the evening date, YYYY-MM-DD.
+CREATE TABLE IF NOT EXISTS night_reports (
+    night       TEXT    NOT NULL,
+    source      TEXT    NOT NULL,
+    body        TEXT    NOT NULL,
+    summary     TEXT    NOT NULL DEFAULT '',
+    pills       TEXT    NOT NULL DEFAULT '[]',
+    received_at INTEGER NOT NULL,
+    PRIMARY KEY (night, source)
+);

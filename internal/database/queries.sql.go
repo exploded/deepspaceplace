@@ -303,6 +303,47 @@ func (q *Queries) GetNextByType(ctx context.Context, arg GetNextByTypeParams) (s
 	return id, err
 }
 
+const getNightReports = `-- name: GetNightReports :many
+SELECT night, source, body, received_at FROM night_reports
+WHERE night = ?
+ORDER BY source
+`
+
+type GetNightReportsRow struct {
+	Night      string `json:"night"`
+	Source     string `json:"source"`
+	Body       string `json:"body"`
+	ReceivedAt int64  `json:"received_at"`
+}
+
+func (q *Queries) GetNightReports(ctx context.Context, night string) ([]GetNightReportsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNightReports, night)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetNightReportsRow{}
+	for rows.Next() {
+		var i GetNightReportsRow
+		if err := rows.Scan(
+			&i.Night,
+			&i.Source,
+			&i.Body,
+			&i.ReceivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPrevByDate = `-- name: GetPrevByDate :one
 SELECT images.id FROM images
 WHERE (images.date > (SELECT i2.date FROM images i2 WHERE i2.id = ?)
@@ -1258,6 +1299,48 @@ func (q *Queries) ListImagesByTypeFilterType(ctx context.Context, arg ListImages
 	return items, nil
 }
 
+const listNightReportSummaries = `-- name: ListNightReportSummaries :many
+SELECT night, source, summary, pills, received_at FROM night_reports
+ORDER BY night DESC, source
+`
+
+type ListNightReportSummariesRow struct {
+	Night      string `json:"night"`
+	Source     string `json:"source"`
+	Summary    string `json:"summary"`
+	Pills      string `json:"pills"`
+	ReceivedAt int64  `json:"received_at"`
+}
+
+func (q *Queries) ListNightReportSummaries(ctx context.Context) ([]ListNightReportSummariesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listNightReportSummaries)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListNightReportSummariesRow{}
+	for rows.Next() {
+		var i ListNightReportSummariesRow
+		if err := rows.Scan(
+			&i.Night,
+			&i.Source,
+			&i.Summary,
+			&i.Pills,
+			&i.ReceivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listObservations = `-- name: ListObservations :many
 SELECT id, name, thumbnail, ra, dec, fieldw, fieldh, orientation
 FROM images
@@ -1525,6 +1608,39 @@ func (q *Queries) UpdateImagePlateSolve(ctx context.Context, arg UpdateImagePlat
 		arg.Solved,
 		arg.Parity,
 		arg.ID,
+	)
+	return err
+}
+
+const upsertNightReport = `-- name: UpsertNightReport :exec
+INSERT INTO night_reports (night, source, body, summary, pills, received_at)
+VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT (night, source) DO UPDATE SET
+    body = excluded.body,
+    summary = excluded.summary,
+    pills = excluded.pills,
+    received_at = excluded.received_at
+`
+
+type UpsertNightReportParams struct {
+	Night      string `json:"night"`
+	Source     string `json:"source"`
+	Body       string `json:"body"`
+	Summary    string `json:"summary"`
+	Pills      string `json:"pills"`
+	ReceivedAt int64  `json:"received_at"`
+}
+
+// Night reports. summary and pills are copied out of the body at write time
+// so the index never has to parse every report.
+func (q *Queries) UpsertNightReport(ctx context.Context, arg UpsertNightReportParams) error {
+	_, err := q.db.ExecContext(ctx, upsertNightReport,
+		arg.Night,
+		arg.Source,
+		arg.Body,
+		arg.Summary,
+		arg.Pills,
+		arg.ReceivedAt,
 	)
 	return err
 }

@@ -228,11 +228,18 @@ func main() {
 	mux.Handle("/meteor/", http.StripPrefix("/meteor/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "meteor"))))))
 	mux.Handle("/data/", handlers.CacheStaticAssets(http.FileServer(http.Dir(path))))
 
-	// Night sky transparency reports, published into reports/ by skyq (scp
-	// from the observatory). handlers.Reports adds the site navigation to
-	// each page on the way out and sets its own cache headers: index.html is
-	// regenerated every morning and a night's report can be re-published, so
-	// the 7-day immutable cache would pin stale pages.
+	// Night reports. skyq (imaging) and skycam (all-sky camera) PUT one JSON
+	// report per night each, authenticated by their own key; /reports/ lists
+	// the nights and /reports/YYYY-MM-DD renders both reports on one page.
+	// reports/ on disk holds the HTML they published before the API, served
+	// as the fallback until each night is re-published. handlers.Reports
+	// sets its own cache headers: a night can be re-published at any time,
+	// so the 7-day immutable cache would pin stale pages.
+	handlers.ReportKeys = map[string]string{
+		"skyq":   os.Getenv("REPORT_KEY_SKYQ"),
+		"skycam": os.Getenv("REPORT_KEY_SKYCAM"),
+	}
+	mux.HandleFunc("PUT /api/reports/{source}/{night}", handlers.HandleReportUpload)
 	mux.Handle("/reports/", http.StripPrefix("/reports/", handlers.Reports(filepath.Join(path, "reports"))))
 	mux.Handle("/reports", http.RedirectHandler("/reports/", http.StatusMovedPermanently))
 

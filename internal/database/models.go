@@ -48,3 +48,12 @@ type Image struct {
 	SolveSubid   sql.NullInt64   `json:"solve_subid"`
 	SkymapHidden int64           `json:"skymap_hidden"`
 }
+
+type NightReport struct {
+	Night      string `json:"night"`
+	Source     string `json:"source"`
+	Body       string `json:"body"`
+	Summary    string `json:"summary"`
+	Pills      string `json:"pills"`
+	ReceivedAt int64  `json:"received_at"`
+}

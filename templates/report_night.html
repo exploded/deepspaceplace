@@ -1,0 +1,59 @@
+{{template "base" .}}
+{{define "head"}}<style>{{.CSS}}</style>{{end}}
+{{define "content"}}
+<div class="nr nr-dark">
+{{template "nr-nav" .}}
+<h1>Night of {{.Label}}</h1>
+
+{{if .Imaging}}{{template "nr-report" .Imaging}}
+{{else if .LegacyImaging}}<p class="nr-old">This night's imaging report is <a href="{{.LegacyImaging}}">in the old format</a>.</p>
+{{end}}
+{{if .Sky}}{{template "nr-report" .Sky}}
+{{else if .LegacySky}}<p class="nr-old">This night's all&#8209;sky camera report is <a href="{{.LegacySky}}">in the old format</a>.</p>
+{{end}}
+<div class="nr-nav bottom">{{template "nr-nav-links" .}}</div>
+</div>
+{{if or .Imaging .Sky}}<script>{{.Script}}</script>{{end}}
+{{end}}
+
+{{define "nr-nav"}}<nav class="nr-nav" aria-label="Nights">{{template "nr-nav-links" .}}</nav>{{end}}
+
+{{define "nr-nav-links"}}<a href="/reports/">All nights</a>
+<span>{{if .Prev}}<a href="{{.Prev.Href}}">&larr; {{.Prev.Label}}</a>{{else}}<span class="off">Earliest night</span>{{end}}
+&nbsp;&nbsp;{{if .Next}}<a href="{{.Next.Href}}">{{.Next.Label}} &rarr;</a>{{else}}<span class="off">Latest night</span>{{end}}</span>{{end}}
+
+{{define "nr-report"}}
+<section id="{{.Anchor}}">
+<h2>{{.Title}}</h2>
+<p class="sub">{{.Verdict}}</p>
+{{if .Stats}}<div class="stats">
+{{range .Stats}}  <div class="stat"><div class="k">{{.K}}</div><div class="v">{{.V}}{{if .Small}} <small>&middot; {{.Small}}</small>{{end}}</div></div>
+{{end}}</div>{{end}}
+{{range .Sections}}<div class="nr-card">
+{{if .Heading}}  <h3>{{.Heading}}</h3>{{end}}
+{{range .Notes}}  <p class="note">{{.}}</p>
+{{end}}{{if .Legend}}  <div class="legend">
+{{range .Legend}}{{if eq .Mark "solve"}}    <span><span class="mark-solve">&#9650;</span>{{.Label}}</span>
+{{else if eq .Mark "phd"}}    <span><span class="mark-phd">&#9670;</span>{{.Label}}</span>
+{{else}}    <span><i class="dot" style="background:{{.Color}}"></i>{{.Label}}</span>
+{{end}}{{end}}  </div>
+{{end}}{{with .Video}}  <video controls preload="metadata" playsinline src="{{.Src}}"{{if .Poster}} poster="{{.Poster}}"{{end}}></video>
+{{end}}{{if .SVG}}  <div class="chartbox">{{.SVG}}<div class="tip"></div></div>
+  <script type="application/json" class="nr-hover">{{.Hover}}</script>
+{{end}}{{range .Images}}{{if .Wide}}  <figure class="shot wide"><img alt="{{.Alt}}" src="{{.Src}}" loading="lazy"><figcaption><b>{{.Caption}}</b>{{if .Note}} &middot; {{.Note}}{{end}}</figcaption></figure>
+{{end}}{{end}}{{if .Images}}  <div class="shots">
+{{range .Images}}{{if not .Wide}}    <figure class="shot"><img alt="{{.Alt}}" src="{{.Src}}" loading="lazy"><figcaption><b>{{.Caption}}</b>{{if .Note}} &middot; {{.Note}}{{end}}</figcaption></figure>
+{{end}}{{end}}  </div>
+{{end}}{{if .Events}}  <div class="events">
+{{range .Events}}    <div class="evrow"><time>{{.Time}}</time><span class="pill">{{.Kind}}</span>{{if .Detail}}<span>{{.Detail}}</span>{{end}}{{if .Cause}}<span class="pill">{{.Cause}}</span>{{end}}</div>
+{{end}}  </div>
+{{end}}{{with .Table}}{{if .Summary}}  <details><summary>{{.Summary}}</summary>{{template "nr-table" .}}</details>
+{{else}}  {{template "nr-table" .}}
+{{end}}{{end}}</div>
+{{end}}{{if .Foot}}<p class="foot">{{.Foot}}{{if .Generated}} Published {{.Generated}}.{{end}}</p>{{end}}
+</section>
+{{end}}
+
+{{define "nr-table"}}<div class="nr-table"><table><thead><tr>{{range .Columns}}<th>{{.}}</th>{{end}}</tr></thead><tbody>
+{{range .Rows}}<tr>{{range .}}<td>{{.}}</td>{{end}}</tr>
+{{end}}</tbody></table></div>{{end}}
