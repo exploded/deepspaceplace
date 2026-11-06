@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/image/draw"
 )
@@ -21,20 +23,40 @@ const (
 	thumbQuality  = 85
 )
 
+// uploadTimeout replaces the server's 5-second read and 10-second write
+// timeouts for an upload. 50 MB takes about 7 minutes at 1 Mbit/s.
+const uploadTimeout = 10 * time.Minute
+
 func HandleAdminUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if !validateCSRF(r) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+	// Both deadlines move: the server starts its write timeout once the
+	// headers are in, so a body that takes longer than that loses its
+	// response. Errors are ignored: a writer that cannot move its deadlines
+	// (an httptest recorder) keeps the server's.
+	rc := http.NewResponseController(w)
+	_ = rc.SetReadDeadline(time.Now().Add(uploadTimeout))
+	_ = rc.SetWriteDeadline(time.Now().Add(uploadTimeout))
+
+	// Parse before the CSRF check, which reads the form: left to that, the
+	// body is read without the size cap.
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
+	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
+		var tooBig *http.MaxBytesError
+		if errors.As(err, &tooBig) {
+			writeUploadResult(w, "danger", "File too large (max 50 MB)")
+			return
+		}
+		slog.Info("Upload not received", "error", err)
+		writeUploadResult(w, "danger", "Upload failed: the file did not arrive in full")
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
-	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
-		writeUploadResult(w, "danger", "File too large (max 50 MB)")
+	if !validateCSRF(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 

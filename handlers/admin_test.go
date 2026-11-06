@@ -11,15 +11,27 @@ import (
 	"testing"
 )
 
-// withAdminEdit sets the CSRF token the posts carry and stubs edit.html down to
-// the error banner, so a refused save can be checked without the real layout.
-func withAdminEdit(t *testing.T) {
+// withCSRFToken sets the CSRF token that admin posts must carry to "test-token".
+func withCSRFToken(t *testing.T) {
 	t.Helper()
 
 	adminSessionMu.Lock()
 	prevToken := adminCSRFToken
 	adminCSRFToken = "test-token"
 	adminSessionMu.Unlock()
+
+	t.Cleanup(func() {
+		adminSessionMu.Lock()
+		adminCSRFToken = prevToken
+		adminSessionMu.Unlock()
+	})
+}
+
+// withAdminEdit sets the CSRF token the posts carry and stubs edit.html down to
+// the error banner, so a refused save can be checked without the real layout.
+func withAdminEdit(t *testing.T) {
+	t.Helper()
+	withCSRFToken(t)
 
 	oldTemplates := Templates
 	Templates = map[string]*template.Template{
@@ -28,12 +40,7 @@ func withAdminEdit(t *testing.T) {
 		)),
 	}
 
-	t.Cleanup(func() {
-		adminSessionMu.Lock()
-		adminCSRFToken = prevToken
-		adminSessionMu.Unlock()
-		Templates = oldTemplates
-	})
+	t.Cleanup(func() { Templates = oldTemplates })
 }
 
 func postEdit(t *testing.T, form url.Values) *httptest.ResponseRecorder {

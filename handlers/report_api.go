@@ -23,8 +23,9 @@ var ReportKeys = map[string]string{}
 // few hundred KB; skycam's is smaller because its images are S3 links.
 const maxReportBody = 4 << 20
 
-// reportUploadTimeout replaces the server's 5-second read timeout for an
-// upload, which a few hundred KB from the observatory's link can exceed.
+// reportUploadTimeout replaces the server's 5-second read and 10-second
+// write timeouts for an upload, which a few hundred KB from the
+// observatory's link can exceed.
 const reportUploadTimeout = 60 * time.Second
 
 // earliestReportNight bounds the nights a producer may write. With the
@@ -81,9 +82,13 @@ func HandleReportUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Errors are deliberately ignored: a writer that cannot move its
-	// deadline (an httptest recorder) simply keeps the server's.
-	_ = http.NewResponseController(w).SetReadDeadline(time.Now().Add(reportUploadTimeout))
+	// Both deadlines move: the server starts its write timeout once the
+	// headers are in, so a body that takes longer than that loses its
+	// response. Errors are deliberately ignored: a writer that cannot move
+	// its deadlines (an httptest recorder) simply keeps the server's.
+	rc := http.NewResponseController(w)
+	_ = rc.SetReadDeadline(time.Now().Add(reportUploadTimeout))
+	_ = rc.SetWriteDeadline(time.Now().Add(reportUploadTimeout))
 	body := http.MaxBytesReader(w, r.Body, maxReportBody)
 
 	var rep nightreport.Report

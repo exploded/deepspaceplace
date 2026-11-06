@@ -140,6 +140,38 @@ func TestReportUploadStoresAndReplaces(t *testing.T) {
 	}
 }
 
+// A report that outlasts the server's read and write timeouts must still be
+// stored and answered, or the producer reports a failure for a saved night.
+func TestReportUploadOutlastsServerTimeouts(t *testing.T) {
+	srv := httptest.NewUnstartedServer(withReports(t))
+	srv.Config.ReadTimeout = 100 * time.Millisecond
+	srv.Config.WriteTimeout = 200 * time.Millisecond
+	srv.Start()
+	defer srv.Close()
+
+	body := mustJSON(t, skyqReport("2026-09-02"))
+	// Ten chunks 50 ms apart: about 500 ms, well past both timeouts.
+	slow := &slowReader{r: bytes.NewReader(body), chunk: len(body)/10 + 1, pause: 50 * time.Millisecond}
+	req, err := http.NewRequest(http.MethodPut, srv.URL+"/api/reports/skyq/2026-09-02", slow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.ContentLength = int64(len(body))
+	req.Header.Set("Authorization", "Bearer "+testSkyqKey)
+
+	resp, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatalf("upload: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204", resp.StatusCode)
+	}
+	if rows, err := DB.GetNightReports(t.Context(), "2026-09-02"); err != nil || len(rows) != 1 {
+		t.Fatalf("want the report stored, got %d rows (%v)", len(rows), err)
+	}
+}
+
 func TestReportUploadRefusesBadKeys(t *testing.T) {
 	h := withReports(t)
 	skyq := mustJSON(t, skyqReport("2026-09-02"))
