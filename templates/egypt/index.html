@@ -4,7 +4,16 @@
 <meta charset="utf-8"/>
 <title>Primordial Egypt — A Field Record</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="description" content="{{.Description}}"/>
+<link rel="canonical" href="https://deepspaceplace.com/egypt/"/>
+<meta property="og:type" content="article"/>
+<meta property="og:title" content="Primordial Egypt — A Field Record"/>
+<meta property="og:description" content="{{.Description}}"/>
+<meta property="og:url" content="https://deepspaceplace.com/egypt/"/>
+<meta property="og:image" content="https://deepspaceplace.com/egypt/photos/day02-giza-hero-sphinx-khafre.jpg"/>
+<meta name="twitter:card" content="summary_large_image"/>
 <base href="/egypt/">
+<noscript><style>.guide-card .quote-wrap { max-height:none; } .guide-card .toggle { display:none; }</style></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&family=Cardo:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Egyptian+Hieroglyphs&display=swap" rel="stylesheet">
@@ -713,10 +722,10 @@ a { color:inherit; }
     <h2>The river is older<br><span class="gold">than the temples.</span></h2>
 
     <div class="active-card" id="map-card">
-      <div class="kicker" style="margin-bottom:14px" id="map-kicker"></div>
-      <div class="place" id="map-place"></div>
-      <div class="meaning" id="map-meaning"></div>
-      <div class="lede" id="map-lede"></div>
+      {{with .First}}<div class="kicker" style="margin-bottom:14px" id="map-kicker">{{.MapKicker}}</div>
+      <div class="place" id="map-place">{{.Place}}</div>
+      <div class="meaning" id="map-meaning">{{.Meaning}}</div>
+      <div class="lede" id="map-lede">{{.Lede}}</div>{{end}}
       <button id="map-read-btn">Read the day &rarr;</button>
     </div>
 
@@ -759,10 +768,62 @@ a { color:inherit; }
     <div class="grid">
       <div class="rail" id="timeline-rail">
         <div class="label">ORDINALS</div>
-        <!-- populated by JS -->
+        {{- range .Days}}
+        <a href="#day-{{.Day}}" data-day="{{.Day}}"><span class="num">{{.Num}}</span><span>{{.PlaceUpper}}</span></a>
+        {{- end}}
       </div>
       <div id="timeline-cards">
-        <!-- populated by JS -->
+        {{- range $d := .Days}}
+        <div class="day-card" id="day-{{.Day}}">
+          <div class="meta"><span class="day-num">Day {{.Num}}</span><span class="date">{{.Date}}</span><span class="coord">{{.Coord}}</span></div>
+          <h3>{{.Place}}</h3>
+          <div class="region">{{.Region}} &nbsp;&middot;&nbsp; <span class="meaning-text">{{.Meaning}}</span></div>
+          <div class="glyph-strip"><span class="glyph glyph-tip">{{.Glyph}}<span class="tip-box"><span class="tip-name">{{.Hiero}}</span><span class="tip-desc">{{.Meaning}}</span></span></span><span class="hiero-name">{{.Hiero}}</span></div>
+          <div class="content-grid"><div>
+            <div class="lede-text">{{.Lede}}</div>
+            <div class="body-text">{{.Body}}</div>
+          </div><div>
+            {{- with .Hero}}
+            <div class="day-plate" data-day="{{$d.Day}}">
+              <div class="hero-frame">
+                {{- if .Video}}
+                <video src="{{.Src}}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>
+                {{- else}}
+                <img src="{{.Src}}" alt="{{.Caption}}" loading="lazy" decoding="async" style="object-position:{{.Crop}}">
+                {{- end}}
+                <div class="vignette"></div>
+                <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
+                <div class="plate-num">{{$d.PlateNum}}</div>
+                <div class="field-tag">&#9670; FIELD</div>
+              </div>
+              <div class="caption">{{.Caption}}</div>
+              {{- if $d.ThumbGroups}}
+              <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+                {{- range $d.ThumbGroups}}
+                <div><div class="thumb-group-label{{if .Active}} active{{end}}">{{.Label}}</div><div class="thumb-strip">
+                  {{- range .Thumbs}}{{template "egypt-thumb" .}}{{end}}
+                </div></div>
+                {{- end}}
+              </div>
+              {{- else if $d.Thumbs}}
+              <div class="thumb-strip" style="margin-top:10px">
+                {{- range $d.Thumbs}}{{template "egypt-thumb" .}}{{end}}
+              </div>
+              {{- end}}
+            </div>
+            {{- else}}
+            <div class="plate-art" id="plate-art-{{.Day}}" data-mode="{{.ArtMode}}">
+              <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
+              <div class="plate-label">PLATE {{.Num}} &middot; {{.Place}}</div>
+              <div class="pending-tag">&#9671; PHOTOGRAPH PENDING</div>
+            </div>
+            {{- end}}
+            <div class="itinerary"><div class="kicker it-label" style="color:var(--muted)">Itinerary</div><ul>
+              {{- range $i, $s := .Stops}}<li><span class="num">{{num2 (inc $i)}}</span><span class="stop">{{$s}}</span></li>{{end -}}
+            </ul></div>
+          </div></div>
+        </div>
+        {{- end}}
       </div>
     </div>
   </div>
@@ -780,7 +841,16 @@ a { color:inherit; }
       <div class="rule" style="justify-content:center;margin-top:30px"><span class="line"></span><span class="diamond">&#9670;</span><span class="line"></span></div>
     </div>
     <div class="guides-grid" id="guides-grid">
-      <!-- populated by JS -->
+      {{- range .Guides}}
+      <div class="guide-card">
+        <div class="top-row"><div class="kicker sub">{{.Sub}}</div><span class="card-glyph glyph-tip">{{.Glyph}}<span class="tip-box"><span class="tip-name">{{.Name}}</span><span class="tip-desc">{{.Tip}}</span></span></span></div>
+        <h3>{{.Name}}</h3>
+        <div class="metric-row"><span class="metric-val">{{.Metric}}</span><span class="metric-label">{{.MetricLabel}}</span></div>
+        <div class="detail">{{.Detail}}</div>
+        <div class="quote-wrap"><div class="quote">{{.Quote}}</div></div>
+        <div class="toggle">+ READ</div>
+      </div>
+      {{- end}}
     </div>
   </div>
 </section>
@@ -802,11 +872,18 @@ a { color:inherit; }
     </div>
 
     <div class="hero-video-wrap">
-      <video src="photos/egypt-hero.mp4" controls preload="metadata" poster="photos/thumbs/egypt-hero.jpg"></video>
+      <video src="photos/egypt-hero-web.mp4" controls preload="metadata" poster="photos/thumbs/egypt-hero.jpg"></video>
     </div>
 
     <div class="gallery-grid" id="gallery-grid">
-      <!-- populated by JS -->
+      {{- range .Plates}}
+      <div class="gallery-cell" style="grid-column:span {{.Cols}};grid-row:span {{.Rows}}">
+        {{- if .Video}}
+        <video src="{{.Video}}" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+        {{- end}}
+        <div class="overlay"></div><div class="cell-meta"><div class="cell-day">DAY {{.DayNum}}</div><div class="cell-label">{{.Label}}</div></div>
+      </div>
+      {{- end}}
     </div>
   </div>
 </section>
@@ -990,334 +1067,16 @@ a { color:inherit; }
 <!-- ════════════════════════════════════════════════════════════════
      JAVASCRIPT
      ════════════════════════════════════════════════════════════════ -->
+<script type="application/json" id="egypt-data">{{.DataJSON}}</script>
 <script>
 'use strict';
 
 // ── DATA ──────────────────────────────────────────────────────
-const TRIP = [
-  { day:1, date:'Wed \xb7 3 Dec 2025', place:'Cairo', region:'Arrival',
-    glyph:'\ud80c\udd8e\ud80c\udd53\ud80c\udfcf\ud80c\ude96', hiero:'KEMET', meaning:'"The Black Land" \u2014 the ancient name for Egypt',
-    coord:'30.0444\xb0 N, 31.2357\xb0 E',
-    lede:'Landfall at the delta. The river ends here; the journey begins.',
-    body:'Arrival at Cairo International. Transfer through the late traffic of Giza to the Hyatt Regency, where the plateau sits dark against the sky \u2014 the first view of stones older than any memory in the world.',
-    stops:['Cairo International Airport','Hyatt Regency Cairo West'],
-    photos:[{ src:'photos/day01-cairo-arrival-pyramid-sunrise.jpg', caption:'First sight \u2014 Khufu from the motorway, dawn of arrival', crop:'center 40%' }] },
-  { day:2, date:'Thu \xb7 4 Dec', place:'Giza', region:'The Plateau',
-    glyph:'\ud80c\udef9', hiero:'ANKH', meaning:'Symbol of life \u2014 held by every god, offered to every pharaoh',
-    coord:'29.9792\xb0 N, 31.1342\xb0 E',
-    lede:'Three pyramids in mathematical correspondence with Orion\'s belt.',
-    body:'The Valley Temple first \u2014 cyclopean limestone and rose granite, tool marks that invite questions. Then the Sphinx from the viewing platform, Khafre\'s causeway, and a full circuit of the three pyramids. The Great Pyramid holds its silence at 2.3 million stones.',
-    stops:['Valley Temple','Great Sphinx','Khafre Causeway','Khafre Pyramid','Great Pyramid','Menkaure Pyramid'],
-    photos:[
-      { src:'photos/day02-giza-hero-sphinx-khafre.jpg', caption:'The Sphinx at morning, Khafre\'s pyramid beyond', crop:'center 45%' },
-      { src:'photos/day02-giza-valley-temple-granite.jpg', caption:'Valley Temple \u2014 rose granite blocks fitted without mortar', crop:'center 50%' },
-      { src:'photos/day02-giza-precision-joint.jpg', caption:'A single joint, Valley Temple \u2014 the line a scalpel could not make', crop:'center 55%' },
-      { src:'photos/day02-giza-menkaure-pyramid.jpg', caption:'Inside Menkaure \u2014 corbelled ceiling, 19th-century graffiti overhead', crop:'center 40%' },
-      { src:'photos/day02-giza-menkaure-interior.jpg', caption:'Pointing out Khafre\'s summit \u2014 camels for scale, the only pyramid at Giza still wearing a cap of its original casing', crop:'center 50%' },
-    ] },
-  { day:3, date:'Fri \xb7 5 Dec', place:'Cairo \u2192 Luxor', region:'Transit',
-    glyph:'\ud80c\udd97', hiero:'URAEUS', meaning:'Pyramidion of Amenemhat III \u2014 winged sun disk flanked by uraei',
-    coord:'25.6872\xb0 N, 32.6396\xb0 E',
-    lede:'A morning in the museum, an afternoon on the southbound wing.',
-    body:'The Cairo Museum at length \u2014 the <a href="https://en.wikipedia.org/wiki/Sabu_disk" target="_blank">Sabu disc</a>, basalt statuary, the <a href="https://en.wikipedia.org/wiki/Narmer_Palette" target="_blank">Narmer palette</a>; room after room of recovered memory. Then a short flight to Luxor and the Steigenberger Nile Palace, where the river first makes itself felt.',
-    stops:['Cairo Museum','Flight to Luxor','Steigenberger Nile Palace'],
-    photos:[
-      { src:'photos/day03-cairo-museum-pyramidion.jpg', caption:'Pyramidion of Amenemhat III \u2014 the capstone that once crowned a pyramid', crop:'center 40%' },
-      { src:'photos/day03-cairo-museum-khafre-horus.jpg', caption:'Khafre enthroned \u2014 Horus embracing his head, anorthosite gneiss (long mislabelled diorite) from the Gebel el-Asr quarries in Nubia, carved to a mirror finish', crop:'center 35%' },
-      { src:'photos/day03-cairo-museum-sabu-disc.jpg', caption:'The Sabu disc \u2014 tri-lobed schist, 1st Dynasty, purpose unknown', crop:'center 45%' },
-      { src:'photos/day03-cairo-museum-hall.jpg', caption:'The old museum\'s wooden vitrines \u2014 sarcophagi lined like library shelves', crop:'center 50%' },
-    ] },
-  { day:4, date:'Sat \xb7 6 Dec', place:'Abydos & Dendera', region:'Archaic Temples',
-    glyph:'\ud80c\ude61', hiero:'HATHOR', meaning:'"House of Horus" \u2014 goddess of Dendera, whose temple you walk',
-    coord:'26.1847\xb0 N, 31.9194\xb0 E',
-    lede:'Dendera\'s ceiling, Seti\'s reliefs, and beneath them \u2014 the Osirion.',
-    body:'Dendera first: the Hathor temple ceilings astonishingly intact, the zodiac overhead, crypts below. Then Abydos \u2014 the elegant bas-reliefs of Seti I and the Abydos king list. Below grade, the megalithic Osirion, water still pooled at its base, stone that refuses to fit the chronology above it.',
-    stops:['Temple of Hathor (Dendera)','Temple of Seti I (Abydos)','The Osirion'],
-    mapLabel:'ABYDOS', subPins:[{ label:'DENDERA', dy:-28 }],
-    groups:[
-      { label:'Dendera \xb7 Temple of Hathor', photos:[
-        { src:'photos/day04-dendera-hypostyle.jpg', caption:'The Hathor-headed columns of the hypostyle hall', crop:'center 45%' },
-        { src:'photos/day04-dendera-nut-ceiling.jpg', caption:'The goddess Nut arched across the stars, swallowing the sun at dusk', crop:'center 40%' },
-        { src:'photos/day04-dendera-light-relief.jpg', caption:'The "Dendera light" \u2014 the serpent-in-the-lotus relief in the crypt', crop:'center 45%' },
-        { src:'photos/day04-dendera-star-relief.jpg', caption:'Rows of stars above a procession \u2014 astronomy on every wall', crop:'center 40%' },
-      ]},
-      { label:'Abydos \xb7 Temple of Seti I', photos:[
-        { src:'photos/day04-abydos-djed-relief.jpg', caption:'Raising the djed pillar \u2014 original paint still clinging to Seti\'s reliefs', crop:'center 40%' },
-        { src:'photos/day04-abydos-columns.jpg', caption:'Seti\'s hall \u2014 columns so wide two people can\'t join hands around them', crop:'center 45%' },
-        { src:'photos/day04-abydos-vaulted-ceiling.jpg', caption:'A corbelled vault cut from single spans of stone', crop:'center 50%' },
-        { src:'photos/day04-abydos-ox-plough.jpg', caption:'A relief nearly unfinished \u2014 the pharaoh ploughing with an ox', crop:'center 45%' },
-      ]},
-      { label:'The Osirion \xb7 beneath Abydos', photos:[
-        { src:'photos/day04-osirion-megaliths-scale.jpg', caption:'Post-and-lintel megaliths \u2014 people at the base give the scale', crop:'center 55%' },
-        { src:'photos/day04-osirion-megalithic.jpg', caption:'Cyclopean blocks sunk below the temple \u2014 stone that refuses the chronology above', crop:'center 50%' },
-        { src:'photos/day04-osirion-water.jpg', caption:'Groundwater still pools inside \u2014 as it did when the chamber was first cut', crop:'center 50%' },
-      ]},
-    ] },
-  { day:5, date:'Sun \xb7 7 Dec', place:'Luxor', region:'East Bank',
-    glyph:'\ud80c\uddcb\ud80c\udfe0\ud80c\ude16\ud80c\udc2d', hiero:'AMUN', meaning:'"The Hidden One" \u2014 the god Luxor Temple honors',
-    coord:'25.7188\xb0 N, 32.6573\xb0 E',
-    lede:'The city that was Thebes. Ram-headed sphinxes line the approach.',
-    body:'The Luxor Museum in the morning \u2014 the finest small collection in Egypt, perfectly lit, a red-granite Amenhotep III that stops you at the door. Luxor Temple at dusk, the avenue of sphinxes newly revealed, the obelisks lit from below.',
-    stops:['Luxor Museum','Luxor Temple'],
-    groups:[
-      { label:'Luxor Museum', photos:[
-        { src:'photos/day05-luxor-museum-sobek.jpg', caption:'Granite Sobek \u2014 the crocodile god, Luxor Museum', crop:'center 40%' },
-        { src:'photos/day05-luxor-museum-thutmose-front.jpg', caption:'Thutmose III enthroned \u2014 cobra at the brow, the face still watching', crop:'center 40%' },
-        { src:'photos/day05-luxor-museum-hathor-cow.jpg', caption:'Hathor as cow with Amenhotep II \u2014 the goddess sheltering the pharaoh', crop:'center 45%' },
-        { src:'photos/day05-luxor-museum-osiride-ankhs.jpg', caption:'Painted Osiride figure clutching two ankhs \u2014 pigment still vivid after millennia', crop:'center 40%' },
-      ]},
-      { label:'Luxor Temple', photos:[
-        { src:'photos/day05-luxor-pylon-sunset.jpg', caption:'Luxor Temple pylon at sunset \u2014 obelisk, colossi of Ramesses, the last light on sandstone', crop:'center 50%' },
-        { src:'photos/day05-luxor-colonnade-night.jpg', caption:'Inside after dark \u2014 the hypostyle colonnade lit from below', crop:'center 45%' },
-        { src:'photos/day05-luxor-colossi-dusk.jpg', caption:'Colossi in profile at dusk \u2014 the orange Theban sky behind them', crop:'center 40%' },
-        { src:'photos/day05-luxor-group.jpg', caption:'The group at the pylon \u2014 fellow travellers, guides, the first obelisk at our backs', crop:'center 55%' },
-      ]},
-    ] },
-  { day:6, date:'Mon \xb7 8 Dec', place:'Valley of the Kings', region:'West Bank \xb7 Boarding',
-    glyph:'\ud80c\udda3', hiero:'KHEPRI', meaning:'Scarab \u2014 rebirth, becoming. Seti\'s tomb (KV17) is the valley\'s finest',
-    coord:'25.7402\xb0 N, 32.6014\xb0 E',
-    lede:'Four royal tombs, a sunrise balloon, the Ramesseum, the Colossi, the boat at dusk.',
-    body:'A hot-air balloon over the West Bank at first light \u2014 the temples laid out below as the sun clears the eastern cliffs. Then the Ramesseum \u2014 the mortuary temple of Ramesses II, its fallen colossus the inspiration for Shelley\'s Ozymandias. The Colossi of Memnon at golden hour, 18 metres of quartzite still guarding a temple that no longer stands. Four tombs in the Valley of the Kings: Seti I (KV17), Merenptah (KV8), Rameses III (KV11), and the shared tomb of Rameses V / VI (KV9). Board the Nile at evening.',
-    stops:['Hot-Air Balloon \xb7 West Bank sunrise','The Ramesseum','Colossi of Memnon','KV17 \xb7 Seti I','KV8 \xb7 Merenptah','KV11 \xb7 Rameses III','KV9 \xb7 Rameses V / VI','Board 5\u2605 Nile Cruise'],
-    groups:[
-      { label:'Sunrise \xb7 Hot-Air Balloon', photos:[
-        { src:'photos/day06-balloon-temple.jpg', caption:'Balloons drifting over the West Bank temples \u2014 the Ramesseum below, the Theban cliffs beyond', crop:'center 45%' },
-        { src:'photos/day06-balloon-memnon.jpg', caption:'Standing colossi of Amenhotep III at his mortuary temple -- where our balloon landed, the others still rising behind them in the first light', crop:'center 45%' },
-        { src:'photos/day06-balloon-selfie.jpg', caption:'In the basket \u2014 the burner firing, the whole valley laid out below', crop:'center 40%' },
-      ]},
-      { label:'The Ramesseum \xb7 Mortuary Temple of Ramesses II', photos:[
-        { src:'photos/day06-ramesseum-fallen-colossus.jpg', caption:'The fallen colossus of Ramesses II \u2014 Shelley\'s Ozymandias, toppled and broken, still taller than the visitors who pass', crop:'center 45%' },
-        { src:'photos/day06-ramesseum-osirid-pillars.jpg', caption:'Osirid pillars at the second court \u2014 standing figures of Ramesses framing the entrance to the hypostyle hall', crop:'center 50%' },
-        { src:'photos/day06-ramesseum-hypostyle.jpg', caption:'Inside the hypostyle hall \u2014 papyrus columns inscribed floor to capital, the group walking through filtered light', crop:'center 45%' },
-        { src:'photos/day06-ramesseum-group.jpg', caption:'The full group at the Ramesseum \u2014 the fallen colossus behind, the Theban hills beyond', crop:'center 50%' },
-      ]},
-      { label:'Colossi of Memnon \xb7 West Bank', photos:[
-        { src:'photos/day06-memnon-colossi.jpg', caption:'The Colossi of Memnon \u2014 18 metres of quartzite, sentinels of a mortuary temple that vanished millennia ago', crop:'center 50%' },
-        { src:'photos/day06-memnon-selfie.jpg', caption:'At the foot of the northern colossus \u2014 the scale of the thing only registers when you stand beside it', crop:'center 40%' },
-      ]},
-      { label:'KV17 \xb7 Tomb of Seti I', photos:[
-        { src:'photos/day06-kv17-star-ceiling.jpg', caption:'The astronomical ceiling \u2014 a black sky set with gold five-pointed stars above the procession of gods', crop:'center 35%' },
-        { src:'photos/day06-kv17-celestial-cow.jpg', caption:'The Celestial Cow \u2014 the goddess Mehet-Weret carrying the sun across the sky', crop:'center 45%' },
-        { src:'photos/day06-kv17-gods-relief.jpg', caption:'Seti embraced by Horus and Osiris \u2014 painted relief still vivid three thousand years on', crop:'center 40%' },
-        { src:'photos/day06-kv17-with-guide.jpg', caption:'Beneath the star-ceiling with our KV guide \u2014 the deepest and finest tomb in the valley', crop:'center 45%' },
-      ]},
-      { label:'KV8 \xb7 Tomb of Merenptah', photos:[
-        { src:'photos/day06-kv8-burial-chamber.jpg', caption:'The burial chamber \u2014 the outer granite sarcophagus still in place beneath the vaulted ceiling', crop:'center 45%' },
-        { src:'photos/day06-kv8-sarcophagus-lid.jpg', caption:'The cartouche-shaped sarcophagus lid \u2014 four nested coffins once held the king inside', crop:'center 45%' },
-      ]},
-      { label:'KV11 \xb7 Tomb of Rameses III', photos:[
-        { src:'photos/day06-kv11-corridor-ceiling.jpg', caption:'The long corridor ceiling \u2014 a yellow band of hieroglyphs between walls of stars', crop:'center 40%' },
-        { src:'photos/day06-kv11-horus-relief.jpg', caption:'The king received by Horus \u2014 one of the tomb\'s best-preserved painted reliefs', crop:'center 45%' },
-      ]},
-      { label:'KV9 \xb7 Tomb of Rameses V / VI', photos:[
-        { src:'photos/day06-kv9-nut-ceiling.jpg', caption:'The goddess Nut stretched across the ceiling twice -- the Book of Day and Book of Night, the sun swallowed at dusk and born at dawn', crop:'center 40%' },
-        { src:'photos/day06-kv9-book-of-gates.jpg', caption:'A dense wall from the Book of Gates \u2014 the sun disk at the centre, the hours of night arrayed around it', crop:'center 35%' },
-        { src:'photos/day06-kv9-pillar-chamber.jpg', caption:'A pillared chamber \u2014 painted sections framing rough-cut rock, excavation stopped mid-work', crop:'center 40%' },
-      ]},
-    ] },
-  { day:7, date:'Tue \xb7 9 Dec', place:'Karnak', region:'Sail South',
-    glyph:'\ud80c\uddcb\ud80c\udeaa\ud80c\udfcf\ud80c\udea8\ud80c\udfcf', hiero:'IPET-SUT', meaning:'"Most Select of Places" \u2014 Karnak\'s ancient name',
-    coord:'25.7188\xb0 N, 32.6573\xb0 E',
-    lede:'The largest religious complex ever built. Built for two thousand years.',
-    body:'Karnak at length \u2014 more than thirty pharaohs added to it across two millennia. 134 columns in the Hypostyle Hall; the central twelve stand about 21 metres, taller than a five-storey building, and the other 122 crowd around them like a stone forest. The precision of its joinery, the scale of the monoliths \u2014 evidence of a technology whose record did not survive.',
-    stops:['Karnak Temple','Afternoon sailing'],
-    photos:[
-      { src:'photos/day07-karnak-obelisk.jpg', caption:'The obelisk of Hatshepsut \u2014 pink Aswan granite inscribed floor to tip, 29 metres of a single stone', crop:'center 40%' },
-      { src:'photos/day07-karnak-grounds-palms.jpg', caption:'The precinct at scale \u2014 palms framing the obelisk, two thousand years of construction in every direction', crop:'center 50%' },
-      { src:'photos/day07-karnak-stone-field.jpg', caption:'A field of displaced blocks \u2014 each one carved, each one part of something larger', crop:'center 55%' },
-      { src:'photos/day07-karnak-hypostyle.mp4', caption:'The Hypostyle Hall \u2014 134 columns, the central twelve about 21 metres tall, higher than a five-storey building', video:true },
-    ] },
-  { day:8, date:'Wed \xb7 10 Dec', place:'Edfu', region:'Mid-river',
-    glyph:'\ud80c\udd43', hiero:'HORUS', meaning:'The falcon god \u2014 to whom Edfu\'s temple is dedicated',
-    coord:'24.9779\xb0 N, 32.8737\xb0 E',
-    lede:'The best-preserved temple in Egypt, intact to its roof.',
-    body:'The Temple of Horus at Edfu \u2014 pylons, roof, and sanctuary walls still carry the original program. Its inscriptions speak of Zep Tepi, the First Time, and of a creation older than the gods who ruled after. An afternoon spent watching the river run north from the deck.',
-    stops:['Temple of Horus (Edfu)','Afternoon sailing'],
-    photos:[
-      { src:'photos/day08-edfu-courtyard-colonnade.jpg', caption:'The Court of Offerings \u2014 composite columns receding into the afternoon light', crop:'center 45%' },
-      { src:'photos/day08-edfu-pylon-selfie.jpg', caption:'At the pylon \u2014 36 metres of sandstone, the smiting scene of Ptolemy XII behind us', crop:'center 50%' },
-      { src:'photos/day08-edfu-sanctuary-naos.jpg', caption:'The Holy of Holies \u2014 Nectanebo\'s granite naos and the barque of Horus, lit from below', crop:'center 40%' },
-      { src:'photos/day08-edfu-wall-reliefs.jpg', caption:'The Edfu Building Texts from floor to parapet -- a creation story, a primordial flood that destroyed the first world, and the founding of the temples that followed <a href="https://www.scirp.org/journal/paperinformation?paperid=132416" target="_blank" rel="noopener" style="font-size:9px;vertical-align:super;opacity:0.6;text-decoration:none;color:inherit">[ref]</a>', crop:'center 45%' },
-    ] },
-  { day:9, date:'Thu \xb7 11 Dec', place:'Abu Simbel & Elephantine', region:'Aswan',
-    glyph:'\ud80c\uddf3\ud80c\udd20\ud80c\uddd3', hiero:'RAMESSES II', meaning:'The pharaoh who carved his temple from a living cliff',
-    coord:'22.3372\xb0 N, 31.6258\xb0 E',
-    lede:'A pre-dawn drive to Ramesses II, an afternoon on an older island.',
-    body:'A 4 AM departure for Abu Simbel \u2014 the great temples of Ramesses II and Nefertari, re-hewn and relocated when Lake Nasser rose. Four colossi at the entrance, 20 metres high, carved from the cliff. Back to Aswan by lunch. In the afternoon a motorboat to Elephantine Island \u2014 the Khnum temple, a Nilometer, the shrine of Heqaib.',
-    stops:['Abu Simbel \u2014 Temples of Ramesses II & Nefertari (4 AM)','Elephantine Island'],
-    mapLabel:'ABU SIMBEL & ELEPHANTINE', subPins:[{ label:'ELEPHANTINE', dy:28 }],
-    groups:[
-      { label:'Abu Simbel \xb7 Temples of Ramesses II', photos:[
-        { src:'photos/day09-abu-simbel-facade.jpg', caption:'Four colossi at the cliff face \u2014 20 metres each, the second head fallen in antiquity', crop:'center 50%' },
-        { src:'photos/day09-abu-simbel-kadesh-relief.jpg', caption:'The Battle of Kadesh \u2014 Ramesses in his chariot, bowstring drawn, 1274 BCE still vivid on the wall', crop:'center 45%' },
-        { src:'photos/day09-abu-simbel-nefertari-isis.jpg', caption:'Nefertari before Isis \u2014 sistrum and lotus in hand, the Small Temple\'s finest painted relief', crop:'center 40%' },
-        { src:'photos/day09-abu-simbel-ra-horakhty.jpg', caption:'Ra-Horakhty enthroned \u2014 the falcon god with the sun disk, deep inside the mountain', crop:'center 45%' },
-      ]},
-      { label:'Elephantine Island \xb7 Aswan', photos:[
-        { src:'photos/day09-elephantine-temple-ruins.jpg', caption:'The Temple of Khnum at golden hour \u2014 a single column against the western hills', crop:'center 50%' },
-        { src:'photos/day09-elephantine-gateway-sunset.jpg', caption:'Alexander\'s gateway at sunset \u2014 the Nile burning orange on both sides', crop:'center 45%' },
-        { src:'photos/day09-elephantine-granite-block.jpg', caption:'A fallen granite monolith \u2014 Aswan red, polished smooth, purpose lost to the rubble', crop:'center 50%' },
-        { src:'photos/day09-elephantine-nile-dusk.jpg', caption:'The Nile at dusk \u2014 neon and ancient water, the day\'s last light over Aswan', crop:'center 50%' },
-      ]},
-    ] },
-  { day:10, date:'Fri \xb7 12 Dec', place:'Aswan & Philae', region:'The Quarry',
-    glyph:'\ud80c\udea8\ud80c\udfcf\ud80c\udc50', hiero:'ISIS', meaning:'The great goddess \u2014 whose island temple is Philae',
-    coord:'24.0258\xb0 N, 32.8842\xb0 E',
-    lede:'The stone from which empire was cut, and the island where Isis waited.',
-    body:'The Unfinished Obelisk at the Aswan quarry \u2014 had it stood, 42 metres of single granite, unmatched. Then to Philae Island: the Temple of Isis, relocated stone by stone when the waters rose, still oriented to its old stars. The sanctuary, the kiosk of Trajan, the pavilion.',
-    stops:['Aswan Quarry \u2014 Unfinished Obelisk','Philae Island \u2014 Temple of Isis'],
-    mapLabel:'ASWAN & PHILAE', subPins:[{ label:'PHILAE', dy:28 }],
-    groups:[
-      { label:'Aswan Quarry \xb7 The Unfinished Obelisk', photos:[
-        { src:'photos/day10-quarry-granite-wall.jpg', caption:'The quarry face \u2014 pink granite rising above the guide, tool marks three millennia old', crop:'center 45%' },
-        { src:'photos/day10-quarry-petroglyphs.jpg', caption:'Petroglyphs on the quarry wall \u2014 wading birds etched before the obelisks were cut', crop:'center 50%' },
-        { src:'photos/day10-quarry-unfinished-obelisk.jpg', caption:'The Unfinished Obelisk in its trench \u2014 42 metres of granite, abandoned when the stone cracked', crop:'center 50%' },
-        { src:'photos/day10-quarry-dolerite-ball.jpg', caption:'A dolerite pounding stone \u2014 harder than granite, the only tool the quarry has yielded', crop:'center 50%' },
-      ]},
-      { label:'Philae Island \xb7 Temple of Isis', photos:[
-        { src:'photos/day10-philae-approach.jpg', caption:'Philae from the water \u2014 the First Pylon and colonnade, relocated stone by stone when the waters rose', crop:'center 50%' },
-        { src:'photos/day10-philae-first-pylon.jpg', caption:'Through the First Pylon \u2014 the smiting scene overhead, granite lions at the threshold', crop:'center 45%' },
-        { src:'photos/day10-philae-trajan-kiosk.jpg', caption:'Trajan\'s Kiosk from the Nile \u2014 fourteen columns, no roof, never finished, still the most beautiful ruin on the river', crop:'center 50%' },
-      ]},
-    ] },
-  { day:11, date:'Sat \xb7 13 Dec', place:'Saqqara', region:'North again',
-    glyph:'\ud80c\udea8\ud80c\udc79\ud80c\udc2d', hiero:'OSIRIS', meaning:'wsjr \u2014 god of the afterlife, lord of the Serapeum',
-    coord:'29.8714\xb0 N, 31.2164\xb0 E',
-    lede:'The Serapeum. Twenty-four granite boxes beneath the sand.',
-    body:'Fly back to Cairo, drive to Saqqara. Down into the Serapeum: twenty-four granite sarcophagi, each weighing tens of tonnes, cut and polished to tolerances the eye still refuses to believe. No tool that could have made them has been found. The corridor hums with a cold that does not belong to the desert.',
-    stops:['Step Pyramid of Djoser','Tomb of Ty','The Serapeum of Saqqara'],
-    groups:[
-      { label:'Step Pyramid of Djoser', photos:[
-        { src:'photos/day11-djoser-exterior.jpg', caption:'The Step Pyramid at dusk \u2014 six mastabas stacked to the sky, the oldest monumental stone structure on Earth', crop:'center 50%' },
-        { src:'photos/day11-djoser-granite-chamber.jpg', caption:'The granite burial vault beneath the pyramid \u2014 massive blocks fitted without mortar, the group dwarfed by the scale', crop:'center 40%' },
-        { src:'photos/day11-djoser-alabaster-sarcophagus.jpg', caption:'The alabaster sarcophagus deep inside \u2014 translucent stone, a single drilled hole, its purpose still debated', crop:'center 45%' },
-        { src:'photos/day11-djoser-stone-vessels.jpg', caption:'Hands on a stone vessel from the subterranean galleries \u2014 lathe-turned alabaster, 4,600 years old, precision that defies the era', crop:'center 50%' },
-      ]},
-      { label:'Tomb of Ty \xb7 Saqqara', photos:[
-        { src:'photos/day11-ty-causeway.jpg', caption:'The causeway approach \u2014 limestone walls channelling the group toward the mastaba entrance', crop:'center 50%' },
-        { src:'photos/day11-ty-boat-relief.jpg', caption:'A Nile sailing vessel carved in low relief \u2014 rigging, crew, and cargo rendered in exquisite 5th Dynasty detail', crop:'center 45%' },
-        { src:'photos/day11-ty-pillared-hall.jpg', caption:'The pillared hall \u2014 square columns inscribed floor to ceiling, painted scenes of daily life still holding their colour', crop:'center 45%' },
-        { src:'photos/day11-ty-serdab.jpg', caption:'The serdab wall \u2014 Ty watches through a narrow slot, painted offerings and attendants surrounding the viewing window', crop:'center 45%' },
-      ]},
-      { label:'The Serapeum \xb7 Saqqara', photos:[
-        { src:'photos/day11-serapeum-sarcophagus.jpg', caption:'A granite sarcophagus in its niche \u2014 hieroglyphs carved into the face, the box cut from a single block', crop:'center 40%' },
-        { src:'photos/day11-serapeum-gallery.jpg', caption:'The main gallery \u2014 rock-cut corridor beneath the sand, arched chambers branching into darkness', crop:'center 45%' },
-        { src:'photos/day11-serapeum-shaft.jpg', caption:'Looking down the shaft \u2014 scaffolding frames the descent, a shattered lid lit blue at the bottom', crop:'center 40%' },
-        { src:'photos/day11-serapeum-group.jpg', caption:'Hands on the granite \u2014 polished to tolerances the eye refuses, the corridor cold with something older than the desert', crop:'center 50%' },
-      ]},
-    ] },
-  { day:12, date:'Sun \xb7 14 Dec', place:'Abu Sir & Abu Ghorab', region:'Private access',
-    glyph:'\ud80c\uddf3', hiero:'RA', meaning:'The sun itself \u2014 to whom Abu Ghorab\'s temple was raised',
-    coord:'29.8978\xb0 N, 31.1990\xb0 E',
-    lede:'Three sites closed to the public; permission granted. Dinner at Abu Sir.',
-    body:'Morning at the Osiris Shaft, the deep well beneath the Giza plateau. Then Abu Ghorab \u2014 the great alabaster basin and solar altar \u2014 by private permission. Abu Sir\'s weathered pyramids, rarely walked. The day ends at a table set in the sand, dinner under the Abu Sir pyramids as the sky turns to stars.',
-    stops:['Osiris Shaft','Abu Ghorab (private access)','Abu Sir (private access)','Dinner at Abu Sir'],
-    groups:[
-      { label:'Osiris Shaft \xb7 Beneath Giza', photos:[
-        { src:'photos/day12-osiris-shaft-descent.jpg', caption:'Khafre\'s pyramid before opening -- arrived early, the plateau empty, the casing stones still clinging to the apex', crop:'center 40%' },
-        { src:'photos/day12-osiris-shaft-chamber.jpg', caption:'Before the gates opened \u2014 Khafre\'s pyramid at my back, the plateau to ourselves, the Osiris Shaft waiting below', crop:'center 50%' },
-        { src:'photos/day12-osiris-shaft-sarcophagus.jpg', caption:'Looking up from the shaft -- a ladder, a rectangle of daylight, and thirty metres of carved rock between', crop:'center 50%' },
-        { src:'photos/day12-osiris-shaft-water.jpg', caption:'The deepest chamber \u2014 LED light on limestone, the group gathered where few visitors are permitted', crop:'center 50%' },
-      ]},
-      { label:'Abu Ghorab \xb7 Sun Temple', photos:[
-        { src:'photos/day12-abu-ghorab-site.jpg', caption:'A precision-drilled bore hole in granite -- clean, circular, cut with a tool no record describes', crop:'center 50%' },
-        { src:'photos/day12-abu-ghorab-guide-basin.jpg', caption:'The great alabaster basin -- our guide explaining its channels and depressions, the pyramid ruin behind', crop:'center 45%' },
-        { src:'photos/day12-abu-ghorab-basin.jpg', caption:'Basin detail -- cup-marks and drainage channels around the rim, purpose still debated', crop:'center 55%' },
-        { src:'photos/day12-abu-ghorab-altar.jpg', caption:'The row of basins at golden hour -- the sun low over the temple mound, the site closed to the public', crop:'center 50%' },
-      ]},
-      { label:'Abu Sir \xb7 5th Dynasty Pyramids', photos:[
-        { src:'photos/day12-abu-sir-pyramid-approach.jpg', caption:'Tool marks on stone \u2014 fine parallel striations, precise enough to measure, too regular to explain', crop:'center 50%' },
-        { src:'photos/day12-abu-sir-pyramid-close.jpg', caption:'A burial chamber from above \u2014 granite sarcophagus at the centre, hieroglyphs on the fallen walls', crop:'center 45%' },
-        { src:'photos/day12-abu-sir-causeway.jpg', caption:'The ruins of a mortuary temple \u2014 papyrus columns still standing among the displaced blocks', crop:'center 50%' },
-        { src:'photos/day12-abu-sir-desert-view.jpg', caption:'A core drill hole in red granite \u2014 spiral grooves on the extracted core, evidence that refuses easy answers', crop:'center 50%' },
-        { src:'photos/day12-abu-sir-dinner.jpg', caption:'Dinner under the pyramids \u2014 Sahure\'s silhouette against the last of the light, the sky turning to stars', crop:'center 50%' },
-      ]},
-    ] },
-  { day:13, date:'Mon \xb7 15 Dec', place:'Giza \xb7 Interior', region:'The Great Pyramid',
-    glyph:'\ud80d\udc0d\ud80c\udd71\ud80c\udd91\ud80c\udd71', hiero:'KHUFU', meaning:'Khufu \u2014 4th Dynasty pharaoh who may have commissioned the Great Pyramid, the last surviving wonder of the ancient world',
-    coord:'29.9792\xb0 N, 31.1342\xb0 E',
-    lede:'Two hours alone inside the Great Pyramid. Every chamber.',
-    body:'The Grand Egyptian Museum in the morning \u2014 the Tutankhamun galleries in their new home, the grand staircase ascending toward the view of Khufu. In the afternoon, private 2-hour access to the Great Pyramid: King\'s Chamber, Queen\'s Chamber, Subterranean Chamber. Hands on the red granite. The hum of the room at rest.',
-    stops:['Grand Egyptian Museum','Great Pyramid \xb7 Private Interior Access \u2014 King\'s, Queen\'s & Subterranean Chambers'],
-    mapLabel:'GIZA \xb7 INTERIOR', subPins:[{ label:'GRAND MUSEUM', dy:-28 }],
-    groups:[
-      { label:'Grand Egyptian Museum', photos:[
-        { src:'photos/day13-gem-ramesses-colossus.jpg', caption:'Ramesses II in the atrium \u2014 eleven metres of granite beneath a glass sky, the museum built around him', crop:'center 40%' },
-        { src:'photos/day13-gem-gilded-shrines.jpg', caption:'The gilded shrines of Tutankhamun \u2014 nested boxes of hammered gold, each one enclosing the next', crop:'center 50%' },
-        { src:'photos/day13-gem-gold-coffin.jpg', caption:'The golden coffin \u2014 nemes headdress, crook and flail, lapis and turquoise inlaid into solid gold', crop:'center 35%' },
-        { src:'photos/day13-gem-alabaster-chalice.jpg', caption:'Tutankhamun\'s double-walled calcite lamp \u2014 translucent stone glowing from within, a painted scene of the king and Queen Ankhesenamun sealed between the walls, invisible until the lamp is lit', crop:'center 45%' },
-        { src:'photos/day13-gem-meteorite-dagger.jpg', caption:'The meteorite dagger \u2014 iron from the sky, a gold sheath with feathered scales, found on the king\'s body', crop:'center 45%' },
-      ]},
-      { label:'Great Pyramid \xb7 Interior Access', photos:[
-        { src:'photos/day13-pyramid-grand-gallery.jpg', caption:'The Grand Gallery \u2014 47 metres of corbelled limestone ascending at 26 degrees, the finest passage ever cut', crop:'center 35%' },
-        { src:'photos/day13-pyramid-kings-chamber.jpg', caption:'The King\'s Chamber \u2014 red granite from Aswan, nine ceiling beams at 25 tons each, the sarcophagus open and empty', crop:'center 45%' },
-        { src:'photos/day13-pyramid-queens-chamber.jpg', caption:'The Queen\'s Chamber \u2014 gabled ceiling of massive limestone slabs, amber light on walls older than history', crop:'center 45%' },
-        { src:'photos/day13-pyramid-ascending-passage.jpg', caption:'The ascending passage \u2014 a vanishing point in rough-cut rock, the figure at the end barely visible', crop:'center 40%' },
-        { src:'photos/day13-pyramid-subterranean.jpg', caption:'The subterranean grotto \u2014 carved from bedrock beneath the pyramid, irregular and unfinished', crop:'center 50%' },
-        { src:'photos/day13-pyramid-portrait.jpg', caption:'Inside the Great Pyramid \u2014 hands on the stone, the hum of the room at rest', crop:'center 50%' },
-      ]},
-    ] },
-  { day:14, date:'Tue \xb7 16 Dec', place:'Cairo \xb7 Khan el-Khalili', region:'Departure',
-    glyph:'\ud80c\udc80', hiero:'WEDJAT', meaning:'Eye of Horus \u2014 torn out by Set, restored by Thoth, protection for the journey home',
-    coord:'30.0478\xb0 N, 31.2622\xb0 E',
-    lede:'The old bazaar. Copper, coffee, the last of the light.',
-    body:'A final morning in the medieval heart of Cairo \u2014 Khan el-Khalili, spice and copper and silver, narrow alleys beneath lanterns, coffee at El Fishawy where Mahfouz wrote. A slow return to the airport. The record closes where the delta begins.',
-    stops:['Khan el-Khalili Bazaar','Departure'],
-    photos:[
-      { src:'photos/day14-khan-street-scene.jpg', caption:'Khan el-Khalili \u2014 the narrow lanes, the costumes overhead, copper and silk in every direction', crop:'center 45%' },
-      { src:'photos/day14-khan-spice-merchant.jpg', caption:'The spice merchant \u2014 cobalt pigment, dried hibiscus, a balance scale older than the stall', crop:'center 50%' },
-      { src:'photos/day14-khan-perfume-bottles.jpg', caption:'Hand-blown glass and copper \u2014 perfume bottles in the shapes the pharaohs knew', crop:'center 50%' },
-      { src:'photos/day14-khan-costumes.jpg', caption:'A wall of sequins \u2014 belly-dance costumes stacked to the ceiling, the bazaar at its most alive', crop:'center 50%' },
-    ] },
-];
-
-const GUIDES = [
-  { name:'The Great Pyramid', sub:'Giza \xb7 G1 / Khufu', glyph:'\ud80c\ude74',
-    metric:'2.3M', metricLabel:'limestone blocks',
-    detail:'Oriented to true north within 0.05\xb0. Its base is level within 2cm across 230m. The descending passage is cut straight through the bedrock for 105m.',
-    quote:'\u201cIts precision is not a feature of religion. It is a feature of knowledge.\u201d' },
-  { name:'The Serapeum', sub:'Saqqara', glyph:'\ud80c\udcd2',
-    metric:'24', metricLabel:'granite sarcophagi',
-    detail:'Each sarcophagus is cut from a single block of hard granite weighing tens of tonnes (estimates put most boxes near 40t, their lids about half that), polished to optical flatness. Lid tolerances rival modern machining; no tool that could cut them has been found.',
-    quote:'\u201cThe hand that shaped them understood granite the way a jeweler understands glass.\u201d' },
-  { name:'Karnak', sub:'Luxor \xb7 East Bank', glyph:'\ud80c\uddcb\ud80c\udfe0\ud80c\ude16',
-    metric:'134', metricLabel:'hypostyle columns',
-    detail:'Construction spans ~2,000 years. Obelisks of 323 tons. Architraves of 70-ton blocks lifted to 23m. Hatshepsut\'s obelisks, at 30m, were raised intact.',
-    quote:'\u201cA city of stone at the scale of a city of people.\u201d' },
-  { name:'The Osirion', sub:'Abydos', glyph:'\ud80c\udea8\ud80c\udc79',
-    metric:'Pre-Dynastic?', metricLabel:'best guesses',
-    detail:'Cyclopean red granite and quartzite, constructed 15m below the Seti I temple. Water still seeps into its central chamber. Its style predates anything around it.',
-    quote:'\u201cOlder than the temple built on top of it. Possibly older than writing itself.\u201d' },
-  { name:'Abu Ghorab', sub:'Private-access site', glyph:'\ud80c\uddf3',
-    metric:'7', metricLabel:'great alabaster basin',
-    detail:'A 5th-Dynasty sun temple; at its heart a vast alabaster basin surrounded by offering altars cut as single pieces. The site is closed to general visitors.',
-    quote:'\u201cThe stones here do not match the official story.\u201d' },
-  { name:'Unfinished Obelisk', sub:'Aswan Quarry', glyph:'\ud80c\ude76',
-    metric:'1,200t', metricLabel:'estimated weight',
-    detail:'A single block of granite, 42m long, abandoned when a crack appeared. Had it stood, it would have been the largest obelisk ever raised by any civilization.',
-    quote:'\u201cA failure at a scale the modern world cannot attempt.\u201d' },
-];
-
-const GALLERY_PLATES = [
-  { mode:'dendera', label:'Dendera', day:4, size:'1x1', video:'photos/day04-dendera.mp4' },
-  { mode:'dendera2', label:'Dendera II', day:4, size:'1x1', video:'photos/day04-dendera-2.mp4' },
-  { mode:'dendera3', label:'Dendera III', day:4, size:'1x1', video:'photos/day04-dendera-3.mp4' },
-  { mode:'dendera-stargate', label:'Dendera \xb7 Stargate', day:4, size:'1x1', video:'photos/day04-dendera-stargate.mp4' },
-  { mode:'dendera5', label:'Dendera V', day:4, size:'2x1', video:'photos/day04-dendera-5.mp4' },
-  { mode:'osirion', label:'The Osirion \xb7 Abydos', day:4, size:'1x1', video:'photos/day04-osirion.mp4' },
-  { mode:'abydos-kings', label:'Abydos \xb7 Kings List', day:4, size:'1x1', video:'photos/day04-abydos-kings-list.mp4' },
-  { mode:'abydos', label:'Temple of Abydos', day:4, size:'1x1', video:'photos/day04-abydos.mp4' },
-  { mode:'balloon-takeoff', label:'Hot Air Balloon \xb7 Takeoff', day:6, size:'1x1', video:'photos/day06-balloon-takeoff.mp4' },
-  { mode:'balloon', label:'Hot Air Balloon \xb7 Luxor', day:6, size:'1x1', video:'photos/day06-balloon-flight.mp4' },
-  { mode:'balloon-landing', label:'Hot Air Balloon \xb7 Landing', day:6, size:'1x1', video:'photos/day06-balloon-landing.mp4' },
-  { mode:'tomb', label:'KV17 \xb7 Sety I', day:6, size:'1x1', video:'photos/day06-kv17-sety-i.mp4' },
-  { mode:'columns', label:'Karnak \xb7 Hypostyle', day:7, size:'1x1', video:'photos/day07-karnak-hypostyle.mp4' },
-  { mode:'obelisk', label:'Unfinished Obelisk \xb7 Aswan', day:10, size:'1x2', video:'photos/day10-aswan-quarry.mp4' },
-  { mode:'serapeum', label:'The Serapeum \xb7 Saqqara', day:11, size:'2x1', video:'photos/day11-serapeum.mp4' },
-  { mode:'serapeum2', label:'The Serapeum \xb7 Saqqara II', day:11, size:'1x1', video:'photos/day11-serapeum-2.mp4' },
-  { mode:'chamber', label:'Queen\'s Chamber \xb7 Great Pyramid', day:13, size:'1x1', video:'photos/day13-queens-chamber.mp4' },
-  { mode:'exit', label:'Exiting the Great Pyramid', day:13, size:'1x1', video:'photos/day13-exiting-great-pyramid.mp4' },
-];
+// The trip data lives in templates/egypt/trip.json. The server renders the
+// days, sites and video plates from it, and embeds it in #egypt-data for the
+// photo viewer, map and lightbox below.
+const EGYPT = JSON.parse(document.getElementById('egypt-data').textContent);
+const TRIP = EGYPT.trip, GUIDES = EGYPT.guides, GALLERY_PLATES = EGYPT.gallery;
 
 // ── STARFIELD (tiling background, no persistent canvas) ───────
 function initStarfield(container, density) {
@@ -1595,25 +1354,17 @@ function adjustFrameAspect(img) {
 // ── TIMELINE ──────────────────────────────────────────────────
 function initTimeline() {
   const rail = document.getElementById('timeline-rail');
-  const cards = document.getElementById('timeline-cards');
 
-  // build rail links
-  TRIP.forEach(t => {
-    const a = document.createElement('a');
-    a.href = '#day-' + t.day;
-    a.dataset.day = t.day;
-    a.innerHTML = '<span class="num">' + String(t.day).padStart(2, '0') + '</span><span>' + t.place.toUpperCase() + '</span>';
-    a.addEventListener('click', e => { e.preventDefault(); jumpToDay(t.day); });
-    rail.appendChild(a);
+  // rail links and day cards are rendered by the server
+  rail.querySelectorAll('a[data-day]').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); jumpToDay(parseInt(a.dataset.day)); });
   });
 
-  // build day cards
-  TRIP.forEach((t, idx) => {
-    const card = document.createElement('div');
-    card.className = 'day-card';
-    card.id = 'day-' + t.day;
+  TRIP.forEach(t => {
+    const card = document.getElementById('day-' + t.day);
+    if (!card) return;
 
-    // flatten photos
+    // flatten photos (indexes match the server-rendered thumb buttons)
     let flat = [];
     const groupSpans = [];
     if (t.groups && t.groups.length) {
@@ -1625,72 +1376,6 @@ function initTimeline() {
     } else if (t.photos) {
       t.photos.forEach(p => flat.push(p));
     }
-
-    let plateHTML;
-    if (flat.length > 0) {
-      const p = flat[0];
-      plateHTML = '<div class="day-plate" data-day="' + t.day + '">' +
-        '<div class="hero-frame">' +
-          (p.video
-            ? '<video src="' + p.src + '" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>'
-            : '<img src="' + p.src + '" alt="' + p.caption.replace(/"/g, '&quot;') + '" loading="lazy" decoding="async" style="object-position:' + (p.crop || 'center') + '">') +
-          '<div class="vignette"></div>' +
-          '<div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>' +
-          '<div class="plate-num">PLATE ' + String(t.day).padStart(2,'0') + ' \xb7 01 / ' + String(flat.length).padStart(2,'0') + '</div>' +
-          '<div class="field-tag">\u25c6 FIELD</div>' +
-        '</div>' +
-        '<div class="caption">' + p.caption + '</div>';
-
-      if (groupSpans.length > 0) {
-        plateHTML += '<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">';
-        groupSpans.forEach((g, gi) => {
-          plateHTML += '<div><div class="thumb-group-label' + (gi === 0 ? ' active' : '') + '">' + g.label + '</div><div class="thumb-strip">';
-          for (let i = g.start; i < g.end; i++) {
-            plateHTML += '<button class="' + (i === 0 ? 'active' : '') + '" data-idx="' + i + '" style="background-image:url(' + flat[i].src.replace('photos/', 'photos/thumbs/') + ')" aria-label="' + flat[i].caption.replace(/"/g, '&quot;') + '"></button>';
-          }
-          plateHTML += '</div></div>';
-        });
-        plateHTML += '</div>';
-      } else if (flat.length > 1) {
-        plateHTML += '<div class="thumb-strip" style="margin-top:10px">';
-        flat.forEach((p, i) => {
-          const thumbSrc = p.video ? p.src.replace('photos/', 'photos/thumbs/').replace(/\.mp4$/, '.jpg') : p.src.replace('photos/', 'photos/thumbs/');
-          plateHTML += '<button class="' + (i === 0 ? 'active' : '') + '" data-idx="' + i + '" style="background-image:url(' + thumbSrc + ')"' + (p.video ? ' data-video="1"' : '') + ' aria-label="' + p.caption.replace(/"/g, '&quot;') + '"></button>';
-        });
-        plateHTML += '</div>';
-      }
-      plateHTML += '</div>';
-    } else {
-      // SVG fallback
-      const compositions = ['plateau','pyramid','museum','temple','hypostyle','valley','columns','river','island','obelisk','serapeum','altar','chamber'];
-      const mode = compositions[idx % compositions.length];
-      plateHTML = '<div class="plate-art" id="plate-art-' + t.day + '" data-mode="' + mode + '">' +
-        '<div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>' +
-        '<div class="plate-label">PLATE ' + String(t.day).padStart(2,'0') + ' \xb7 ' + t.place + '</div>' +
-        '<div class="pending-tag">\u25c7 PHOTOGRAPH PENDING</div>' +
-        '</div>';
-    }
-
-    card.innerHTML =
-      '<div class="meta">' +
-        '<span class="day-num">Day ' + String(t.day).padStart(2,'0') + '</span>' +
-        '<span class="date">' + t.date + '</span>' +
-        '<span class="coord">' + t.coord + '</span>' +
-      '</div>' +
-      '<h3>' + t.place + '</h3>' +
-      '<div class="region">' + t.region + ' &nbsp;\xb7&nbsp; <span class="meaning-text">' + t.meaning + '</span></div>' +
-      '<div class="glyph-strip"><span class="glyph glyph-tip">' + t.glyph + '<span class="tip-box"><span class="tip-name">' + t.hiero + '</span><span class="tip-desc">' + t.meaning + '</span></span></span><span class="hiero-name">' + t.hiero + '</span></div>' +
-      '<div class="content-grid"><div>' +
-        '<div class="lede-text">' + t.lede + '</div>' +
-        '<div class="body-text">' + t.body + '</div>' +
-      '</div><div>' +
-        plateHTML +
-        '<div class="itinerary"><div class="kicker it-label" style="color:var(--muted)">Itinerary</div><ul>' +
-          t.stops.map((s, i) => '<li><span class="num">' + String(i+1).padStart(2,'0') + '</span><span class="stop">' + s + '</span></li>').join('') +
-        '</ul></div>' +
-      '</div></div>';
-
-    cards.appendChild(card);
 
     // insert SVG plate art
     const plateEl = card.querySelector('.plate-art');
@@ -1817,22 +1502,12 @@ function initTimeline() {
 // ── GUIDES ────────────────────────────────────────────────────
 function initGuides() {
   const grid = document.getElementById('guides-grid');
-  GUIDES.forEach((g, i) => {
-    const card = document.createElement('div');
-    card.className = 'guide-card';
-    card.innerHTML =
-      '<div class="top-row"><div class="kicker sub">' + g.sub + '</div><span class="card-glyph glyph-tip">' + g.glyph + '<span class="tip-box"><span class="tip-name">' + g.name + '</span><span class="tip-desc">' + g.detail.split('.')[0] + '</span></span></span></div>' +
-      '<h3>' + g.name + '</h3>' +
-      '<div class="metric-row"><span class="metric-val">' + g.metric + '</span><span class="metric-label">' + g.metricLabel + '</span></div>' +
-      '<div class="detail">' + g.detail + '</div>' +
-      '<div class="quote-wrap"><div class="quote">' + g.quote + '</div></div>' +
-      '<div class="toggle">+ READ</div>';
+  grid.querySelectorAll('.guide-card').forEach(card => {
     card.addEventListener('click', () => {
       const wasOpen = card.classList.contains('open');
       grid.querySelectorAll('.guide-card').forEach(c => { c.classList.remove('open'); c.querySelector('.toggle').textContent = '+ READ'; });
       if (!wasOpen) { card.classList.add('open'); card.querySelector('.toggle').textContent = '\u2014 CLOSE'; }
     });
-    grid.appendChild(card);
   });
 }
 
@@ -1843,23 +1518,11 @@ function initGallery() {
   const lbFrame = document.getElementById('lb-frame');
   const lbLabel = document.getElementById('lb-label');
 
+  const cells = grid.querySelectorAll('.gallery-cell');
   GALLERY_PLATES.forEach((p, i) => {
-    const [cs, rs] = p.size.split('x').map(Number);
-    const cell = document.createElement('div');
-    cell.className = 'gallery-cell';
-    cell.style.gridColumn = 'span ' + cs;
-    cell.style.gridRow = 'span ' + rs;
-    if (p.video) {
-      const vid = document.createElement('video');
-      vid.src = p.video; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
-      vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
-      cell.appendChild(vid);
-    } else {
-      cell.appendChild(createPlateArtSVG(p.mode));
-    }
-    const overlayHTML = '<div class="overlay"></div><div class="cell-meta"><div class="cell-day">DAY ' + String(p.day).padStart(2,'0') + '</div><div class="cell-label">' + p.label + '</div></div>';
-    const frag = document.createRange().createContextualFragment(overlayHTML);
-    cell.appendChild(frag);
+    const cell = cells[i];
+    if (!cell) return;
+    if (!p.video) cell.insertBefore(createPlateArtSVG(p.mode), cell.firstChild);
     cell.addEventListener('click', () => {
       lbFrame.style.background = 'linear-gradient(140deg, var(--plum), var(--bg2))';
       // clear old media
@@ -1880,7 +1543,6 @@ function initGallery() {
       lbLabel.innerHTML = p.label + '<div class="lb-day">DAY ' + String(p.day).padStart(2,'0') + '</div>';
       lightbox.classList.add('active');
     });
-    grid.appendChild(cell);
   });
 
   lightbox.addEventListener('click', e => { if (e.target.tagName !== 'VIDEO') lightbox.classList.remove('active'); });
@@ -1971,3 +1633,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+{{define "egypt-thumb"}}<button class="{{if .Active}}active{{end}}" data-idx="{{.Idx}}" style="background-image:url({{.Thumb}})"{{if .Video}} data-video="1"{{end}} aria-label="{{.Label}}"></button>{{end}}

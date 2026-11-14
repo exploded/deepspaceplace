@@ -242,8 +242,13 @@ func main() {
 	mux.Handle("/reports/", http.StripPrefix("/reports/", handlers.Reports()))
 	mux.Handle("/reports", http.RedirectHandler("/reports/", http.StatusMovedPermanently))
 
-	// Egypt field record (standalone page)
+	// Egypt field record (standalone page). The page itself is rendered from
+	// templates/egypt/; the photos and videos are files under static/egypt/.
+	if err := handlers.LoadEgypt("templates/egypt"); err != nil {
+		log.Fatalf("Failed to load Egypt page: %v", err)
+	}
 	mux.HandleFunc("/egypt", handlers.HandleEgypt)
+	mux.HandleFunc("/egypt/{$}", handlers.EgyptPage)
 	mux.Handle("/egypt/", http.StripPrefix("/egypt/", handlers.CacheStaticAssets(http.FileServer(http.Dir(filepath.Join(path, "static", "egypt"))))))
 
 	// Build server with middleware
