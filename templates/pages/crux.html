@@ -15,7 +15,7 @@
     <div class="crux-hero-text">
         <h1 class="crux-title">crux</h1>
         <p class="crux-tagline">An astrophotography processor, from raw subs to a finished image. <span class="crux-badge">In development</span></p>
-        <p class="crux-intro">crux grades every sub, finds the right calibration frames anywhere in your library, stacks, builds mosaics, and finishes the image, without moving or changing a single file in your data.</p>
+        <p class="crux-intro">crux grades subs, finds the right calibration frames anywhere in your library, stacks, builds mosaics, and finishes the image, without moving or changing your raw data.</p>
     </div>
     <figure class="crux-fig crux-hero-fig">
         <a class="crux-zoom" href="/static/crux/m17-red-and-blue.jpg">
@@ -40,8 +40,7 @@
     <div class="crux-text">
         <div class="crux-num">01</div>
         <h2>Sorts good subs from bad</h2>
-        <p>crux measures every sub for focus, tracking, cloud, sky brightness and satellite trails, compares it with the rest of its night and its panel, and gives each frame a grade with a plain reason: &ldquo;transparency 0.03: stars at 3% of their brightness in the field&rsquo;s best frame&rdquo;. Drag a reject limit and the whole night regrades as you drag.</p>
-        <p>On a 302-sub LMC mosaic, crux graded 63 of the 64 subs that had been rejected by hand as reject or warn, and it measured the two known thin-cloud frames at 0.47 and 0.20 transparency.</p>
+        <p>crux measures every sub for focus, tracking, cloud, sky brightness and satellite trails, compares it with the rest of its night and its panel, and gives each frame a grade with a reason: &ldquo;transparency 0.03: stars at 3% of their brightness in the field&rsquo;s best frame&rdquo;. Drag a reject limit and the whole night regrades as you drag, or override individual frames by hand.</p>
     </div>
     <div class="crux-media">
         <figure class="crux-fig">
@@ -81,7 +80,7 @@
         <div class="crux-num">03</div>
         <h2>Finds the best flats, darks and bias in your whole library</h2>
         <p>Point crux at your top-level folders and it builds a calibration library: every flat set, dark and bias, checked and graded. When you process a target, crux picks the best calibration from anywhere in that library. No more copying flats, darks and bias into every target folder.</p>
-        <p>Flats are matched by night, filter and the dust pattern they share with your lights, and checked against the lights themselves. Darks are matched by their hot pixels: a master dark from September covered 100% of the LMC lights&rsquo; hot pixels, while one from January covered only 26%.</p>
+        <p>Flats are matched by night, filter and the dust pattern they share with your lights, and checked against the lights. Darks are matched by their hot pixels: a master dark from September covered 100% of the LMC lights&rsquo; hot pixels, while one from January covered only 26%.</p>
     </div>
     <div class="crux-media">
         <figure class="crux-fig">
