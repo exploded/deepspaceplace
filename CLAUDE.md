@@ -25,7 +25,7 @@ go test -v ./...
 sqlc generate
 ```
 
-Requires `.env` file (copy `.env.example`). Variables: `PORT` (default 8485), `PROD`, `ADMIN_PASSWORD`.
+Requires `.env` file (copy `.env.example`). Variables: `PORT` (default 8485), `BIND_ADDR` (default empty = all interfaces; set `127.0.0.1` for local test instances), `PROD`, `ADMIN_PASSWORD`.
 
 ## Architecture
 

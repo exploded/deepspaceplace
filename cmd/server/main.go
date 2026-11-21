@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -52,10 +53,12 @@ func main() {
 	if httpPort == "" {
 		httpPort = "8485"
 	}
-	httpPort = ":" + httpPort
+	// BIND_ADDR limits which interface the server listens on (e.g. 127.0.0.1
+	// for a local test instance). Empty, the default, listens on all of them.
+	listenAddr := net.JoinHostPort(os.Getenv("BIND_ADDR"), httpPort)
 
 	prod := os.Getenv("PROD") == "True"
-	slog.Info("Config", "prod", prod, "port", httpPort)
+	slog.Info("Config", "prod", prod, "addr", listenAddr)
 
 	// Open SQLite database
 	db, err := sql.Open("sqlite", "deepspaceplace.db")
@@ -257,7 +260,7 @@ func main() {
 
 	// Build server with middleware
 	srv := &http.Server{
-		Addr:         httpPort,
+		Addr:         listenAddr,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
