@@ -38,6 +38,7 @@ var staticPages = []string{
 	"/thermalcamera",
 	"/currentsetup",
 	"/egypt",
+	"/crux",
 	"/tutorials/pixinsight-sho-workflow",
 	"/tutorials/pixinsight-mosaic-workflow",
 	"/tutorials/nina-autofocus",

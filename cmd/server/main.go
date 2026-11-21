@@ -190,6 +190,10 @@ func main() {
 	mux.HandleFunc("/currentsetup", handlers.StaticPage("currentsetup.html", "/currentsetup",
 		"Current Setup", "Current astrophotography equipment setup: Paramount ME mount, ASI2600MM Duo camera, Baader filters, and 12 inch f/4 Newtonian telescope."))
 
+	// crux, James's astrophotography processor (in development)
+	mux.HandleFunc("/crux", handlers.StaticPage("crux.html", "/crux",
+		"crux", "crux is an astrophotography processor in development: it grades your subs, finds the best flats, darks and bias in your whole library, and stacks, mosaics and finishes images without touching your data."))
+
 	// Tutorials
 	mux.HandleFunc("/tutorials/pixinsight-sho-workflow", handlers.StaticPage("tutorial-pixinsight-sho.html", "/tutorials/pixinsight-sho-workflow",
 		"PixInsight Standard SHO Workflow", "Step-by-step PixInsight SHO narrowband processing runbook: WBPP, BlurXTerminator, GradientCorrection, StarXTerminator, PerfectPalettePicker and NarrowbandNormalization."))

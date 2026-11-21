@@ -1,0 +1,254 @@
+/* ============================================================
+   /crux: promo page for the crux astrophotography processor.
+   Builds on dsp.css (colours, fonts) and adds the page layout:
+   a hero, then one section per feature with the image beside the
+   text on wide screens and below it on phones.
+   ============================================================ */
+
+.crux { padding-bottom: 1rem; }
+
+/* ── Hero ── */
+.crux-hero { padding: 2.5rem 0 1rem; }
+.crux-hero-text { text-align: center; max-width: 720px; margin: 0 auto 2rem; }
+
+/* dsp.css sets the heading font with !important, so only size, weight and
+   colour are changed here. */
+.crux-title {
+  font-size: 3.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 1rem;
+  color: var(--text-bright);
+}
+.crux-tagline {
+  font-size: 1.2rem;
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+}
+.crux-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--accent-gold);
+  border-radius: 999px;
+  color: var(--accent-gold);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.crux-intro {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.crux-hero-fig { margin: 0; }
+.crux-hero-fig img { border-radius: var(--radius-lg); }
+.crux-hero-fig figcaption { text-align: center; }
+
+/* Jump links to the nine features. */
+.crux-toc {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 2rem auto 0;
+  max-width: 900px;
+}
+.crux-toc a {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.8rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  transition: color var(--transition), border-color var(--transition);
+}
+.crux-toc a:hover { color: var(--text-bright); border-color: var(--accent-blue); }
+
+/* ── Figures ── */
+.crux-fig { margin: 0 0 1.25rem; }
+.crux-fig a { display: block; cursor: zoom-in; }
+.crux-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.crux-fig a:hover img,
+.crux-fig a:focus-visible img {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 24px var(--accent-blue-glow);
+}
+.crux-fig a:focus-visible { outline: none; }
+.crux-fig figcaption {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin-top: 0.5rem;
+}
+
+/* Second images sit smaller under the main one. */
+.crux-fig-sub { max-width: 68%; margin-left: auto; }
+.crux-flip .crux-fig-sub { margin-left: 0; margin-right: auto; }
+.crux-text .crux-fig-sub { max-width: 100%; margin: 1.5rem 0 0; }
+.crux-fig-portrait { max-width: 40%; }
+
+/* ── Feature sections ── */
+.crux-feature {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 3.5rem 0 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  scroll-margin-top: 4.5rem; /* clear the sticky navbar on jump links */
+}
+.crux-hero + .crux-feature { margin-top: 2rem; }
+
+.crux-num {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--accent-blue);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+}
+.crux-text h2 { margin-top: 0; font-size: 1.5rem; }
+.crux-text p { font-size: 0.98rem; }
+.crux code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--accent-gold);
+}
+
+.crux-gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 1.25rem;
+}
+/* One shape for the thumbnails so the row lines up; the full image opens on
+   click. */
+.crux-gallery img { aspect-ratio: 3 / 2; object-fit: cover; }
+
+@media (min-width: 576px) {
+  .crux-gallery { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 992px) {
+  .crux-feature {
+    grid-template-columns: 5fr 7fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .crux-flip { grid-template-columns: 7fr 5fr; }
+  .crux-flip .crux-text { order: 2; }
+  .crux-flip .crux-media { order: 1; }
+  .crux-gallery { grid-column: 1 / -1; grid-template-columns: repeat(4, 1fr); }
+  .crux-feature-solo { grid-template-columns: 7fr 5fr; }
+}
+
+@media (max-width: 575.98px) {
+  .crux-title { font-size: 2.8rem; }
+  .crux-fig-sub { max-width: 100%; }
+  .crux-fig-portrait { max-width: 60%; }
+}
+
+/* ── Numbers in section 9 ── */
+.crux-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0;
+}
+.crux-stats > div {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+}
+.crux-stats dt {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 1.6rem;
+  color: var(--accent-blue);
+  line-height: 1.2;
+}
+.crux-stats dt span {
+  font-family: var(--font-body);
+  font-size: 0.65em;
+  color: var(--text-secondary);
+}
+.crux-stats dd {
+  margin: 0.3rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ── Status ── */
+.crux-status {
+  margin-top: 2rem;
+  padding: 1.5rem 1.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: var(--radius-md);
+}
+.crux-status h2 { margin-top: 0; }
+.crux-status p { margin-bottom: 0; }
+
+/* ── Full-size viewer ── */
+.crux-viewer {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  margin: 0;
+  padding: 1.5rem;
+  border: 0;
+  background: rgba(6, 6, 12, 0.96);
+  color: var(--text-primary);
+}
+.crux-viewer[open] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.crux-viewer::backdrop { background: rgba(0, 0, 0, 0.8); }
+.crux-viewer img {
+  max-width: 100%;
+  max-height: calc(100vh - 6rem);
+  object-fit: contain;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: zoom-out;
+}
+.crux-viewer-caption {
+  max-width: 900px;
+  margin: 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.crux-viewer-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.9rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-bright);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.crux-viewer-close:hover { border-color: var(--accent-blue); }

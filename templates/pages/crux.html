@@ -1,0 +1,257 @@
+{{template "base" .}}
+{{define "head"}}
+<link href="{{asset "/static/css/crux.css"}}" rel="stylesheet">
+<script src="{{asset "/static/js/crux.js"}}" defer></script>
+<meta property="og:title" content="crux - Deep Space Place">
+<meta property="og:description" content="{{.Description}}">
+<meta property="og:image" content="https://deepspaceplace.com/static/crux/m17-red-and-blue.jpg">
+<meta property="og:url" content="https://deepspaceplace.com/crux">
+<meta property="og:type" content="website">
+{{end}}
+{{define "content"}}
+<div class="crux">
+
+<header class="crux-hero">
+    <div class="crux-hero-text">
+        <h1 class="crux-title">crux</h1>
+        <p class="crux-tagline">An astrophotography processor, from raw subs to a finished image. <span class="crux-badge">In development</span></p>
+        <p class="crux-intro">crux grades every sub, finds the right calibration frames anywhere in your library, stacks, builds mosaics, and finishes the image, without moving or changing a single file in your data.</p>
+    </div>
+    <figure class="crux-fig crux-hero-fig">
+        <a class="crux-zoom" href="/static/crux/m17-red-and-blue.jpg">
+            <img src="/static/crux/m17-red-and-blue.jpg" width="1600" height="1069" fetchpriority="high"
+                 alt="M 17, the Omega Nebula, in a red and blue narrowband palette."></a>
+        <figcaption>M 17 from 5.1 hours of H-alpha, OIII and SII subs, processed entirely by crux.</figcaption>
+    </figure>
+    <nav class="crux-toc" aria-label="Features">
+        <a href="#grading">Sorts good subs from bad</a>
+        <a href="#your-data">Never touches your data</a>
+        <a href="#calibration">Finds the best flats, darks and bias</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#mosaics">Mosaics</a>
+        <a href="#sharpen-denoise">Sharpen, denoise and remove stars</a>
+        <a href="#cameras">Mono or one-shot colour</a>
+        <a href="#feedback">Visual feedback</a>
+        <a href="#fast">Fast and native</a>
+    </nav>
+</header>
+
+<section class="crux-feature" id="grading">
+    <div class="crux-text">
+        <div class="crux-num">01</div>
+        <h2>Sorts good subs from bad</h2>
+        <p>crux measures every sub for focus, tracking, cloud, sky brightness and satellite trails, compares it with the rest of its night and its panel, and gives each frame a grade with a plain reason: &ldquo;transparency 0.03: stars at 3% of their brightness in the field&rsquo;s best frame&rdquo;. Drag a reject limit and the whole night regrades as you drag.</p>
+        <p>On a 302-sub LMC mosaic, crux graded 63 of the 64 subs that had been rejected by hand as reject or warn, and it measured the two known thin-cloud frames at 0.47 and 0.20 transparency.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/02-frames.webp">
+                <img src="/static/crux/02-frames.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's Frames page: a night's transparency chart with rejected frames in red, reject limit sliders and the reasons for the selected frame."></a>
+            <figcaption>One night of the LMC mosaic. Cloud rolls in after 01:00; each red frame says why it was rejected.</figcaption>
+        </figure>
+        <figure class="crux-fig crux-fig-sub">
+            <a class="crux-zoom" href="/static/crux/03-inbox.webp">
+                <img src="/static/crux/03-inbox.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's Inbox listing master flats built from bad flats and frames close to a reject limit."></a>
+            <figcaption>The Inbox lists only what needs a decision.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature crux-flip" id="your-data">
+    <div class="crux-text">
+        <div class="crux-num">02</div>
+        <h2>Never touches your data</h2>
+        <p>crux reads your files where they are. Its index and cache live in its own folder, and everything it makes (calibrated and registered frames, masters, mosaics and images) goes to a working folder that you can delete whenever you like.</p>
+        <p>If you want your folders tidied, crux can do that too: combine a target shot over several folders, or file subs by night, panel or filter. You see every move before it happens, and any change can be undone. Rejects are moved to a <code>BAD</code> folder, never deleted.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/12-organise.webp">
+                <img src="/static/crux/12-organise.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's Organise page: layout rules on the left, the folder plan before and after on the right."></a>
+            <figcaption>A folder layout previewed before anything moves: 364 moves, no name clashes, and an undo afterwards.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature" id="calibration">
+    <div class="crux-text">
+        <div class="crux-num">03</div>
+        <h2>Finds the best flats, darks and bias in your whole library</h2>
+        <p>Point crux at your top-level folders and it builds a calibration library: every flat set, dark and bias, checked and graded. When you process a target, crux picks the best calibration from anywhere in that library. No more copying flats, darks and bias into every target folder.</p>
+        <p>Flats are matched by night, filter and the dust pattern they share with your lights, and checked against the lights themselves. Darks are matched by their hot pixels: a master dark from September covered 100% of the LMC lights&rsquo; hot pixels, while one from January covered only 26%.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/04-calibrate.webp">
+                <img src="/static/crux/04-calibrate.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's Calibration page: each night's lights linked to a flat set from the library and to a master dark and bias, with flat error maps below."></a>
+            <figcaption>Each night takes its flats from the library. The set on the right was shot through cloud, so crux leaves it out: it would leave a 12.6% error.</figcaption>
+        </figure>
+        <figure class="crux-fig crux-fig-sub">
+            <a class="crux-zoom" href="/static/crux/01-library-home.webp">
+                <img src="/static/crux/01-library-home.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's library view: six targets with their images, hours and nights."></a>
+            <figcaption>The whole library at a glance: six targets and 76 flat sets.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature crux-flip" id="recipes">
+    <div class="crux-text">
+        <div class="crux-num">04</div>
+        <h2>Recipes make the next night easy</h2>
+        <p>Everything you set in the image stages (gradient removal, palette, stretch, finishing, star colours, sharpening and noise reduction, crop) is kept as the target&rsquo;s recipe. Add another night&rsquo;s subs and crux processes only the new frames, stacks them in, and rebuilds the image with the same recipe. Save a recipe by name to start other targets from it.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/09-finish.webp">
+                <img src="/static/crux/09-finish.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's Image page: a before and after split of M 17, with each setting labelled as coming from the recipe &ldquo;Red &amp; Blue&rdquo;."></a>
+            <figcaption>Each setting shows where it came from: the default, the recipe, or a change you made here.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature" id="mosaics">
+    <div class="crux-text">
+        <div class="crux-num">05</div>
+        <h2>Mosaics are automatic</h2>
+        <p>Shoot the panels and crux does the rest. It plate-solves each panel&rsquo;s master, fits the lens distortion, places the panels from where they are on the sky (not from their names), matches their brightness, and blends the seams.</p>
+        <p>This 36-panel LMC mosaic came together in 17 seconds: 176 megapixels, with stars in the overlaps lining up to 0.11 pixels.</p>
+        <figure class="crux-fig crux-fig-sub">
+            <a class="crux-zoom" href="/static/crux/mosaic-panels.webp">
+                <img src="/static/crux/mosaic-panels.webp" width="1306" height="902" loading="lazy"
+                     alt="The LMC mosaic with each of the 36 panels outlined and numbered."></a>
+            <figcaption>Every panel placed by plate solving.</figcaption>
+        </figure>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/lmc-mosaic-ha.jpg">
+                <img src="/static/crux/lmc-mosaic-ha.jpg" width="1600" height="1102" loading="lazy"
+                     alt="The Large Magellanic Cloud in H-alpha, a 36-panel mosaic."></a>
+            <figcaption>The Large Magellanic Cloud, 36 panels, 19.8 hours of H-alpha.</figcaption>
+        </figure>
+        <figure class="crux-fig crux-fig-sub crux-fig-portrait">
+            <a class="crux-zoom" href="/static/crux/ic434-red-and-blue.jpg">
+                <img src="/static/crux/ic434-red-and-blue.jpg" width="905" height="1600" loading="lazy"
+                     alt="The Horsehead and Flame nebulae, a three-panel narrowband mosaic."></a>
+            <figcaption>IC 434, three panels, 21.3 hours.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature crux-flip" id="sharpen-denoise">
+    <div class="crux-text">
+        <div class="crux-num">06</div>
+        <h2>Sharpen, denoise and remove stars your way</h2>
+        <p>If you have an RC Astro licence, crux runs BlurXTerminator and NoiseXTerminator in its Image stage (and StarXTerminator from the command line) on your linear masters.</p>
+        <p>Or use crux&rsquo;s own built-in networks: a noise reducer, a star corrector that rounds out elongated or comatic stars and can tighten them, and a star remover. They&rsquo;re trained on real amateur data from several cameras.</p>
+        <p>On cameras it had never seen in training, the noise reducer gave faint areas the noise level of about six times as many frames, while keeping star brightness within 1% (median). The star corrector took M 17&rsquo;s stars from 0.55 to 0.39 eccentricity, keeping their flux within 1.2%.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/enhance-split.webp">
+                <img src="/static/crux/enhance-split.webp" width="1305" height="869" loading="lazy"
+                     alt="A before and after split of a star field from M 17: noisy, slightly elongated stars on the left; round stars and a smooth background on the right."></a>
+            <figcaption>M 17&rsquo;s top-left corner at full size: as stacked, and with crux&rsquo;s star correction and 80% noise reduction.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature" id="cameras">
+    <div class="crux-text">
+        <div class="crux-num">07</div>
+        <h2>Mono or one-shot colour</h2>
+        <p>crux works with mono cameras and filters (narrowband SHO and HOO with the palette mixer&rsquo;s nine presets, LRGB, LRGB with H-alpha) and with one-shot colour cameras. It has processed data from the ASI2600MM, an SBIG STL-11000M and a QHY9 from 2010&ndash;2012, and one-shot colour from an ASI294MC Pro and a Seestar S30. One-shot colour support is the newest part of crux.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/07-palette.webp">
+                <img src="/static/crux/07-palette.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's palette stage: M 17 linear on the left, mixed on the right, and a row of palette preview tiles made from the data."></a>
+            <figcaption>Every palette is previewed from your own data.</figcaption>
+        </figure>
+    </div>
+    <div class="crux-gallery">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/ngc6188-lrgb.jpg">
+                <img src="/static/crux/ngc6188-lrgb.jpg" width="1600" height="1067" loading="lazy"
+                     alt="NGC 6188, the Fighting Dragons of Ara: LRGB and H-alpha from an STL-11000M in 2012."></a>
+            <figcaption>NGC 6188, the Fighting Dragons of Ara: LRGB and H-alpha from an STL-11000M in 2012.</figcaption>
+        </figure>
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/ngc3324-lrgb-2010.jpg">
+                <img src="/static/crux/ngc3324-lrgb-2010.jpg" width="1600" height="1197" loading="lazy"
+                     alt="NGC 3324 in Carina: LRGB from a QHY9 in 2010."></a>
+            <figcaption>NGC 3324 in Carina: LRGB from a QHY9 in 2010.</figcaption>
+        </figure>
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/ngc7293-realistic.jpg">
+                <img src="/static/crux/ngc7293-realistic.jpg" width="1600" height="1069" loading="lazy"
+                     alt="NGC 7293, the Helix Nebula, 31.2 hours."></a>
+            <figcaption>NGC 7293, the Helix Nebula, 31.2 hours.</figcaption>
+        </figure>
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/ngc2070-lrgb.jpg">
+                <img src="/static/crux/ngc2070-lrgb.jpg" width="1600" height="1069" loading="lazy"
+                     alt="NGC 2070, the Tarantula Nebula: LRGB."></a>
+            <figcaption>NGC 2070, the Tarantula Nebula: LRGB.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature crux-flip" id="feedback">
+    <div class="crux-text">
+        <div class="crux-num">08</div>
+        <h2>Easy to use, with visual feedback</h2>
+        <p>Every stage shows a before and after split that updates as you move a control: previews redraw in 6&ndash;35 milliseconds, and regrading a night takes about 10. Each step says in plain words what it does and whether it has run. Settings show whether they&rsquo;re the default, from your recipe, or changed here.</p>
+    </div>
+    <div class="crux-media">
+        <figure class="crux-fig">
+            <a class="crux-zoom" href="/static/crux/stars-split.webp">
+                <img src="/static/crux/stars-split.webp" width="1243" height="869" loading="lazy"
+                     alt="A split view of M 17's core: pink stars from the palette on the left, natural star colours on the right."></a>
+            <figcaption>Natural star colours: crux measures each star in every filter and gives it one true colour, so narrowband palettes don&rsquo;t leave pink stars.</figcaption>
+        </figure>
+        <figure class="crux-fig crux-fig-sub">
+            <a class="crux-zoom" href="/static/crux/06-integrate.webp">
+                <img src="/static/crux/06-integrate.webp" width="1600" height="1000" loading="lazy"
+                     alt="crux's Stack page: the reference frame beside the 25-frame master, with the steps listed on the left."></a>
+            <figcaption>Integrate: the reference frame beside the master. Signal-to-noise &times;4.73 from 25 frames.</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="crux-feature crux-feature-solo" id="fast">
+    <div class="crux-text">
+        <div class="crux-num">09</div>
+        <h2>Fast and native</h2>
+        <p>crux is written in Rust: every step is native code, using all your CPU cores. Calibrating and registering a 26-megapixel sub takes about a second; measuring 302 subs takes 47 seconds; 17 subs stack in 5 seconds.</p>
+        <p>The viewer and previews are drawn on the GPU. The built-in networks run on the CPU; RC Astro&rsquo;s tools use your GPU.</p>
+        <p>crux runs on Windows now; Linux and macOS are to follow.</p>
+    </div>
+    <dl class="crux-stats">
+        <div><dt>~1<span>&#8239;s</span></dt><dd>to calibrate and register a 26-megapixel sub</dd></div>
+        <div><dt>47<span>&#8239;s</span></dt><dd>to measure 302 subs</dd></div>
+        <div><dt>5<span>&#8239;s</span></dt><dd>to stack 17 subs</dd></div>
+        <div><dt>17<span>&#8239;s</span></dt><dd>to build the 36-panel LMC mosaic</dd></div>
+    </dl>
+</section>
+
+<section class="crux-status">
+    <h2>Status</h2>
+    <p>crux is in development and not yet released. It&rsquo;s being built and tested on real data from N.I.N.A., PixInsight&rsquo;s WBPP, MaxIm DL and the ASIAIR.</p>
+</section>
+
+<dialog class="crux-viewer" id="crux-viewer" aria-label="Full-size image">
+    <button type="button" class="crux-viewer-close" aria-label="Close">&times;</button>
+    <img alt="">
+    <p class="crux-viewer-caption"></p>
+</dialog>
+
+</div>
+{{end}}
