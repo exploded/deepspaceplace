@@ -201,6 +201,7 @@
 }
 .crux-status h2 { margin-top: 0; }
 .crux-status p { margin-bottom: 0; }
+.crux-status p + p { margin-top: 0.75rem; }
 
 /* ── Full-size viewer ── */
 .crux-viewer {
