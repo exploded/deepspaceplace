@@ -26,23 +26,28 @@
   color: var(--accent-gold);
   margin-bottom: 1rem;
 }
-.crux-badge {
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 0.35rem;
-  padding: 0.1rem 0.6rem;
-  border: 1px solid var(--accent-gold);
-  border-radius: 999px;
-  color: var(--accent-gold);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 .crux-intro {
   color: var(--text-secondary);
   font-size: 1rem;
   line-height: 1.8;
+}
+
+/* Download button under the intro. */
+.crux-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  margin: 1.5rem 0 0;
+}
+.crux-download {
+  font-size: 0.9rem;
+  padding: 0.65rem 1.6rem;
+}
+.crux-cta-note {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
 }
 
 .crux-hero-fig { margin: 0; }

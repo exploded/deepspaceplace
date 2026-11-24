@@ -14,8 +14,12 @@
 <header class="crux-hero">
     <div class="crux-hero-text">
         <h1 class="crux-title">crux</h1>
-        <p class="crux-tagline">An astrophotography processor, from raw subs to a finished image. <span class="crux-badge">In development</span></p>
+        <p class="crux-tagline">An astrophotography processor, from raw subs to a finished image.</p>
         <p class="crux-intro">crux grades subs, finds the right calibration frames anywhere in your library, stacks, builds mosaics, and finishes the image, without moving or changing your raw data.</p>
+        <p class="crux-cta">
+            <a class="btn btn-primary crux-download" href="https://github.com/exploded/crux/releases/latest">Download crux</a>
+            <span class="crux-cta-note">Free and open source &middot; Windows, macOS and Linux</span>
+        </p>
     </div>
     <figure class="crux-fig crux-hero-fig">
         <a class="crux-zoom" href="/static/crux/v2/m17.jpg">
@@ -33,6 +37,7 @@
         <a href="#cameras">Mono or one-shot colour</a>
         <a href="#feedback">Visual feedback</a>
         <a href="#fast">Fast and native</a>
+        <a href="#download">Download</a>
     </nav>
 </header>
 
@@ -148,7 +153,7 @@
     <div class="crux-text">
         <div class="crux-num">06</div>
         <h2>Sharpen, denoise and remove stars your way</h2>
-        <p>If you have an RC Astro licence, crux runs BlurXTerminator and NoiseXTerminator in its Image stage (and StarXTerminator from the command line) on your linear masters.</p>
+        <p>If you have an RC Astro licence, crux runs BlurXTerminator and NoiseXTerminator in its Image stage on your linear masters.</p>
         <p>Or use crux&rsquo;s own three neural networks, trained specifically for crux on real amateur data, including subs from ASV members, from four cameras: a noise reducer, a star corrector that rounds out elongated or comatic stars and can tighten them, and a star remover. New recipes correct star shapes and reduce noise with them by default.</p>
         <p>On cameras it had never seen in training, the noise reducer gave faint areas the noise level of nearly seven times as many frames, while keeping star brightness within 1% (median). The star corrector took M 17&rsquo;s stars from 0.55 to 0.38 eccentricity, keeping their flux within 1.5%.</p>
         <p>With natural star colours, crux stretches the starless image and the stars separately and screens the stars back on, so you can make stars smaller without touching the nebula. Round glows that star removal leaves around bright stars go back with the stars, so narrowband halos don&rsquo;t come out magenta.</p>
@@ -167,7 +172,7 @@
     <div class="crux-text">
         <div class="crux-num">07</div>
         <h2>Mono or one-shot colour</h2>
-        <p>crux works with mono cameras and filters (narrowband SHO and HOO with the palette mixer&rsquo;s nine presets, LRGB, LRGB with H-alpha) and with one-shot colour cameras, including dual-band filters. It has processed data from the ASI2600MM, an SBIG STL-11000M and a QHY9 from 2010&ndash;2012, and one-shot colour from an ASI294MC Pro and a Seestar S30. One-shot colour support is the newest part of crux.</p>
+        <p>crux works with mono cameras and filters (narrowband SHO and HOO with the palette mixer&rsquo;s nine presets, LRGB, LRGB with H-alpha) and with one-shot colour cameras, including dual-band filters. It has processed data from the ASI2600MM, an SBIG STL-11000M and a QHY9 from 2010&ndash;2012, and one-shot colour from an ASI294MC Pro and a Seestar S30. It reads FITS, XISF and Canon CR2 files. One-shot colour support is the newest part of crux.</p>
     </div>
     <div class="crux-media">
         <figure class="crux-fig">
@@ -233,7 +238,7 @@
         <h2>Fast and native</h2>
         <p>crux is written in Rust: every step is native code, using all your CPU cores. Calibrating and registering a 26-megapixel sub takes about a second, and measuring 302 subs takes 47 seconds.</p>
         <p>The networks, and the warps that line up frames and mosaic panels, run on your graphics card: NVIDIA, AMD, Intel or Apple, through DirectX 12, Vulkan or Metal, with no vendor libraries to install. On an RTX 3070 the networks run about 15 times faster than on an 8-core CPU, and the whole 176-megapixel LMC image with noise reduction, star correction and star removal takes about a minute instead of nearly ten. Without a suitable card, crux uses the CPU and gets the same result. The top bar shows which one it&rsquo;s using.</p>
-        <p>crux runs on Windows. Builds for Linux and macOS (Apple Silicon) are made the same way, but haven&rsquo;t been tested on a real machine yet.</p>
+        <p>crux runs on Windows, macOS (Apple Silicon and Intel) and Linux. It&rsquo;s used daily on Windows and has been tested on Linux (Debian) and macOS (an iMac).</p>
     </div>
     <dl class="crux-stats">
         <div><dt>~1<span>&#8239;s</span></dt><dd>to calibrate and register a 26-megapixel sub</dd></div>
@@ -243,10 +248,10 @@
     </dl>
 </section>
 
-<section class="crux-status">
-    <h2>Status</h2>
-    <p>crux is in development. It&rsquo;s being built and tested on real data from N.I.N.A., PixInsight&rsquo;s WBPP, MaxIm DL and the ASIAIR.</p>
-    <p>crux is open source under the MIT licence. The code is on <a href="https://github.com/exploded/crux">GitHub</a>, and downloads for Windows, Linux and macOS are on its <a href="https://github.com/exploded/crux/releases">Releases page</a>.</p>
+<section class="crux-status" id="download">
+    <h2>Download</h2>
+    <p>crux is free and open source under the MIT licence. <a href="https://github.com/exploded/crux/releases/latest">Download it</a> for Windows, macOS (Apple Silicon and Intel) or Linux. There&rsquo;s nothing to install: unpack the archive and run <code>crux-gui</code>. The builds aren&rsquo;t signed, so the first run needs <a href="https://github.com/exploded/crux#download-and-first-run">one extra step</a>.</p>
+    <p>When a newer version is out, the app shows an Update button in its top bar. crux is built and tested on real data from N.I.N.A., PixInsight&rsquo;s WBPP, MaxIm DL and the ASIAIR, and its code is on <a href="https://github.com/exploded/crux">GitHub</a>.</p>
 </section>
 
 <dialog class="crux-viewer" id="crux-viewer" aria-label="Full-size image">
